@@ -1,1 +1,0 @@
-# this is the implementation be used to get the secrets from AWS Secrets Manager

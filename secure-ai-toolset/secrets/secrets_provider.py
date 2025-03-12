@@ -1,1 +1,0 @@
-# this is a abstract class for secrets provider
