@@ -1,6 +1,6 @@
 from typing import List
 import pytest
-from secure_ai_toolset.secrets.aws_secrets_provider import AWSSecretsProvider
+from secure_ai_toolset.secrets.aws_secrets_manager_provider import AWSSecretsProvider
 from secure_ai_toolset.secrets.conjur_secrets_provider import ConjurSecretsProvider
 from secure_ai_toolset.secrets.secrets_provider import BaseSecretsProvider
 
