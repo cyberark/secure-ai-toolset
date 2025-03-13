@@ -1,0 +1,26 @@
+[project]
+name = "secure-ai-toolset"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "GilAddaCyberArk",email = "gil.adda@cyberark.com"}
+]
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+]
+
+[tool.poetry]
+packages = [
+    { include = "secure_ai_toolset", from = "secure-ai-toolset" }
+]
+
+[tool.poetry.group.aws.dependencies]
+boto3 = "*"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "*"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

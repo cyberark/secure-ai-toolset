@@ -1,0 +1,5 @@
+# Project: secure-ai-toolset
+# License: MIT License
+
+# Dependencies and their licenses:
+# TBD
