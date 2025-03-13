@@ -2,15 +2,4 @@
 # License: MIT License
 
 # Dependencies and their licenses:
-
-# Project: dependency1
-# License: Apache License 2.0
-
-# Project: dependency2
-# License: BSD 3-Clause License
-
-# Project: dependency3
-# License: MIT License
-
-# ...add more dependencies and their licenses as needed...
-
+# TBD

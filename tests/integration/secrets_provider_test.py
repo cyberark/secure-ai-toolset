@@ -34,9 +34,21 @@ def test_get_secret(provider):
     assert fetched_value == "another_test_value"
 
 @pytest.mark.parametrize("provider", secret_providers)
+def test_store_secret_with_none_key(provider):
+    provider.store(None, "test_value")
+    fetched_value = provider.get("")
+    assert fetched_value is None
+
+@pytest.mark.parametrize("provider", secret_providers)
 def test_store_secret_with_empty_key(provider):
     provider.store("", "test_value")
     fetched_value = provider.get("")
+    assert fetched_value is None
+
+@pytest.mark.parametrize("provider", secret_providers)
+def test_store_secret_with_none_value(provider):
+    provider.store("test_key", None)
+    fetched_value = provider.get("test_key")
     assert fetched_value is None
 
 @pytest.mark.parametrize("provider", secret_providers)

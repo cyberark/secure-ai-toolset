@@ -50,14 +50,15 @@ class AWSSecretsProvider(BaseSecretsProvider):
         Returns None if the key is missing or retrieval fails.
         """
         if not key:
-            # log error
+            self.logger.warning("get: key is missing")
             return None
         try:
             self.connect()
             response = self.client.get_secret_value(SecretId=key)
             meta = response.get("ResponseMetadata", {})
             if meta.get("HTTPStatusCode") != 200 or "SecretString" not in response:
-                # log error
+                self.logger.error("get: secret retrieval error")
+
                 return None
             return response["SecretString"]
         except self.client.exceptions.ResourceNotFoundException:
