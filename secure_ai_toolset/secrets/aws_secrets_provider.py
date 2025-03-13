@@ -32,9 +32,9 @@ class AWSSecretsProvider(BaseSecretsProvider):
         Stores a secret in AWS Secrets Manager. Creates or updates the secret.
         """
         if not key or not secret:
-            # log error
             self.logger.warning("store: key or secret is missing")
             return
+        
         try:
             self.connect()
             self.client.create_secret(Name=key, SecretString=secret)
