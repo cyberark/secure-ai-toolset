@@ -9,24 +9,16 @@ def test_provider_ctor():
     provider = ConjurSecretsProvider()
     assert provider is not None
 
-def test_get_secret():
-    provider = ConjurSecretsProvider()
-    # key = "data/hr-agent-poc/env-data"
-    # key = "data/hr-agent-poc/hr-db-user-id"a
-    key = "data/hr-agent-poc/hr-db-user-password"
-    secret = provider.get(key=key)
-    assert secret
 
-
-def test_create_secret():
+def test_create_get_delete_secret():
     provider = ConjurSecretsProvider()
     
-    secret_id = "gil1/test_key"
-    secret = "blah"
-    policy = "gil1"
-    host = "authn-iam/aws/450676674096/AWSReservedSSO_NeoDeveloper_c1b66fa92e7669fe"
-    provider.store(key=secret_id, secret=secret)
+    key = "data/test-toolset/my-environment"
+    secret = "test"
+    provider.store(key=key, secret=secret)
 
     fetched_secret = provider.get(key=key)
-    assert fetched_secret
+    assert fetched_secret == secret
 
+    provider.delete(key=key)
+    assert provider.get(key=key) == ""
