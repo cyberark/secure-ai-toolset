@@ -11,15 +11,22 @@ Secure-AI-toolset is using the following open source components:
 3) pytest (https://github.com/pytest-dev/pytest): MIT License
     Copyright (c) 2004 Holger Krekel and others
 
-4) poetry (https://github.com/python-poetry/poetry) :  MIT License
+4) poetry (https://github.com/python-poetry/poetry): MIT License
     Copyright (c) 2018 Sébastien Eustace and others
 
+5) pydantic (https://github.com/pydantic/pydantic): MIT License
+    Copyright (c) 2017 to present Pydantic Services Inc. and individual contributors.
 
+6) yapf (https://github.com/google/yapf): Apache Software License (Apache-2.0)
+    Copyright 2015 Google Inc. All Rights Reserved.
+
+7) isort (https://github.com/PyCQA/isort): MIT License
+    Copyright (c) 2013 Timothy Edmund Crosley
 
 =================================================================================
 
 1)	MIT License
-Copyright (C) 2014 by Saúl Ibarra Corretgé
+
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
