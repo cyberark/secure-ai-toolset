@@ -1,13 +1,17 @@
-from .secrets_provider import BaseSecretsProvider
 import boto3
+from pydantic import SecretStr
+
+from .secrets_provider import BaseSecretsProvider
 
 DEFAULT_REGION = "us-east-1"
 SERVICE_NAME = "secretsmanager"
 
+
 class AWSSecretsProvider(BaseSecretsProvider):
     """
     Manages storing and retrieving secrets from AWS Secrets Manager.
-    """    
+    """
+
     def __init__(self, region_name=DEFAULT_REGION):
         """
         Initializes the AWS Secrets Manager client with the specified region.
@@ -32,9 +36,10 @@ class AWSSecretsProvider(BaseSecretsProvider):
             # Verify connectivity using STS get caller identity
             caller = boto3.client('sts').get_caller_identity()
             return caller
-            
+
         except Exception as e:
-            self.logger.error(f"Error initializing AWS Secrets Manager client: {e}")
+            self.logger.error(
+                f"Error initializing AWS Secrets Manager client: {e}")
             raise
 
     def store(self, key: str, secret: str) -> None:
@@ -47,7 +52,7 @@ class AWSSecretsProvider(BaseSecretsProvider):
         if not key or not secret:
             self.logger.warning("store: key or secret is missing")
             return
-        
+
         try:
             self.connect()
             self._client.create_secret(Name=key, SecretString=secret)
@@ -57,7 +62,7 @@ class AWSSecretsProvider(BaseSecretsProvider):
             self.logger.error(f"Error storing secret: {e}")
             return
 
-    def get(self, key: str) -> str:
+    def get(self, key: str) -> SecretStr:
         """
         Retrieves a secret from AWS Secrets Manager by key.
         
@@ -71,7 +76,8 @@ class AWSSecretsProvider(BaseSecretsProvider):
             self.connect()
             response = self._client.get_secret_value(SecretId=key)
             meta = response.get("ResponseMetadata", {})
-            if meta.get("HTTPStatusCode") != 200 or "SecretString" not in response:
+            if meta.get(
+                    "HTTPStatusCode") != 200 or "SecretString" not in response:
                 self.logger.error("get: secret retrieval error")
                 return None
             return response["SecretString"]
@@ -93,9 +99,9 @@ class AWSSecretsProvider(BaseSecretsProvider):
             return
         try:
             self.connect()
-            self._client.delete_secret(SecretId=key, ForceDeleteWithoutRecovery=True)
+            self._client.delete_secret(SecretId=key,
+                                       ForceDeleteWithoutRecovery=True)
         except self._client.exceptions.ResourceNotFoundException:
             self.logger.error("Secret not found.")
         except Exception as e:
             self.logger.error(f"Error deleting secret: {e}")
-
