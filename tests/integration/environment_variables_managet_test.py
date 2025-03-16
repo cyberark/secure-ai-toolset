@@ -1,16 +1,17 @@
 import os
 import uuid
 import pytest
+from secure_ai_toolset.secrets.aws_ssm_provider import AWSParameterStoreProvider
 from secure_ai_toolset.secrets.aws_secrets_manager_provider import AWSSecretsProvider
 from secure_ai_toolset.secrets.environment_manager import EnvironmentVariablesManager
 
-@pytest.fixture
-def env_manager():
+@pytest.fixture(params=[AWSParameterStoreProvider, AWSSecretsProvider])
+def env_manager(request):
     """
-    Fixture to create an instance of EnvironmentVariablesManager with AWSSecretsProvider.
+    Fixture to create an instance of EnvironmentVariablesManager with AWSParameterStoreProvider or AWSSecretsProvider.
     This fixture is used to provide a clean instance for each test case.
     """
-    secret_provider = AWSSecretsProvider()
+    secret_provider = request.param(region_name="us-east-1")
     return EnvironmentVariablesManager(secret_provider=secret_provider)
 
 @pytest.mark.dependency()
@@ -29,7 +30,7 @@ def test_aws_secrets_manager_connect(env_manager):
     assert result
 
 
-@pytest.mark.dependency(depends=["test_aws_secrets_manager_authentication"])
+@pytest.mark.dependency(depends=["test_aws_secrets_manager_connect"])
 def test_list_env_vars_positive(env_manager):
     """
     Test case to verify the functionality of listing, adding, fetching, and removing environment variables.
@@ -57,7 +58,7 @@ def test_list_env_vars_positive(env_manager):
     fetched_value = env_manager.get_env_var(key)
     assert fetched_value is None
 
-@pytest.mark.dependency(depends=["test_aws_secrets_manager_authentication"])
+@pytest.mark.dependency(depends=["test_aws_secrets_manager_connect"])
 def test_populate_and_depopulate_env_vars(env_manager):
     """
     Test case to verify the functionality of populating and depopulating environment variables.
