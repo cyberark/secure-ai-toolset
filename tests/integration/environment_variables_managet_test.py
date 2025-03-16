@@ -100,6 +100,3 @@ def test_populate_and_depopulate_env_vars(env_manager):
         fetched_removed_value = env_manager.get_env_var(key=key)
         assert not fetched_removed_value
 
-
-
-
