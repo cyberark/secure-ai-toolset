@@ -4,7 +4,6 @@ import pytest
 from secure_ai_toolset.secrets.aws_secrets_manager_provider import AWSSecretsProvider
 from secure_ai_toolset.secrets.environment_manager import EnvironmentVariablesManager
 
-
 @pytest.fixture
 def env_manager():
     """
@@ -14,7 +13,23 @@ def env_manager():
     secret_provider = AWSSecretsProvider()
     return EnvironmentVariablesManager(secret_provider=secret_provider)
 
+@pytest.mark.dependency()
+def test_aws_secrets_manager_connect(env_manager):
+    """
+    Test case to verify the functionality of the AWS Secrets Manager provider.
+    
+    Steps:
+    1. Verify that the env_manager instance is created.
+    2. Fetch the value of a secret from the AWS Secrets Manager.
+    3. Verify that the fetched value is not None.
+    """
+    assert env_manager
+    assert env_manager.secret_provider
+    result = env_manager.secret_provider.connect()
+    assert result
 
+
+@pytest.mark.dependency(depends=["test_aws_secrets_manager_authentication"])
 def test_list_env_vars_positive(env_manager):
     """
     Test case to verify the functionality of listing, adding, fetching, and removing environment variables.
@@ -42,7 +57,7 @@ def test_list_env_vars_positive(env_manager):
     fetched_value = env_manager.get_env_var(key)
     assert fetched_value is None
 
-
+@pytest.mark.dependency(depends=["test_aws_secrets_manager_authentication"])
 def test_populate_and_depopulate_env_vars(env_manager):
     """
     Test case to verify the functionality of populating and depopulating environment variables.
@@ -57,10 +72,7 @@ def test_populate_and_depopulate_env_vars(env_manager):
     7. Remove each key-value pair from the environment manager.
     8. Verify that each key-value pair is removed from the environment manager.
     """
-    keys_values = {
-        f"key_{uuid.uuid4()}": f"value_{uuid.uuid4()}"
-        for _ in range(5)
-    }
+    keys_values = {f"key_{uuid.uuid4()}": f"value_{uuid.uuid4()}" for _ in range(5)}
     # store new environment
     for key, value in keys_values.items():
         env_manager.add_env_var(key=key, value=value)
@@ -68,7 +80,7 @@ def test_populate_and_depopulate_env_vars(env_manager):
     # Populate environment variables
     env_manager.populate_env_vars()
 
-    # Check they exist
+    # Check they exist 
     for key, value in keys_values.items():
         fetched_value = env_manager.get_env_var(key)
         os_env_value = os.environ.get(key)
@@ -82,8 +94,9 @@ def test_populate_and_depopulate_env_vars(env_manager):
         fetched_os_env_value = os.environ.get(key)
         assert fetched_os_env_value is None
 
-    # remove new environment
+    # remove new environment variables from repository
     for key, value in keys_values.items():
         env_manager.remove_env_var(key=key)
         fetched_removed_value = env_manager.get_env_var(key=key)
         assert not fetched_removed_value
+
