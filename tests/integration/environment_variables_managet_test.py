@@ -13,6 +13,23 @@ def env_manager():
     secret_provider = AWSSecretsProvider()
     return EnvironmentVariablesManager(secret_provider=secret_provider)
 
+@pytest.mark.dependency()
+def test_aws_secrets_manager_connect(env_manager):
+    """
+    Test case to verify the functionality of the AWS Secrets Manager provider.
+    
+    Steps:
+    1. Verify that the env_manager instance is created.
+    2. Fetch the value of a secret from the AWS Secrets Manager.
+    3. Verify that the fetched value is not None.
+    """
+    assert env_manager
+    assert env_manager.secret_provider
+    result = env_manager.secret_provider.connect()
+    assert result
+
+
+@pytest.mark.dependency(depends=["test_aws_secrets_manager_authentication"])
 def test_list_env_vars_positive(env_manager):
     """
     Test case to verify the functionality of listing, adding, fetching, and removing environment variables.
@@ -40,6 +57,7 @@ def test_list_env_vars_positive(env_manager):
     fetched_value = env_manager.get_env_var(key)
     assert fetched_value is None
 
+@pytest.mark.dependency(depends=["test_aws_secrets_manager_authentication"])
 def test_populate_and_depopulate_env_vars(env_manager):
     """
     Test case to verify the functionality of populating and depopulating environment variables.
@@ -76,7 +94,7 @@ def test_populate_and_depopulate_env_vars(env_manager):
         fetched_os_env_value = os.environ.get(key)
         assert fetched_os_env_value is None
 
-    # remove new environment
+    # remove new environment variables from repository
     for key, value in keys_values.items():
         env_manager.remove_env_var(key=key)
         fetched_removed_value = env_manager.get_env_var(key=key)
