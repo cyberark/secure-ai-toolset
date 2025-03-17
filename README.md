@@ -36,6 +36,19 @@ To download the toolset, use the following command:
 git clone https://github.com/your-repo/secure-ai-toolset.git
 ```
 
+## Setup instructions
+
+### pip
+```bash
+pip3 install secure-ai-toolset
+```
+
+### poetry
+```bash
+poetry add secure-ai-toolset
+```
+
+
 ## Usage
 
 Here is an example of how to consume the toolset in your project:
