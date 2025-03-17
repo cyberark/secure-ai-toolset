@@ -1,6 +1,4 @@
 # this is an implementation of the secrets provider interface for CyberArk Conjur
-from pydantic import SecretStr
-
 from secure_ai_toolset.secrets.secrets_provider import BaseSecretsProvider
 
 
@@ -9,7 +7,6 @@ class ConjurSecretsProvider(BaseSecretsProvider):
     def __init__(self):
         super().__init__()
         # ...initialize Conjur client...
-        pass
 
     def connect(self):
         pass
@@ -18,7 +15,7 @@ class ConjurSecretsProvider(BaseSecretsProvider):
         # ...store secret logic...
         pass
 
-    def get(self, key: str) -> SecretStr:
+    def get(self, key: str) -> str:
         # ...retrieve secret logic...
         pass
 

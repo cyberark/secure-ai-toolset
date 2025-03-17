@@ -3,8 +3,6 @@ import logging
 import os
 from typing import Dict
 
-from pydantic import SecretStr
-
 from secure_ai_toolset.secrets.secrets_provider import BaseSecretsProvider
 
 DEFAULT_ENV_VARS_NAMESPACE = "default"
@@ -30,7 +28,7 @@ class EnvironmentVariablesManager:
         self._secret_dict = {}
         self._logger = logging.getLogger(__name__)
 
-    def list_env_vars(self) -> Dict[str, SecretStr]:
+    def list_env_vars(self) -> Dict[str, str]:
         """
         List all environment variables stored in the secret provider.
         
@@ -77,9 +75,6 @@ class EnvironmentVariablesManager:
             self._secret_dict = self.list_env_vars()
             if not self._secret_dict:
                 self._secret_dict = {}
-                self.secret_provider.store(key=self._secret_dictionary_key,
-                                           secret=json.dumps(
-                                               self._secret_dict))
             self._secret_dict[key] = value
             secrets_text = json.dumps(self._secret_dict)
             self.secret_provider.store(key=self._secret_dictionary_key,
