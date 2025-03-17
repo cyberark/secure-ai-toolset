@@ -16,6 +16,7 @@ def env_manager(request):
     secret_provider = request.param(region_name="us-east-1")
     return EnvironmentVariablesManager(secret_provider=secret_provider)
 
+
 def test_aws_secrets_manager_connect(env_manager):
     """
     Test case to verify the functionality of the AWS Secrets Manager provider.
@@ -88,7 +89,10 @@ def test_populate_and_depopulate_env_vars(env_manager):
     7. Remove each key-value pair from the environment manager.
     8. Verify that each key-value pair is removed from the environment manager.
     """
-    keys_values = {f"key_{uuid.uuid4()}": f"value_{uuid.uuid4()}" for _ in range(5)}
+    keys_values = {
+        f"key_{uuid.uuid4()}": f"value_{uuid.uuid4()}"
+        for _ in range(5)
+    }
     # store new environment
     for key, value in keys_values.items():
         env_manager.add_env_var(key=key, value=value)
@@ -96,7 +100,7 @@ def test_populate_and_depopulate_env_vars(env_manager):
     # Populate environment variables
     env_manager.populate_env_vars()
 
-    # Check they exist 
+    # Check they exist
     for key, value in keys_values.items():
         fetched_value = env_manager.get_env_var(key)
         os_env_value = os.environ.get(key)
@@ -115,4 +119,3 @@ def test_populate_and_depopulate_env_vars(env_manager):
         env_manager.remove_env_var(key=key)
         fetched_removed_value = env_manager.get_env_var(key=key)
         assert not fetched_removed_value
-

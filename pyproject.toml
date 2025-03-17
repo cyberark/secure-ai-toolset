@@ -3,7 +3,7 @@ name = "secure-ai-toolset"
 version = "0.0.7"
 description = ""
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.9,<4.0"
 license = "Apache Software License (Apache-2.0)"
 homepage = "https://github.com/cyberark/secure-ai-toolset"
 repository = "https://github.com/cyberark/secure-ai-toolset"
@@ -20,6 +20,7 @@ build-backend = "poetry.core.masonry.api"
 include = "secure_ai_toolset"
 
 [tool.poetry.dependencies]
+poetry = ">=1.8.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "*"

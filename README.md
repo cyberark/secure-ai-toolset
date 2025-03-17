@@ -44,6 +44,8 @@ pip3 install secure-ai-toolset
 ```
 
 ### poetry
+> **Note:** Ensure you have Poetry version greater than 1.8.0 installed.
+
 ```bash
 poetry add secure-ai-toolset
 ```
