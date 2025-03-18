@@ -1,28 +1,20 @@
-[project]
+[tool.poetry]
 name = "secure-ai-toolset"
 version = "0.0.7"
-description = ""
+description = "python toolset to secure AI agents with secret provisioning, authentication, call monitoring and authorization"
 readme = "README.md"
-requires-python = ">=3.10,<4.0"
 license = "Apache Software License (Apache-2.0)"
-homepage = "https://github.com/cyberark/secure-ai-toolset"
-repository = "https://github.com/cyberark/secure-ai-toolset"
-[[project.authors]]
-name = "CyberArk"
-email = "cyberark@cyberark.com"
-
+authors = ["CyberArk <acyberark@cyberark.com>"]
+ 
 [build-system]
-requires = [ "poetry-core",]
+requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
-
-[tool.poetry]
-[[tool.poetry.packages]]
-include = "secure_ai_toolset"
-
+ 
 [tool.poetry.dependencies]
-poetry = ">=1.8.0"
-
-[tool.poetry.group.dev.dependencies]
+python = ">=3.10.0, <4.0"
+boto3 = "*"
+ 
+[tool.poetry.dev-dependencies]
 pytest = "*"
 yapf = "^0.43.0"
 isort = "^6.0.1"
