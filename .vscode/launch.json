@@ -6,10 +6,10 @@
     "configurations": [
     
         {
-            "name": "agent",
+            "name": "autogen-agent",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/examples/autogen/src/autogen_openai_agent.py",
+            "program": "${workspaceFolder}/examples/autogen-agent/autogen_openai_agent.py",
             "console": "integratedTerminal",
             "env": {
                 "PYTHONPATH": "${workspaceFolder}/:$PYTHONPATH"

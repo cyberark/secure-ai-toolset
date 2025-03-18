@@ -3,7 +3,7 @@ name = "secure-ai-toolset"
 version = "0.0.7"
 description = ""
 readme = "README.md"
-requires-python = ">=3.9,<4.0"
+requires-python = ">=3.10,<4.0"
 license = "Apache Software License (Apache-2.0)"
 homepage = "https://github.com/cyberark/secure-ai-toolset"
 repository = "https://github.com/cyberark/secure-ai-toolset"
@@ -29,6 +29,11 @@ isort = "^6.0.1"
 autoflake = "^2.3.1"
 toml = "^0.10.2"
 twine = "^6.1.0"
+dotenv = "^0.9.9"
 
 [tool.poetry.group.aws.dependencies]
 boto3 = "*"
+
+[tool.poetry.group.autogen.dependencies]
+autogen-core = ">=0.4.9.2,<0.5.0.0"
+autogen-ext = {extras = ["openai"], version = "^0.4.9.2"}

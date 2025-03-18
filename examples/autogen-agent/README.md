@@ -3,9 +3,9 @@
 ## Setup
 open a new shell 
 ```bash
-cd examples/autogen
 poetry shell
-poetry install --no-root
+poetry install -with autogen
+cd examples/autogen
 ```
 
 ## Running the example
