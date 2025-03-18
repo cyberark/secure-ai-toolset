@@ -24,7 +24,7 @@ class BaseSecretsProvider(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def get(self, key: str) -> str:
+    def get(self, key: str) -> Optional[str]:
         pass
 
     @abc.abstractmethod

@@ -1,10 +1,7 @@
 import json
-import urllib.parse
-from typing import Optional, Tuple
-
-from pydantic import SecretStr
-
 import os
+import urllib.parse
+from typing import Tuple, Optional
 
 import boto3
 import requests
@@ -20,11 +17,11 @@ class ConjurSecretsProvider(BaseSecretsProvider):
 
         self._url = os.getenv("CONJUR_APPLIANCE_URL")
         self._workload_id = os.getenv("CONJUR_AUTHN_LOGIN")
-        self._api_key = SecretStr(os.getenv("CONJUR_AUTHN_API_KEY", ""))
+        self._api_key = os.getenv("CONJUR_AUTHN_API_KEY", "")
         self._authenticator_id = os.getenv("CONJUR_AUTHENTICATOR_ID")
         self._account = os.getenv("CONJUR_ACCOUNT", "conjur")
         self._region = os.getenv("CONJUR_AUTHN_IAM_REGION", "us-east-1")
-        self._access_token: Optional[SecretStr] = None
+        self._access_token = None
 
     def _authenticate_aws(self):
         """
@@ -54,7 +51,7 @@ class ConjurSecretsProvider(BaseSecretsProvider):
                                  data=signed_headers,
                                  headers=headers)
         if response.status_code == 200:
-            self._access_token = SecretStr(response.text)
+            self._access_token = response.text
 
     def _authenticate_api_key(self):
         """
@@ -68,16 +65,16 @@ class ConjurSecretsProvider(BaseSecretsProvider):
         conjur_authenticate_uri = f'{self._url}/authn/{self._account}/{self._workload_id.replace("/", "%2F")}/authenticate'
         headers = {"Accept-Encoding": "base64"}
         response = requests.post(conjur_authenticate_uri,
-                                 data=self._api_key.get_secret_value(),
+                                 data=self._api_key,
                                  headers=headers)
         if response.status_code == 200:
-            self._access_token = SecretStr(response.text)
+            self._access_token = response.text
 
     def _get_conjur_headers(self) -> dict:
         if not self._access_token:
             self.connect()
         headers = {
-            'Authorization': f'Token token="{self._access_token.get_secret_value()}"',
+            'Authorization': f'Token token="{self._access_token}"',
             'Content-Type': 'text/plain'
         }
 
@@ -93,7 +90,7 @@ class ConjurSecretsProvider(BaseSecretsProvider):
         """
 
         # Check for an invalid input
-        if "/" not in secret_id or "\n" in secret_id:
+        if not secret_id or "/" not in secret_id or "\n" in secret_id:
             return "", ""
         branch, secret_name = secret_id.rsplit("/", 1)
         return branch, secret_name
@@ -137,7 +134,7 @@ class ConjurSecretsProvider(BaseSecretsProvider):
         except Exception as e:
             self.logger.error(f"Error storing secret: {e}")
 
-    def get(self, key: str) -> str:
+    def get(self, key: str) -> Optional[str]:
         if not self._access_token:
             self.connect()
         url = f"{self._url}/secrets/{self._account}/variable/{urllib.parse.quote(key)}"
@@ -146,11 +143,11 @@ class ConjurSecretsProvider(BaseSecretsProvider):
             response = requests.get(url, headers=self._get_conjur_headers())
             if response.status_code != 200:
                 self.logger.error(f"Error retrieving secret: {response.text}")
-                return ""
+                return None
             return response.text
         except Exception as e:
             self.logger.error(f"Error retrieving secret: {e}")
-            return ""
+            return None
 
     def delete(self, key: str) -> None:
         branch, secret_name = self._get_branch_and_name_from_id(key)

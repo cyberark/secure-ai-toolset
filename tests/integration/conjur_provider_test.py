@@ -1,8 +1,8 @@
 import pytest
 
-from secure_ai_toolset.secrets.aws_secrets_manager_provider import AWSSecretsProvider
 from secure_ai_toolset.secrets.conjur_secrets_provider import ConjurSecretsProvider
-from secure_ai_toolset.secrets.secrets_provider import BaseSecretsProvider
+
+secret_providers = [ConjurSecretsProvider()]
 
 
 def test_provider_ctor():
@@ -10,32 +10,16 @@ def test_provider_ctor():
     assert provider is not None
 
 
-def test_create_get_delete_secret():
-    provider = ConjurSecretsProvider()
-    
-    key = "data/test-toolset/my-environment"
-    secret = "test"
-    provider.store(key=key, secret=secret)
-
-    fetched_secret = provider.get(key=key)
-    assert fetched_secret == secret
-
-    provider.delete(key=key)
-    assert provider.get(key=key) == ""
-
-
-# secret_providers = [AWSSecretsProvider()]
-secret_providers = [AWSSecretsProvider(), ConjurSecretsProvider()]
-
-
+@pytest.mark.aws
 @pytest.mark.parametrize("provider", secret_providers)
-def test_provider_ctor(provider: BaseSecretsProvider):
+def test_provider_ctor(provider: ConjurSecretsProvider):
     assert provider is not None
 
 
+@pytest.mark.aws
 @pytest.mark.parametrize("provider", secret_providers)
 def test_store_secret(provider):
-    key = "test_key"
+    key = "data/test-toolset/my-environment"
     value = "test_value"
 
     # Store get and compare
@@ -49,13 +33,15 @@ def test_store_secret(provider):
     assert not fetched_value
 
 
+@pytest.mark.aws
 @pytest.mark.parametrize("provider", secret_providers)
 def test_get_secret(provider):
-    provider.store("another_test_key", "another_test_value")
-    fetched_value = provider.get("another_test_key")
+    provider.store("data/test-toolset/my-environment-2", "another_test_value")
+    fetched_value = provider.get("data/test-toolset/my-environment-2")
     assert fetched_value == "another_test_value"
 
 
+@pytest.mark.aws
 @pytest.mark.parametrize("provider", secret_providers)
 def test_store_secret_with_none_key(provider):
     provider.store(None, "test_value")
@@ -63,6 +49,7 @@ def test_store_secret_with_none_key(provider):
     assert fetched_value is None
 
 
+@pytest.mark.aws
 @pytest.mark.parametrize("provider", secret_providers)
 def test_store_secret_with_empty_key(provider):
     provider.store("", "test_value")
@@ -70,30 +57,34 @@ def test_store_secret_with_empty_key(provider):
     assert fetched_value is None
 
 
+@pytest.mark.aws
 @pytest.mark.parametrize("provider", secret_providers)
 def test_store_secret_with_none_value(provider):
-    provider.store("test_key", None)
-    fetched_value = provider.get("test_key")
+    provider.store("data/test-toolset/my-environment", None)
+    fetched_value = provider.get("data/test-toolset/my-environment")
     assert fetched_value is None
 
 
+@pytest.mark.aws
 @pytest.mark.parametrize("provider", secret_providers)
 def test_store_secret_with_empty_value(provider):
-    provider.store("test_key", "")
-    fetched_value = provider.get("test_key")
+    provider.store("data/test-toolset/my-environment", "")
+    fetched_value = provider.get("data/test-toolset/my-environment")
     assert fetched_value is None
 
 
+@pytest.mark.aws
 @pytest.mark.parametrize("provider", secret_providers)
 def test_get_nonexistent_secret(provider):
     fetched_value = provider.get("nonexistent_key")
     assert fetched_value is None
 
 
+@pytest.mark.aws
 @pytest.mark.parametrize("provider", secret_providers)
 def test_store_and_update_secret(provider):
-    provider.store("update_test_key", "initial_value")
-    provider.store("update_test_key", "updated_value")
-    fetched_value = provider.get("update_test_key")
+    provider.store("data/test-toolset/my-environment", "initial_value")
+    provider.store("data/test-toolset/my-environment", "updated_value")
+    fetched_value = provider.get("data/test-toolset/my-environment")
     assert fetched_value == "updated_value"
 
