@@ -2,8 +2,6 @@
 import abc
 import logging
 
-from pydantic import SecretStr
-
 
 class BaseSecretsProvider(abc.ABC):
 
@@ -19,9 +17,9 @@ class BaseSecretsProvider(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def get(self, key: str) -> SecretStr:
+    def get(self, key: str) -> str:
         pass
 
     @abc.abstractmethod
-    def delete(self, key: str) -> str:
+    def delete(self, key: str) -> None:
         pass

@@ -1,5 +1,4 @@
 import boto3
-from pydantic import SecretStr
 
 from .secrets_provider import BaseSecretsProvider
 
@@ -68,7 +67,7 @@ class AWSSecretsProvider(BaseSecretsProvider):
             self.logger.error(f"Error storing secret: {e}")
             return
 
-    def get(self, key: str) -> SecretStr:
+    def get(self, key: str) -> str:
         """
         Retrieves a secret from AWS Secrets Manager by key.
         

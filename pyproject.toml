@@ -1,30 +1,34 @@
 [project]
 name = "secure-ai-toolset"
-version = "0.1.0"
+version = "0.0.7"
 description = ""
-authors = [
-    {name = "GilAddaCyberArk",email = "gil.adda@cyberark.com"}
-]
 readme = "README.md"
-requires-python = ">=3.9"
-dependencies = [
-    "pydantic (>=2.10.6,<3.0.0)",
-    "pylint (>=3.3.5,<4.0.0)"
-]
+requires-python = ">=3.9,<4.0"
+license = "Apache Software License (Apache-2.0)"
+homepage = "https://github.com/cyberark/secure-ai-toolset"
+repository = "https://github.com/cyberark/secure-ai-toolset"
+[[project.authors]]
+name = "CyberArk"
+email = "cyberark@cyberark.com"
+
+[build-system]
+requires = [ "poetry-core",]
+build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
-packages = [
-    { include = "secure_ai_toolset", from = "secure-ai-toolset" }
-]
+[[tool.poetry.packages]]
+include = "secure_ai_toolset"
 
-[tool.poetry.group.aws.dependencies]
-boto3 = "*"
+[tool.poetry.dependencies]
+poetry = ">=1.8.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "*"
 yapf = "^0.43.0"
 isort = "^6.0.1"
+autoflake = "^2.3.1"
+toml = "^0.10.2"
+twine = "^6.1.0"
 
-[build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
+[tool.poetry.group.aws.dependencies]
+boto3 = "*"
