@@ -11,7 +11,7 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
  
 [tool.poetry.dependencies]
-python = ">=3.11.0, <4.0"
+python = ">=3.10.0, <4.0"
 boto3 = "*"
  
 [tool.poetry.dev-dependencies]
@@ -20,3 +20,12 @@ yapf = "^0.43.0"
 isort = "^6.0.1"
 autoflake = "^2.3.1"
 toml = "^0.10.2"
+twine = "^6.1.0"
+dotenv = "^0.9.9"
+
+[tool.poetry.group.aws.dependencies]
+boto3 = "*"
+
+[tool.poetry.group.autogen.dependencies]
+autogen-core = ">=0.4.9.2,<0.5.0.0"
+autogen-ext = {extras = ["openai"], version = "^0.4.9.2"}

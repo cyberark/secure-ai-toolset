@@ -2,17 +2,18 @@ import pytest
 
 from secure_ai_toolset.secrets.aws_secrets_manager_provider import AWSSecretsProvider
 
-secret_providers = [AWSSecretsProvider()]
+
+@pytest.fixture()
+def provider(scope="module"):
+    return AWSSecretsProvider()
 
 
 @pytest.mark.aws
-@pytest.mark.parametrize("provider", secret_providers)
-def test_provider_ctor(provider: AWSSecretsProvider):
+def test_provider_ctor(provider):
     assert provider is not None
 
 
 @pytest.mark.aws
-@pytest.mark.parametrize("provider", secret_providers)
 def test_store_secret(provider):
     key = "test_key"
     value = "test_value"
@@ -29,7 +30,6 @@ def test_store_secret(provider):
 
 
 @pytest.mark.aws
-@pytest.mark.parametrize("provider", secret_providers)
 def test_get_secret(provider):
     provider.store("another_test_key", "another_test_value")
     fetched_value = provider.get("another_test_key")
@@ -37,7 +37,6 @@ def test_get_secret(provider):
 
 
 @pytest.mark.aws
-@pytest.mark.parametrize("provider", secret_providers)
 def test_store_secret_with_none_key(provider):
     provider.store(None, "test_value")
     fetched_value = provider.get("")
@@ -45,7 +44,6 @@ def test_store_secret_with_none_key(provider):
 
 
 @pytest.mark.aws
-@pytest.mark.parametrize("provider", secret_providers)
 def test_store_secret_with_empty_key(provider):
     provider.store("", "test_value")
     fetched_value = provider.get("")
@@ -53,7 +51,6 @@ def test_store_secret_with_empty_key(provider):
 
 
 @pytest.mark.aws
-@pytest.mark.parametrize("provider", secret_providers)
 def test_store_secret_with_none_value(provider):
     provider.store("test_key", None)
     fetched_value = provider.get("test_key")
@@ -61,7 +58,6 @@ def test_store_secret_with_none_value(provider):
 
 
 @pytest.mark.aws
-@pytest.mark.parametrize("provider", secret_providers)
 def test_store_secret_with_empty_value(provider):
     provider.store("test_key", "")
     fetched_value = provider.get("test_key")
@@ -69,14 +65,12 @@ def test_store_secret_with_empty_value(provider):
 
 
 @pytest.mark.aws
-@pytest.mark.parametrize("provider", secret_providers)
 def test_get_nonexistent_secret(provider):
     fetched_value = provider.get("nonexistent_key")
     assert fetched_value is None
 
 
 @pytest.mark.aws
-@pytest.mark.parametrize("provider", secret_providers)
 def test_store_and_update_secret(provider):
     provider.store("update_test_key", "initial_value")
     provider.store("update_test_key", "updated_value")

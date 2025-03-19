@@ -65,13 +65,13 @@ def test_list_env_vars_positive(env_manager):
 
     key = f"key_{uuid.uuid4()}"
     value = f"value_{uuid.uuid4()}"
-    env_manager.add_env_var(key=key, value=value)
+    env_manager._add_env_var(key=key, value=value)
 
-    fetched_value = env_manager.get_env_var(key)
+    fetched_value = env_manager._get_env_var(key)
     assert fetched_value == value
 
-    env_manager.remove_env_var(key)
-    fetched_value = env_manager.get_env_var(key)
+    env_manager._remove_env_var(key)
+    fetched_value = env_manager._get_env_var(key)
     assert fetched_value is None
 
 
@@ -95,14 +95,14 @@ def test_populate_and_depopulate_env_vars(env_manager):
     }
     # store new environment
     for key, value in keys_values.items():
-        env_manager.add_env_var(key=key, value=value)
+        env_manager._add_env_var(key=key, value=value)
 
     # Populate environment variables
     env_manager.populate_env_vars()
 
     # Check they exist
     for key, value in keys_values.items():
-        fetched_value = env_manager.get_env_var(key)
+        fetched_value = env_manager._get_env_var(key)
         os_env_value = os.environ.get(key)
         assert os_env_value == fetched_value
 
@@ -116,6 +116,6 @@ def test_populate_and_depopulate_env_vars(env_manager):
 
     # remove new environment variables from repository
     for key, value in keys_values.items():
-        env_manager.remove_env_var(key=key)
-        fetched_removed_value = env_manager.get_env_var(key=key)
+        env_manager._remove_env_var(key=key)
+        fetched_removed_value = env_manager._get_env_var(key=key)
         assert not fetched_removed_value

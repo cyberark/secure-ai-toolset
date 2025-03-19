@@ -3,6 +3,12 @@ import abc
 import logging
 
 
+class SecretProviderException(Exception):
+
+    def __init__(self, message: str):
+        super().__init__(message)
+
+
 class BaseSecretsProvider(abc.ABC):
 
     def __init__(self, *args, **kwargs):

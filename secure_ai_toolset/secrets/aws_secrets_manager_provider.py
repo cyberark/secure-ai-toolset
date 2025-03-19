@@ -1,6 +1,8 @@
+from typing import Optional
+
 import boto3
 
-from .secrets_provider import BaseSecretsProvider
+from .secrets_provider import BaseSecretsProvider, SecretProviderException
 
 DEFAULT_REGION = "us-east-1"
 SERVICE_NAME = "secretsmanager"
@@ -39,7 +41,10 @@ class AWSSecretsProvider(BaseSecretsProvider):
         except Exception as e:
             self.logger.error(
                 f"Error initializing AWS Secrets Manager client: {e}")
-            raise
+            raise SecretProviderException(
+                message=
+                f'Error connecting to the secret provider: AWSSecretsProvider with this exception: {e.args[0]}'
+            )
 
     def store(self, key: str, secret: str) -> None:
         """
@@ -67,7 +72,7 @@ class AWSSecretsProvider(BaseSecretsProvider):
             self.logger.error(f"Error storing secret: {e}")
             return
 
-    def get(self, key: str) -> str:
+    def get(self, key: str) -> Optional[str]:
         """
         Retrieves a secret from AWS Secrets Manager by key.
         
