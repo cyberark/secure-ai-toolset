@@ -22,7 +22,6 @@ Example 2 uses a 'with' statement to populate and depopulate environment variabl
     prompt = f"What is the stock price of NVDA on 2024/06/01? "
     tool_use_agent_id = AgentId(type="tool_use_agent", key="2")
     response = await runtime.send_message(Message(prompt), tool_use_agent_id)
-````
 
 Environment variables are stored in the secret provider, loaded into memory, and wiped after usage.
 
