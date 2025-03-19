@@ -43,7 +43,7 @@ class AWSSecretsProvider(BaseSecretsProvider):
                 f"Error initializing AWS Secrets Manager client: {e}")
             raise SecretProviderException(
                 message=
-                f'Error Connecting to the secret provider: AWSSecretsProvider with this exception: {e.args[0]}'
+                f'Error connecting to the secret provider: AWSSecretsProvider with this exception: {e.args[0]}'
             )
 
     def store(self, key: str, secret: str) -> None:
