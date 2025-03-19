@@ -17,23 +17,41 @@ variables around function execution.
 
 
 class EnvironmentVariablesManager:
+    """
+    Manages environment variables using a secrets provider. 
+    It enables setting, retrieving, and removing environment variables, 
+    as well as populating and depopulating them from the OS environment.
+    """
 
     def __init__(self,
                  secret_provider: BaseSecretsProvider,
                  namespace: str = DEFAULT_ENV_VARS_NAMESPACE,
                  env_var_secret_id: str = ENV_VARS_DEFAULT_SECRET_ID):
         """
-        Initialize the EnvironmentVariablesManager with a secret provider, namespace, and secret ID.
-        
+        Initialize the EnvironmentVariablesManager.
+
         :param secret_provider: The secret provider to use for storing and retrieving secrets.
-        :param namespace: The context in which the secret containing the environment variables will be stored.
-        :param env_var_secret_name: The name of the secret, in the given namespace, in which the environment variables will be stored.
+        :param namespace: The namespace for storing the environment variables secret.
+        :param env_var_secret_id: The ID of the secret within the given namespace for the environment variables.
         """
         self.secret_provider = secret_provider
         self._namespace = namespace
         self._secret_dictionary_key = f"{namespace}/{env_var_secret_id}"
         self._secret_dict = {}
         self._logger = logging.getLogger(__name__)
+
+    def __enter__(self):
+        """
+        Context manager entry method: populates environment variables into the system.
+        """
+        self.populate_env_vars()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """
+        Context manager exit method: removes environment variables from the system.
+        """
+        self.depopulate_env_vars()
 
     def list_env_vars(self) -> Dict[str, str]:
         """
