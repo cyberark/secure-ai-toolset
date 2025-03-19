@@ -94,6 +94,7 @@ class ToolUseAgent(RoutedAgent):
         return Message(content=messages[-1].content)
 
 
+@EnvironmentVariablesManager.set_env_vars(AWSSecretsProvider())
 async def main() -> None:
     """
     The main function to run the agent.
@@ -128,9 +129,9 @@ async def main() -> None:
         # load_dotenv()
 
         # safe load the secrets from a secret provider
-        env_var_mgr = EnvironmentVariablesManager(
-            secret_provider=AWSSecretsProvider(region_name="us-east-1"))
-        env_var_mgr.populate_env_vars()
+        # env_var_mgr = EnvironmentVariablesManager(
+        #     secret_provider=AWSSecretsProvider(region_name="us-east-1"))
+        # env_var_mgr.populate_env_vars()
 
         # Start processing messages.
         runtime.start()
@@ -143,7 +144,7 @@ async def main() -> None:
         print(response.content)
 
         # wipe out the secrets after usage
-        env_var_mgr.depopulate_env_vars()
+        # env_var_mgr.depopulate_env_vars()
 
     except Exception as e:
         print(f'An error occurred: {e}')

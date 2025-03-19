@@ -7,6 +7,13 @@ from secure_ai_toolset.secrets.secrets_provider import BaseSecretsProvider
 
 DEFAULT_ENV_VARS_NAMESPACE = "default"
 ENV_VARS_DEFAULT_SECRET_ID = "agentic_env_vars"
+"""
+The EnvironmentVariablesManager class provides functionality for storing,
+retrieving, and deleting environment variables in a secrets provider. It also
+has methods for populating and depopulating OS environment variables based on
+the stored secrets. Use set_env_vars decorator to seamlessly manage environment
+variables around function execution.
+"""
 
 
 class EnvironmentVariablesManager:
@@ -46,16 +53,16 @@ class EnvironmentVariablesManager:
             return {}
         return self._secret_dict
 
-    def add_env_var(self, key: str, value: str):
+    def _add_env_var(self, key: str, value: str):
         """
         Add a new environment variable to the secret provider.
         
         :param key: The key of the environment variable.
         :param value: The value of the environment variable.
         """
-        self.set_env_var(key, value)
+        self._set_env_var(key, value)
 
-    def get_env_var(self, key: str) -> str:
+    def _get_env_var(self, key: str) -> str:
         """
         Retrieve an environment variable from the secret provider.
         
@@ -64,7 +71,7 @@ class EnvironmentVariablesManager:
         """
         return self.list_env_vars().get(key)
 
-    def set_env_var(self, key: str, value: str):
+    def _set_env_var(self, key: str, value: str):
         """
         Set an environment variable in the secret provider.
         
@@ -82,7 +89,7 @@ class EnvironmentVariablesManager:
         except Exception as e:
             self._logger.error(e)
 
-    def remove_env_var(self, key: str):
+    def _remove_env_var(self, key: str):
         """
         Remove an environment variable from the secret provider.
         
@@ -105,6 +112,7 @@ class EnvironmentVariablesManager:
         env_vars = self.list_env_vars()
         for key, value in env_vars.items():
             os.environ[key] = value
+            self._logger.info(f'populating env var with key:{key}')
 
     def depopulate_env_vars(self):
         """
@@ -114,3 +122,31 @@ class EnvironmentVariablesManager:
         for key in env_vars.keys():
             if key in os.environ:
                 del os.environ[key]
+                self._logger.info(
+                    f'removing from memory env var with key:{key}')
+
+    @staticmethod
+    def set_env_vars(secret_provider: BaseSecretsProvider):
+        """
+        Decorator that populates environment variables from the given secret
+        provider before the wrapped function is called, and depopulates them
+        afterwards. This ensures that any environment variables needed for the
+        function are ready before execution and cleaned up afterward."
+        """
+
+        def async_decorator(func):
+
+            async def wrapper(*args, **kwargs):
+
+                env_var_mgr = EnvironmentVariablesManager(
+                    secret_provider=secret_provider)
+                env_var_mgr.populate_env_vars()
+
+                result = await func(*args, **kwargs)
+
+                env_var_mgr.depopulate_env_vars()
+                return result
+
+            return wrapper
+
+        return async_decorator
