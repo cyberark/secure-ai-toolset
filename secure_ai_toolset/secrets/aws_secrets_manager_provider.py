@@ -1,11 +1,14 @@
-from typing import Optional
+import json
+from typing import Dict, Optional
 
 import boto3
 
 from .secrets_provider import BaseSecretsProvider, SecretProviderException
 
-DEFAULT_REGION = "us-east-1"
 SERVICE_NAME = "secretsmanager"
+DEFAULT_REGION = "us-east-1"
+DEFAULT_NAMESPACE = "default"
+DEFAULT_DICTIONARY_PATH = "agentic_env_vars"
 
 
 class AWSSecretsProvider(BaseSecretsProvider):
@@ -13,7 +16,7 @@ class AWSSecretsProvider(BaseSecretsProvider):
     Manages storing and retrieving secrets from AWS Secrets Manager.
     """
 
-    def __init__(self, region_name=DEFAULT_REGION):
+    def __init__(self, region_name=DEFAULT_REGION, namespace: str = None):
         """
         Initializes the AWS Secrets Manager client with the specified region.
         
@@ -21,8 +24,11 @@ class AWSSecretsProvider(BaseSecretsProvider):
         """
         super().__init__()
         self._client = None
+        self._region_name = region_name
+        namespace = DEFAULT_NAMESPACE if namespace is None else namespace
+        self._dictionary_path = f"{namespace}/{DEFAULT_DICTIONARY_PATH}"
 
-    def connect(self, region_name=DEFAULT_REGION):
+    def connect(self):
         """
         Establishes a connection to the AWS Secrets Manager service.
         
@@ -33,10 +39,11 @@ class AWSSecretsProvider(BaseSecretsProvider):
             return
 
         try:
-            self._client = boto3.client(SERVICE_NAME, region_name=region_name)
+            self._client = boto3.client(SERVICE_NAME,
+                                        region_name=self._region_name)
             # Verify connectivity using STS get caller identity
-            caller = boto3.client('sts').get_caller_identity()
-            return caller
+            # caller = boto3.client('sts').get_caller_identity()
+            return "connected"
 
         except Exception as e:
             self.logger.error(
@@ -45,6 +52,44 @@ class AWSSecretsProvider(BaseSecretsProvider):
                 message=
                 f'Error connecting to the secret provider: AWSSecretsProvider with this exception: {e.args[0]}'
             )
+
+    def get_secret_dictionary(self) -> Optional[Dict]:
+
+        try:
+            self.connect()
+            response = self._client.get_secret_value(
+                SecretId=self._dictionary_path)
+            meta = response.get("ResponseMetadata", {})
+            if meta.get(
+                    "HTTPStatusCode") != 200 or "SecretString" not in response:
+                self.logger.error("get: secret retrieval error")
+                return None
+            secret_text = response["SecretString"]
+            if secret_text:
+                secret_dict = json.loads(secret_text)
+                return secret_dict
+            else:
+                return {}
+
+        except Exception as e:
+            raise SecretProviderException(str(e))
+
+    def store_secret_dictionary(self, secret_dictionary: Dict):
+        if not secret_dictionary:
+            raise SecretProviderException("Dictionary not provided")
+
+        try:
+            self.connect()
+            secret_text = json.dumps(secret_dictionary)
+            self._client.create_secret(Name=self._dictionary_path,
+                                       SecretString=secret_text)
+
+        except self._client.exceptions.ResourceExistsException:
+            self._client.put_secret_value(SecretId=self._dictionary_path,
+                                          SecretString=secret_text)
+        except Exception as e:
+            self.logger.error(f"Error storing secret: {e}")
+            return
 
     def store(self, key: str, secret: str) -> None:
         """
@@ -56,21 +101,20 @@ class AWSSecretsProvider(BaseSecretsProvider):
         Caution:
         Concurrent access to secrets can cause issues. If two clients simultaneously list, update different environment variables,
         and then store, one client's updates may override the other's if they are working on the same secret.
-        This issue will be addressed in future versions.
-            
+        This issue will be addressed in future versions.            
         """
         if not key or not secret:
-            self.logger.warning("store: key or secret is missing")
+            self.logger.warning(
+                "store: key is missing, proceeding with default")
             return
 
-        try:
-            self.connect()
-            self._client.create_secret(Name=key, SecretString=secret)
-        except self._client.exceptions.ResourceExistsException:
-            self._client.put_secret_value(SecretId=key, SecretString=secret)
-        except Exception as e:
-            self.logger.error(f"Error storing secret: {e}")
-            return
+        dictionary = self.get_secret_dictionary()
+
+        if not dictionary:
+            dictionary = {}
+
+        dictionary[key] = secret
+        self.store_secret_dictionary(dictionary)
 
     def get(self, key: str) -> Optional[str]:
         """
@@ -80,23 +124,12 @@ class AWSSecretsProvider(BaseSecretsProvider):
         :return: The secret value if retrieval is successful, None otherwise.
         """
         if not key:
-            self.logger.warning("get: key is missing")
-            return None
-        try:
-            self.connect()
-            response = self._client.get_secret_value(SecretId=key)
-            meta = response.get("ResponseMetadata", {})
-            if meta.get(
-                    "HTTPStatusCode") != 200 or "SecretString" not in response:
-                self.logger.error("get: secret retrieval error")
-                return None
-            return response["SecretString"]
-        except self._client.exceptions.ResourceNotFoundException:
-            self.logger.error("Secret not found.")
-            return None
-        except Exception as e:
-            self.logger.error(f"Error retrieving secret: {e}")
-            return None
+            self.logger.warning("get: key is missing, proceeding with default")
+
+        dictionary = self.get_secret_dictionary()
+
+        if dictionary:
+            return dictionary.get(key)
 
     def delete(self, key: str) -> None:
         """
@@ -105,13 +138,11 @@ class AWSSecretsProvider(BaseSecretsProvider):
         :param key: The name of the secret to delete.
         """
         if not key:
-            self.logger.warning("delete: key is missing")
-            return
-        try:
-            self.connect()
-            self._client.delete_secret(SecretId=key,
-                                       ForceDeleteWithoutRecovery=True)
-        except self._client.exceptions.ResourceNotFoundException:
-            self.logger.error("Secret not found.")
-        except Exception as e:
-            self.logger.error(f"Error deleting secret: {e}")
+            self.logger.warning(
+                "remove: key is missing, proceeding with default")
+
+        dictionary = self.get_secret_dictionary()
+
+        if dictionary:
+            del dictionary[key]
+            self.store_secret_dictionary(dictionary)

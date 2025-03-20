@@ -5,31 +5,23 @@ import pytest
 
 from secure_ai_toolset.secrets.aws_secrets_manager_provider import AWSSecretsProvider
 from secure_ai_toolset.secrets.environment_manager import EnvironmentVariablesManager
+from secure_ai_toolset.secrets.file_secrets_provider import FileSecretsProvider
 
 
-@pytest.fixture(params=[AWSSecretsProvider])
+@pytest.fixture(params=[
+    (AWSSecretsProvider(region_name="us-east-1"), ""),
+    (AWSSecretsProvider(region_name="us-east-1"), "ns_test1"),
+    (FileSecretsProvider(), ""),
+    (FileSecretsProvider(), "ns_test1"),
+])
 def env_manager(request):
     """
     Fixture to create an instance of EnvironmentVariablesManager with AWSParameterStoreProvider or AWSSecretsProvider.
     This fixture is used to provide a clean instance for each test case.
     """
-    secret_provider = request.param(region_name="us-east-1")
-    return EnvironmentVariablesManager(secret_provider=secret_provider)
-
-
-def test_aws_secrets_manager_connect(env_manager):
-    """
-    Test case to verify the functionality of the AWS Secrets Manager provider.
-    
-    Steps:
-    1. Verify that the env_manager instance is created.
-    2. Fetch the value of a secret from the AWS Secrets Manager.
-    3. Verify that the fetched value is not None.
-    """
-    assert env_manager
-    assert env_manager.secret_provider
-    result = env_manager.secret_provider.connect()
-    assert result
+    (secret_provider, namespace) = request.param
+    return EnvironmentVariablesManager(secret_provider=secret_provider,
+                                       namespace=namespace)
 
 
 def test_aws_secrets_manager_connect(env_manager):

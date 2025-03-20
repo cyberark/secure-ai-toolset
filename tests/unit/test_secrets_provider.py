@@ -32,7 +32,7 @@ def test_get(provider):
     provider.get.assert_called_once_with("key")
 
 
-def test_delete(provider):
+def test_delete_secret(provider):
     provider.delete.return_value = None
     result = provider.delete("key")
     assert result is None
