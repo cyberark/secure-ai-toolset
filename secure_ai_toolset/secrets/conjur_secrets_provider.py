@@ -1,6 +1,8 @@
+import base64
 import json
 import os
 import urllib.parse
+from datetime import datetime, timedelta
 from typing import Tuple, Optional
 
 import boto3
@@ -9,6 +11,12 @@ from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
 
 from secure_ai_toolset.secrets.secrets_provider import BaseSecretsProvider
+
+
+# Tokens should only be reused for 5 minutes (max lifetime is 8 minutes)
+DEFAULT_TOKEN_EXPIRATION = 8
+API_TOKEN_SAFETY_BUFFER = 3
+DEFAULT_API_TOKEN_DURATION = DEFAULT_TOKEN_EXPIRATION - API_TOKEN_SAFETY_BUFFER
 
 
 class ConjurSecretsProvider(BaseSecretsProvider):
@@ -22,6 +30,7 @@ class ConjurSecretsProvider(BaseSecretsProvider):
         self._account = os.getenv("CONJUR_ACCOUNT", "conjur")
         self._region = os.getenv("CONJUR_AUTHN_IAM_REGION", "us-east-1")
         self._access_token = None
+        self._access_token_expiration = datetime.now()
 
     def _authenticate_aws(self):
         """
@@ -95,17 +104,36 @@ class ConjurSecretsProvider(BaseSecretsProvider):
         branch, secret_name = secret_id.rsplit("/", 1)
         return branch, secret_name
 
+    def _update_token_expiration(self):
+        # Attempt to get the expiration from the token. If failing then the default expiration will be used
+        try:
+            # The token is in JSON format. Each field in the token is base64 encoded.
+            # So we decode the payload filed and then extract the expiration date from it
+            decoded_token_payload = base64.b64decode(json.loads(self._access_token)['payload'].encode('ascii'))
+            token_expiration = json.loads(decoded_token_payload)['exp']
+            self._access_token_expiration = datetime.fromtimestamp(token_expiration) - timedelta(minutes=API_TOKEN_SAFETY_BUFFER)
+        except:
+            # If we can't extract the expiration from the token because we work with an older version
+            # of Conjur, then we use the default expiration
+            self._access_token_expiration = datetime.now() + timedelta(minutes=DEFAULT_API_TOKEN_DURATION)
+
+    def _refresh_access_token_if_needed(self):
+        if not self._access_token or datetime.now() > self._access_token_expiration:
+            self.connect()
+
     def connect(self):
         if not self._authenticator_id:
             self._authenticate_api_key()
         elif self._authenticator_id.startswith("authn-iam"):
             self._authenticate_aws()
 
+
     def store(self, key: str, secret: str) -> None:
         branch, secret_name = self._get_branch_and_name_from_id(key)
         if not branch or not secret_name:
             return None
 
+        self._refresh_access_token_if_needed()
         url = f"{self._url}/policies/{self._account}/policy/{urllib.parse.quote(branch)}"
         policy_body = f"""
         - !variable
@@ -135,8 +163,7 @@ class ConjurSecretsProvider(BaseSecretsProvider):
             self.logger.error(f"Error storing secret: {e}")
 
     def get(self, key: str) -> Optional[str]:
-        if not self._access_token:
-            self.connect()
+        self._refresh_access_token_if_needed()
         url = f"{self._url}/secrets/{self._account}/variable/{urllib.parse.quote(key)}"
 
         try:
@@ -154,6 +181,7 @@ class ConjurSecretsProvider(BaseSecretsProvider):
         if not branch or not secret_name:
             return None
 
+        self._refresh_access_token_if_needed()
         url = f"{self._url}/policies/{self._account}/policy/{urllib.parse.quote(branch)}"
         policy_body = f"""
         - !delete
