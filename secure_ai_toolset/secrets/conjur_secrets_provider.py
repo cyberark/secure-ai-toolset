@@ -19,6 +19,6 @@ class ConjurSecretsProvider(BaseSecretsProvider):
         # ...retrieve secret logic...
         pass
 
-    def delete_secret(self, key: str) -> str:
+    def delete(self, key: str) -> str:
         # ...delete secret logic...
         pass

@@ -90,7 +90,7 @@ class EnvironmentVariablesManager:
             if not self._secret_dict:
                 self._secret_dict = {}
 
-            self._secret_dict[key] = value
+            self._secret_dict[key.strip()] = value.strip()
 
             self.secret_provider.store_secret_dictionary(
                 secret_dictionary=self._secret_dict)

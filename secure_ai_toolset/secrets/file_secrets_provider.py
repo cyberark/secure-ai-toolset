@@ -41,8 +41,8 @@ class FileSecretsProvider(BaseSecretsProvider):
 
                         line_parts = line.strip().split('=', 1)
                         if len(line_parts) == 2:
-                            key = line_parts[0]
-                            value = line_parts[1]
+                            key = line_parts[0].strip()
+                            value = line_parts[1].strip()
                             secret_dictionary[key] = value
         except Exception as e:
             raise SecretProviderException(str(e))

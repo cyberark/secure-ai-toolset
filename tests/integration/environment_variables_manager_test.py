@@ -67,6 +67,24 @@ def test_list_env_vars_positive(env_manager):
     assert fetched_value is None
 
 
+def test_list_env_vars_with_spaces(env_manager):
+    assert env_manager
+    env_vars_list = env_manager.list_env_vars()
+    assert env_vars_list is not None
+
+    key = f"key_{uuid.uuid4()}"
+    value = f"value_{uuid.uuid4()}"
+    dirty_key = f"  {key}   "
+    dirty_value = f"  {value}  "
+
+    # storing key and values wrapped with spaces
+    env_manager._add_env_var(key=dirty_key, value=dirty_value)
+
+    # check that the key and value where sanitized
+    fetched_value = env_manager._get_env_var(key)
+    assert fetched_value == value
+
+
 def test_populate_and_depopulate_env_vars(env_manager):
     """
     Test case to verify the functionality of populating and depopulating environment variables.
