@@ -1,7 +1,7 @@
 import pytest
 
 from secure_ai_toolset.secrets.file_secrets_provider import FileSecretsProvider
-from secure_ai_toolset.secrets.secrets_provider import BaseSecretsProvider
+from secure_ai_toolset.secrets.secrets_provider import BaseSecretsProvider, SecretProviderException
 
 
 @pytest.fixture(scope="module")
@@ -11,8 +11,7 @@ def secret_provider() -> BaseSecretsProvider:
 
 def test_connect(secret_provider):
     assert secret_provider
-    connection = secret_provider.connect()
-    assert connection
+    assert secret_provider.connect() is True
 
 
 def test_get_nonexistent_secret(secret_provider):
@@ -37,3 +36,10 @@ def test_create_get_nonexistent_secret(secret_provider):
     assert fetched_secret == None
 
     ## environment variables manager tests
+
+
+@pytest.mark.parametrize("key", ["", None])
+def test_delete_secret_none_empty(secret_provider, key):
+    with pytest.raises(SecretProviderException) as e:
+        result = secret_provider.delete(key)
+        assert result is None

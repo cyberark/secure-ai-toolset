@@ -8,7 +8,7 @@ from .secrets_provider import BaseSecretsProvider, SecretProviderException
 SERVICE_NAME = "secretsmanager"
 DEFAULT_REGION = "us-east-1"
 DEFAULT_NAMESPACE = "default"
-DEFAULT_DICTIONARY_PATH = "agentic_env_vars"
+DEFAULT_SECRET_ID = "agentic_env_vars"
 
 
 class AWSSecretsProvider(BaseSecretsProvider):
@@ -16,7 +16,9 @@ class AWSSecretsProvider(BaseSecretsProvider):
     Manages storing and retrieving secrets from AWS Secrets Manager.
     """
 
-    def __init__(self, region_name=DEFAULT_REGION, namespace: str = None):
+    def __init__(self,
+                 region_name=DEFAULT_REGION,
+                 namespace: Optional[str] = None):
         """
         Initializes the AWS Secrets Manager client with the specified region.
         
@@ -26,9 +28,9 @@ class AWSSecretsProvider(BaseSecretsProvider):
         self._client = None
         self._region_name = region_name
         namespace = DEFAULT_NAMESPACE if namespace is None else namespace
-        self._dictionary_path = f"{namespace}/{DEFAULT_DICTIONARY_PATH}"
+        self._dictionary_path = f"{namespace}/{DEFAULT_SECRET_ID}"
 
-    def connect(self):
+    def connect(self) -> bool:
         """
         Establishes a connection to the AWS Secrets Manager service.
         
@@ -43,7 +45,7 @@ class AWSSecretsProvider(BaseSecretsProvider):
                                         region_name=self._region_name)
             # Verify connectivity using STS get caller identity
             # caller = boto3.client('sts').get_caller_identity()
-            return "connected"
+            return True
 
         except Exception as e:
             self.logger.error(
@@ -88,8 +90,9 @@ class AWSSecretsProvider(BaseSecretsProvider):
             self._client.put_secret_value(SecretId=self._dictionary_path,
                                           SecretString=secret_text)
         except Exception as e:
-            self.logger.error(f"Error storing secret: {e}")
-            return
+            message = f"Error storing secret: {e}"
+            self.logger.error(message)
+            raise SecretProviderException(message)
 
     def store(self, key: str, secret: str) -> None:
         """
@@ -138,8 +141,9 @@ class AWSSecretsProvider(BaseSecretsProvider):
         :param key: The name of the secret to delete.
         """
         if not key:
-            self.logger.warning(
-                "remove: key is missing, proceeding with default")
+            message = "delete secret failed, key is none or empty"
+            self.logger.warning(message)
+            raise SecretProviderException(message)
 
         dictionary = self.get_secret_dictionary()
 

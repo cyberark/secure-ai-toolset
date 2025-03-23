@@ -16,7 +16,7 @@ class BaseSecretsProvider(abc.ABC):
         self.logger = logging.getLogger(__name__)
 
     @abc.abstractmethod
-    def connect(self) -> str:
+    def connect(self) -> bool:
         pass
 
     @abc.abstractmethod

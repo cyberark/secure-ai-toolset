@@ -4,10 +4,11 @@ from unittest.mock import MagicMock
 import pytest
 
 from secure_ai_toolset.secrets.aws_secrets_manager_provider import AWSSecretsProvider
-from secure_ai_toolset.secrets.secrets_provider import BaseSecretsProvider
+from secure_ai_toolset.secrets.file_secrets_provider import FileSecretsProvider
+from secure_ai_toolset.secrets.secrets_provider import SecretProviderException
 
 
-@pytest.fixture(params=[BaseSecretsProvider, AWSSecretsProvider])
+@pytest.fixture(params=[AWSSecretsProvider, FileSecretsProvider])
 def provider(request):
     return MagicMock(spec=request.param)
 
@@ -65,7 +66,17 @@ def test_get_failure(provider):
 
 def test_delete_failure(provider):
     provider.delete.side_effect = Exception("Delete failed")
-    with pytest.raises(Exception) as excinfo:
+    with pytest.raises(Exception) as e:
         provider.delete("key")
-    assert str(excinfo.value) == "Delete failed"
+    assert str(e.value) == "Delete failed"
     provider.delete.assert_called_once_with("key")
+
+
+@pytest.mark.parametrize("key", ["", None])
+def test_delete_secret_none_empty(provider, key):
+    provider.delete.return_value = None
+    provider.delete.side_effect = SecretProviderException("delete failed")
+    with pytest.raises(SecretProviderException) as e:
+        result = provider.delete(key)
+        assert result is None
+        provider.delete.assert_called_once_with(key)

@@ -14,6 +14,11 @@ def test_provider_ctor(provider):
 
 
 @pytest.mark.aws
+def test_provider_connect(provider):
+    assert provider.connect() is True
+
+
+@pytest.mark.aws
 def test_store_secret(provider):
     key = "test_key"
     value = "test_value"

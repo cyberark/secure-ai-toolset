@@ -61,13 +61,13 @@ class FileSecretsProvider(BaseSecretsProvider):
         except Exception as e:
             raise SecretProviderException(str(e))
 
-    def connect(self):
+    def connect(self) -> bool:
         """
         Simulate a connection to the secrets storage.
 
         :return: A string indicating the connection status.
         """
-        return "connected"
+        return True
 
     def store(self, key: str, secret: str) -> None:
         """
@@ -99,6 +99,11 @@ class FileSecretsProvider(BaseSecretsProvider):
 
         :param key: The key for the secret.
         """
+        if not key:
+            self.logger.warning("remove: key is none or empty")
+            raise SecretProviderException(
+                "delete secret failed, key is none or empty")
+
         dictionary: Dict = self.get_secret_dictionary()
         if dictionary and key in dictionary:
             del dictionary[key]
