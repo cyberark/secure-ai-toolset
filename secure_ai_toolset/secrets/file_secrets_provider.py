@@ -50,6 +50,12 @@ class FileSecretsProvider(BaseSecretsProvider):
         return secret_dictionary
 
     def store_secret_dictionary(self, secret_dictionary: Dict):
+        """
+        Store the secret dictionary to the file.
+
+        :param secret_dictionary: A dictionary containing the secrets to store.
+        :raises SecretProviderException: If there is an error writing the secrets to the file.
+        """
         dictionary_text = ""
         for key, value in secret_dictionary.items():
             if key:
@@ -65,13 +71,13 @@ class FileSecretsProvider(BaseSecretsProvider):
         """
         Simulate a connection to the secrets storage.
 
-        :return: A string indicating the connection status.
+        :return: True indicating the connection status.
         """
         return True
 
     def store(self, key: str, secret: str) -> None:
         """
-        Store a secret in a file.
+        Store a secret in the file.
 
         :param key: The key for the secret.
         :param secret: The secret to store.
@@ -83,21 +89,20 @@ class FileSecretsProvider(BaseSecretsProvider):
 
     def get(self, key: str) -> Optional[str]:
         """
-        Retrieve a secret from a file.
+        Retrieve a secret from the file.
 
         :param key: The key for the secret.
         :return: The secret if it exists, otherwise None.
         """
-
         dictionary: Dict = self.get_secret_dictionary()
-
         return dictionary.get(key)
 
     def delete(self, key: str) -> None:
         """
-        Delete a secret file.
+        Delete a secret from the file.
 
         :param key: The key for the secret.
+        :raises SecretProviderException: If the key is none or empty.
         """
         if not key:
             self.logger.warning("remove: key is none or empty")

@@ -23,6 +23,7 @@ class AWSSecretsProvider(BaseSecretsProvider):
         Initializes the AWS Secrets Manager client with the specified region.
         
         :param region_name: AWS region name where the secrets manager is located. Defaults to 'us-east-1'.
+        :param namespace: Optional namespace for the secrets. Defaults to 'default'.
         """
         super().__init__()
         self._client = None
@@ -34,11 +35,10 @@ class AWSSecretsProvider(BaseSecretsProvider):
         """
         Establishes a connection to the AWS Secrets Manager service.
         
-        :param region_name: AWS region name where the secrets manager is located. Defaults to 'us-east-1'.
-        :return: Caller identity information if connection is successful.
+        :return: True if connection is successful, raises SecretProviderException otherwise.
         """
         if self._client:
-            return
+            return True
 
         try:
             self._client = boto3.client(SERVICE_NAME,
@@ -55,8 +55,13 @@ class AWSSecretsProvider(BaseSecretsProvider):
                 f'Error connecting to the secret provider: AWSSecretsProvider with this exception: {e.args[0]}'
             )
 
-    def get_secret_dictionary(self) -> Optional[Dict]:
-
+    def get_secret_dictionary(self) -> Dict:
+        """
+        Retrieves the secret dictionary from AWS Secrets Manager.
+        
+        :return: A dictionary containing the secrets.
+        :raises SecretProviderException: If there is an error retrieving the secrets.
+        """
         try:
             self.connect()
             response = self._client.get_secret_value(
@@ -64,8 +69,9 @@ class AWSSecretsProvider(BaseSecretsProvider):
             meta = response.get("ResponseMetadata", {})
             if meta.get(
                     "HTTPStatusCode") != 200 or "SecretString" not in response:
-                self.logger.error("get: secret retrieval error")
-                return None
+                message = "get: secret retrieval error"
+                self.logger.error(message)
+                raise SecretProviderException(message)
             secret_text = response["SecretString"]
             if secret_text:
                 secret_dict = json.loads(secret_text)
@@ -77,6 +83,12 @@ class AWSSecretsProvider(BaseSecretsProvider):
             raise SecretProviderException(str(e))
 
     def store_secret_dictionary(self, secret_dictionary: Dict):
+        """
+        Stores the secret dictionary in AWS Secrets Manager.
+        
+        :param secret_dictionary: The dictionary containing secrets to store.
+        :raises SecretProviderException: If there is an error storing the secrets.
+        """
         if not secret_dictionary:
             raise SecretProviderException("Dictionary not provided")
 
@@ -100,6 +112,7 @@ class AWSSecretsProvider(BaseSecretsProvider):
         
         :param key: The name of the secret.
         :param secret: The secret value to store.
+        :raises SecretProviderException: If key or secret is missing, or if there is an error storing the secret.
     
         Caution:
         Concurrent access to secrets can cause issues. If two clients simultaneously list, update different environment variables,
@@ -107,9 +120,9 @@ class AWSSecretsProvider(BaseSecretsProvider):
         This issue will be addressed in future versions.            
         """
         if not key or not secret:
-            self.logger.warning(
-                "store: key is missing, proceeding with default")
-            return
+            message = "store: key or secret is missing"
+            self.logger.warning(message)
+            raise SecretProviderException(message)
 
         dictionary = self.get_secret_dictionary()
 
@@ -125,6 +138,7 @@ class AWSSecretsProvider(BaseSecretsProvider):
         
         :param key: The name of the secret to retrieve.
         :return: The secret value if retrieval is successful, None otherwise.
+        :raises SecretProviderException: If there is an error retrieving the secret.
         """
         if not key:
             self.logger.warning("get: key is missing, proceeding with default")
@@ -139,6 +153,7 @@ class AWSSecretsProvider(BaseSecretsProvider):
         Deletes a secret from AWS Secrets Manager by key.
         
         :param key: The name of the secret to delete.
+        :raises SecretProviderException: If key is missing or if there is an error deleting the secret.
         """
         if not key:
             message = "delete secret failed, key is none or empty"
