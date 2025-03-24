@@ -1,12 +1,9 @@
-import json
 import logging
 import os
 from typing import Dict
 
 from secure_ai_toolset.secrets.secrets_provider import BaseSecretsProvider
 
-DEFAULT_ENV_VARS_NAMESPACE = "default"
-ENV_VARS_DEFAULT_SECRET_ID = "agentic_env_vars"
 """
 The EnvironmentVariablesManager class provides functionality for storing,
 retrieving, and deleting environment variables in a secrets provider. It also
@@ -23,20 +20,14 @@ class EnvironmentVariablesManager:
     as well as populating and depopulating them from the OS environment.
     """
 
-    def __init__(self,
-                 secret_provider: BaseSecretsProvider,
-                 namespace: str = DEFAULT_ENV_VARS_NAMESPACE,
-                 env_var_secret_id: str = ENV_VARS_DEFAULT_SECRET_ID):
+    def __init__(self, secret_provider: BaseSecretsProvider):
         """
         Initialize the EnvironmentVariablesManager.
 
         :param secret_provider: The secret provider to use for storing and retrieving secrets.
-        :param namespace: The namespace for storing the environment variables secret.
-        :param env_var_secret_id: The ID of the secret within the given namespace for the environment variables.
+        :param env_var_secret_id: The ID of the secret within for the environment variables.
         """
         self.secret_provider = secret_provider
-        self._namespace = namespace
-        self._secret_dictionary_key = f"{namespace}/{env_var_secret_id}"
         self._secret_dict = {}
         self._logger = logging.getLogger(__name__)
 
@@ -60,12 +51,7 @@ class EnvironmentVariablesManager:
         :return: A dictionary of environment variables.
         """
         try:
-            secret_dict_text = self.secret_provider.get(
-                key=self._secret_dictionary_key)
-            if not secret_dict_text:
-                self._secret_dict = {}
-            else:
-                self._secret_dict = json.loads(secret_dict_text)
+            self._secret_dict = self.secret_provider.get_secret_dictionary()
         except Exception as e:
             self._logger.warning(e)
             return {}
@@ -97,13 +83,16 @@ class EnvironmentVariablesManager:
         :param value: The value of the environment variable.
         """
         try:
-            self._secret_dict = self.list_env_vars()
+            self._secret_dict = self.secret_provider.get_secret_dictionary()
+
             if not self._secret_dict:
                 self._secret_dict = {}
-            self._secret_dict[key] = value
-            secrets_text = json.dumps(self._secret_dict)
-            self.secret_provider.store(key=self._secret_dictionary_key,
-                                       secret=secrets_text)
+
+            self._secret_dict[key.strip()] = value.strip()
+
+            self.secret_provider.store_secret_dictionary(
+                secret_dictionary=self._secret_dict)
+
         except Exception as e:
             self._logger.error(e)
 
@@ -114,12 +103,12 @@ class EnvironmentVariablesManager:
         :param key: The key of the environment variable to remove.
         """
         try:
-            self._secret_dict = self.list_env_vars()
+            self._secret_dict = self.secret_provider.get_secret_dictionary()
             if key in self._secret_dict:
                 del self._secret_dict[key]
-                self.secret_provider.store(key=self._secret_dictionary_key,
-                                           secret=json.dumps(
-                                               self._secret_dict))
+                self.secret_provider.store_secret_dictionary(
+                    secret_dictionary=self._secret_dict)
+
         except Exception as e:
             self._logger.error(e)
 

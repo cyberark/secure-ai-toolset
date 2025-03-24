@@ -1,6 +1,7 @@
 import pytest
 
 from secure_ai_toolset.secrets.aws_secrets_manager_provider import AWSSecretsProvider
+from secure_ai_toolset.secrets.secrets_provider import SecretProviderException
 
 
 @pytest.fixture()
@@ -11,6 +12,11 @@ def provider(scope="module"):
 @pytest.mark.aws
 def test_provider_ctor(provider):
     assert provider is not None
+
+
+@pytest.mark.aws
+def test_provider_connect(provider):
+    assert provider.connect() is True
 
 
 @pytest.mark.aws
@@ -38,30 +44,34 @@ def test_get_secret(provider):
 
 @pytest.mark.aws
 def test_store_secret_with_none_key(provider):
-    provider.store(None, "test_value")
-    fetched_value = provider.get("")
-    assert fetched_value is None
+    with pytest.raises(SecretProviderException) as e:
+        provider.store(None, "test_value")
+        fetched_value = provider.get("")
+        assert fetched_value is None
 
 
 @pytest.mark.aws
 def test_store_secret_with_empty_key(provider):
-    provider.store("", "test_value")
-    fetched_value = provider.get("")
-    assert fetched_value is None
+    with pytest.raises(SecretProviderException) as e:
+        provider.store("", "test_value")
+        fetched_value = provider.get("")
+        assert fetched_value is None
 
 
 @pytest.mark.aws
 def test_store_secret_with_none_value(provider):
-    provider.store("test_key", None)
-    fetched_value = provider.get("test_key")
-    assert fetched_value is None
+    with pytest.raises(SecretProviderException) as e:
+        provider.store("test_key", None)
+        fetched_value = provider.get("test_key")
+        assert fetched_value is None
 
 
 @pytest.mark.aws
 def test_store_secret_with_empty_value(provider):
-    provider.store("test_key", "")
-    fetched_value = provider.get("test_key")
-    assert fetched_value is None
+    with pytest.raises(SecretProviderException) as e:
+        provider.store("test_key", "")
+        fetched_value = provider.get("test_key")
+        assert fetched_value is None
 
 
 @pytest.mark.aws
