@@ -1,9 +1,11 @@
 import os
 from typing import Dict, Optional
 
+from dotenv import dotenv_values
+
 from secure_ai_toolset.secrets.secrets_provider import BaseSecretsProvider, SecretProviderException
 
-DEFAULT_NAMESPACE = "."
+DEFAULT_NAMESPACE = ""
 DEFAULT_SECRET_ID = ".env"
 
 
@@ -20,8 +22,8 @@ class FileSecretsProvider(BaseSecretsProvider):
         :param namespace: The namespace to use for storing secrets. Defaults to an empty string.
         """
         super().__init__()
-        self._namespace = DEFAULT_NAMESPACE if namespace is None else namespace
-        self._dictionary_path = f"{self._namespace}/{DEFAULT_SECRET_ID}"
+        self._namespace = DEFAULT_NAMESPACE if not namespace else namespace
+        self._dictionary_path = f"{self._namespace}{DEFAULT_SECRET_ID}"
 
     def get_secret_dictionary(self) -> Optional[Dict]:
         """
@@ -33,17 +35,9 @@ class FileSecretsProvider(BaseSecretsProvider):
         secret_dictionary = {}
         try:
             if os.path.exists(self._dictionary_path):
-                with open(self._dictionary_path, "r") as f:
-                    for line in f:
-                        line = line.strip()
-                        if not line:
-                            continue
-
-                        line_parts = line.strip().split('=', 1)
-                        if len(line_parts) == 2:
-                            key = line_parts[0].strip()
-                            value = line_parts[1].strip()
-                            secret_dictionary[key] = value
+                secret_dictionary = dotenv_values(self._dictionary_path)
+            else:
+                return {}
         except Exception as e:
             raise SecretProviderException(str(e))
 
@@ -61,7 +55,7 @@ class FileSecretsProvider(BaseSecretsProvider):
             if key:
                 dictionary_text += f'{key}={value}\n'
         try:
-            with open(self._dictionary_path, "w") as f:
+            with open(self._dictionary_path, "w+") as f:
                 f.write(dictionary_text)
 
         except Exception as e:

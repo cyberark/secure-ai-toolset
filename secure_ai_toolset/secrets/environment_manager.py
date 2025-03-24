@@ -20,16 +20,14 @@ class EnvironmentVariablesManager:
     as well as populating and depopulating them from the OS environment.
     """
 
-    def __init__(self, secret_provider: BaseSecretsProvider, namespace: str):
+    def __init__(self, secret_provider: BaseSecretsProvider):
         """
         Initialize the EnvironmentVariablesManager.
 
         :param secret_provider: The secret provider to use for storing and retrieving secrets.
-        :param namespace: The namespace for storing the environment variables secret.
-        :param env_var_secret_id: The ID of the secret within the given namespace for the environment variables.
+        :param env_var_secret_id: The ID of the secret within for the environment variables.
         """
         self.secret_provider = secret_provider
-        self._namespace = namespace
         self._secret_dict = {}
         self._logger = logging.getLogger(__name__)
 

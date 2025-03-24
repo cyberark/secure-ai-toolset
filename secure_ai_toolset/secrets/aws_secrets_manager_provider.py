@@ -28,7 +28,7 @@ class AWSSecretsProvider(BaseSecretsProvider):
         super().__init__()
         self._client = None
         self._region_name = region_name
-        namespace = DEFAULT_NAMESPACE if namespace is None else namespace
+        namespace = DEFAULT_NAMESPACE if not namespace else namespace
         self._dictionary_path = f"{namespace}/{DEFAULT_SECRET_ID}"
 
     def connect(self) -> bool:
@@ -79,6 +79,9 @@ class AWSSecretsProvider(BaseSecretsProvider):
             else:
                 return {}
 
+        except self._client.exceptions.ResourceNotFoundException as e:
+            return {}
+
         except Exception as e:
             raise SecretProviderException(str(e))
 
@@ -89,7 +92,8 @@ class AWSSecretsProvider(BaseSecretsProvider):
         :param secret_dictionary: The dictionary containing secrets to store.
         :raises SecretProviderException: If there is an error storing the secrets.
         """
-        if not secret_dictionary:
+        # an empty dictionary is valid, yet a none one is not and raises an exception
+        if secret_dictionary is None:
             raise SecretProviderException("Dictionary not provided")
 
         try:
