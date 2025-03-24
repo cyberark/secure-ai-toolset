@@ -32,7 +32,7 @@ class ConjurSecretsProvider(BaseSecretsProvider):
         self._access_token = None
         self._access_token_expiration = datetime.now()
 
-    def _authenticate_aws(self):
+    def _authenticate_aws(self) -> Optional[str]:
         """
         Authenticates with Conjur using AWS IAM role.
 
@@ -61,8 +61,9 @@ class ConjurSecretsProvider(BaseSecretsProvider):
                                  headers=headers)
         if response.status_code == 200:
             self._access_token = response.text
+            return self._workload_id
 
-    def _authenticate_api_key(self):
+    def _authenticate_api_key(self) -> Optional[str]:
         """
         Authenticates with Conjur using an API key.
 
@@ -78,6 +79,7 @@ class ConjurSecretsProvider(BaseSecretsProvider):
                                  headers=headers)
         if response.status_code == 200:
             self._access_token = response.text
+            return self._workload_id
 
     def _get_conjur_headers(self) -> dict:
         if not self._access_token:
@@ -117,15 +119,12 @@ class ConjurSecretsProvider(BaseSecretsProvider):
             # of Conjur, then we use the default expiration
             self._access_token_expiration = datetime.now() + timedelta(minutes=DEFAULT_API_TOKEN_DURATION)
 
-    def _refresh_access_token_if_needed(self):
-        if not self._access_token or datetime.now() > self._access_token_expiration:
-            self.connect()
-
     def connect(self):
-        if not self._authenticator_id:
-            self._authenticate_api_key()
-        elif self._authenticator_id.startswith("authn-iam"):
-            self._authenticate_aws()
+        if not self._access_token or datetime.now() > self._access_token_expiration:
+            if not self._authenticator_id:
+                return self._authenticate_api_key()
+            elif self._authenticator_id.startswith("authn-iam"):
+                return self._authenticate_aws()
 
 
     def store(self, key: str, secret: str) -> None:
@@ -133,7 +132,7 @@ class ConjurSecretsProvider(BaseSecretsProvider):
         if not branch or not secret_name:
             return None
 
-        self._refresh_access_token_if_needed()
+        self.connect()
         url = f"{self._url}/policies/{self._account}/policy/{urllib.parse.quote(branch)}"
         policy_body = f"""
         - !variable
@@ -163,7 +162,7 @@ class ConjurSecretsProvider(BaseSecretsProvider):
             self.logger.error(f"Error storing secret: {e}")
 
     def get(self, key: str) -> Optional[str]:
-        self._refresh_access_token_if_needed()
+        self.connect()
         url = f"{self._url}/secrets/{self._account}/variable/{urllib.parse.quote(key)}"
 
         try:
@@ -181,7 +180,7 @@ class ConjurSecretsProvider(BaseSecretsProvider):
         if not branch or not secret_name:
             return None
 
-        self._refresh_access_token_if_needed()
+        self.connect()
         url = f"{self._url}/policies/{self._account}/policy/{urllib.parse.quote(branch)}"
         policy_body = f"""
         - !delete

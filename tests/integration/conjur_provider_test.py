@@ -2,22 +2,27 @@ import pytest
 
 from secure_ai_toolset.secrets.conjur_secrets_provider import ConjurSecretsProvider
 
-secret_providers = [ConjurSecretsProvider()]
+@pytest.fixture()
+def provider(scope="module"):
+    return ConjurSecretsProvider()
 
 
-def test_provider_ctor():
+def test_provider_ctor(provider):
     provider = ConjurSecretsProvider()
     assert provider is not None
 
 
 @pytest.mark.conjur
-@pytest.mark.parametrize("provider", secret_providers)
 def test_provider_ctor(provider: ConjurSecretsProvider):
     assert provider is not None
 
 
 @pytest.mark.conjur
-@pytest.mark.parametrize("provider", secret_providers)
+def test_authentication(provider: ConjurSecretsProvider):
+    assert provider.connect() is not None
+
+
+@pytest.mark.conjur
 def test_store_secret(provider):
     key = "data/test-toolset/my-environment"
     value = "test_value"
@@ -34,7 +39,6 @@ def test_store_secret(provider):
 
 
 @pytest.mark.conjur
-@pytest.mark.parametrize("provider", secret_providers)
 def test_get_secret(provider):
     provider.store("data/test-toolset/my-environment-2", "another_test_value")
     fetched_value = provider.get("data/test-toolset/my-environment-2")
@@ -42,7 +46,6 @@ def test_get_secret(provider):
 
 
 @pytest.mark.conjur
-@pytest.mark.parametrize("provider", secret_providers)
 def test_store_secret_with_none_key(provider):
     provider.store(None, "test_value")
     fetched_value = provider.get("")
@@ -50,7 +53,6 @@ def test_store_secret_with_none_key(provider):
 
 
 @pytest.mark.conjur
-@pytest.mark.parametrize("provider", secret_providers)
 def test_store_secret_with_empty_key(provider):
     provider.store("", "test_value")
     fetched_value = provider.get("")
@@ -58,7 +60,6 @@ def test_store_secret_with_empty_key(provider):
 
 
 @pytest.mark.conjur
-@pytest.mark.parametrize("provider", secret_providers)
 def test_store_secret_with_none_value(provider):
     provider.store("data/test-toolset/my-environment", None)
     fetched_value = provider.get("data/test-toolset/my-environment")
@@ -66,7 +67,6 @@ def test_store_secret_with_none_value(provider):
 
 
 @pytest.mark.conjur
-@pytest.mark.parametrize("provider", secret_providers)
 def test_store_secret_with_empty_value(provider):
     provider.store("data/test-toolset/my-environment", "")
     fetched_value = provider.get("data/test-toolset/my-environment")
@@ -74,14 +74,12 @@ def test_store_secret_with_empty_value(provider):
 
 
 @pytest.mark.conjur
-@pytest.mark.parametrize("provider", secret_providers)
 def test_get_nonexistent_secret(provider):
     fetched_value = provider.get("nonexistent_key")
     assert fetched_value is None
 
 
 @pytest.mark.conjur
-@pytest.mark.parametrize("provider", secret_providers)
 def test_store_and_update_secret(provider):
     provider.store("data/test-toolset/my-environment", "initial_value")
     provider.store("data/test-toolset/my-environment", "updated_value")
