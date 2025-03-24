@@ -11,10 +11,10 @@ def provider(request):
 
 
 def test_connect(provider):
-    provider.connect.return_value = "connected"
+    provider.connect.return_value = True
     try:
         result = provider.connect()
-        assert result == "connected"
+        assert result == True
         provider.connect.assert_called_once()
     except Exception:
         pytest.fail("Unexpected Exception raised")

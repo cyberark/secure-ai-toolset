@@ -43,8 +43,6 @@ class AWSSecretsProvider(BaseSecretsProvider):
         try:
             self._client = boto3.client(SERVICE_NAME,
                                         region_name=self._region_name)
-            # Verify connectivity using STS get caller identity
-            # caller = boto3.client('sts').get_caller_identity()
             return True
 
         except Exception as e:
