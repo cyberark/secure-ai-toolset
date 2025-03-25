@@ -2,10 +2,10 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from secure_ai_toolset.secrets.aws_secrets_manager_provider import AWSSecretsProvider
+from secure_ai_toolset.secrets.conjur_secrets_provider import ConjurSecretsProvider
 
 
-@pytest.fixture(params=[AWSSecretsProvider])
+@pytest.fixture(params=[ConjurSecretsProvider])
 def provider(request):
     return MagicMock(spec=request.param)
 
