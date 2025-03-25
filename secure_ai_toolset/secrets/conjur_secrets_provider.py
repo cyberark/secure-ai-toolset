@@ -175,7 +175,7 @@ class ConjurSecretsProvider(BaseSecretsProvider):
             response = requests.post(set_secret_url,
                                      data=json.dumps(secret_dictionary),
                                      headers=self._get_conjur_headers())
-            if response.status_code != 200:
+            if response.status_code != 201:
                 self.logger.error(f"Error storing secret: {response.text}")
                 raise SecretProviderException(f"Error storing secret: {response.text}")
         except Exception as e:
