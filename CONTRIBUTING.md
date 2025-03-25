@@ -32,8 +32,8 @@ contributor!
 ## Development
 
 To start developing and testing using our development scripts, the following tools need to be installed:
-* Python >=3.9 and <4.0
-* Poetry >=1.8.0
+* Python = 3.11
+* Poetry = 2.1.1
 
 
 ## Testing
@@ -51,39 +51,22 @@ The working directory is the project root
 pytest -v ./tests/unit
 ```
 5. Run the integration test
-Integration tests run on different secret providers, therefore run the test one the 
-existing groups:
+Follow the guidelines in the [README.md](tests/integration/README.md) file inside the `tests/integration` folder.
 
-### Running tests related to AWS Secrets Manager Secret Provider
-
-Enure that you:
-* Have an AWS Account
-* An IAM role with CRUD permissions for AWS Secrets Manager
-* Valid AWS credentials to access the account using the designated role (via ACS CLI / EC2 instance etc..)
-
-run the tests usign that 
-```bash
-pytest -v -m aws ./tests/integration
-```
-
-### Running tests related to Conjur Secret Provider
-
-Enure that you: 
-* Have a CyberArk Conjur environment
-* Environment variables set to:
-```text
-WORKLOAD_ID=<iam-role>
-CONJUR_API_KEY = <conjur-api-key>
-CONJUR_URL=https://<conjur-tenant-dns>.secretsmgr.integration-cyberark.cloud/api
-CONJUR_REGION=<default-aws-region>
-```
-
-run this command to 
-
-```bash
-pytest -v -m conjur ./tests/integration
-```
-
+6. Make sure that your code is clean, by running the `code_clean.bash` script:  
+   First run:
+   ```shell
+   poetry env activate
+   ```
+   Then run the command it has outputted. Should look as follows:
+   ```shell
+   source <your current working folder>/secure-ai-toolset/.venv/bin/activate
+   ```
+   Run this command above. This should activate the virtual environment.  
+   Finally, run the following command:
+   ```shell
+   ./scripts/code_clean.bash
+   ```
 
 ## Releases
 
@@ -92,5 +75,4 @@ Maintainers only should create releases. Follow these steps to prepare for a rel
 ### Pre-requisites
 Review recent commits and ensure the changelog includes all relevant changes, with references to GitHub issues or PRs when applicable.
 Verify that any updated dependencies are accurately reflected in the NOTICES.
-Confirm that the required documentation is complete and has been approved.
-
+Confirm that the required documentation is complete and has been approved.\

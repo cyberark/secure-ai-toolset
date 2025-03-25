@@ -49,5 +49,21 @@ export CONJUR_AUTHN_API_KEY="<API key>"
 Then execute the following command to run the tests:
 
 ```sh
-pytest tests/integration/providers/conjur_test.py
+pytest -v -m conjur ./tests/integration
+```
+
+## AWS Secrets Manager Provider Test
+
+### Running the AWS Secrets Manager provider tests
+
+Ensure that you:
+
+- Have an AWS Account
+- An IAM role with CRUD permissions for AWS Secrets Manager
+- Valid AWS session (via AWS CLI / EC2 instance etc..)
+
+Then run the tests using the following command:
+
+```bash
+pytest -v -m aws ./tests/integration
 ```
