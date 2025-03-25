@@ -3,7 +3,7 @@ import json
 import os
 import urllib.parse
 from datetime import datetime, timedelta
-from typing import Tuple, Optional, Dict
+from typing import Optional, Dict
 
 import boto3
 import requests
@@ -47,7 +47,7 @@ class ConjurSecretsProvider(BaseSecretsProvider):
         This function uses AWS IAM credentials to authenticate with Conjur. It signs a request using the STS temporary credentials and then fetches an API token from Conjur.
 
         Returns:
-            str: The authentication token if successful, otherwise an empty string.
+            bool: True if the authentication succeeded, False if it failed.
         """
 
         session = boto3.Session()
@@ -77,7 +77,7 @@ class ConjurSecretsProvider(BaseSecretsProvider):
         Authenticates with Conjur using an API key.
 
         Returns:
-            str: The authentication token if successful, otherwise an empty string.
+            bool: True if the authentication succeeded, False if it failed.
         """
 
         # Fetch an access token from Conjur
@@ -91,7 +91,7 @@ class ConjurSecretsProvider(BaseSecretsProvider):
             return True
         return False
 
-    def _get_conjur_headers(self) -> dict:
+    def _get_conjur_headers(self) -> Dict[str, str]:
         if not self._access_token:
             self.connect()
         headers = {
@@ -122,7 +122,7 @@ class ConjurSecretsProvider(BaseSecretsProvider):
                 return self._authenticate_aws()
         return False
 
-    def get_secret_dictionary(self) -> Dict:
+    def get_secret_dictionary(self) -> Dict[str, str]:
         """
         Retrieves the secret dictionary from Conjur.
 
@@ -179,7 +179,9 @@ class ConjurSecretsProvider(BaseSecretsProvider):
                 self.logger.error(f"Error storing secret: {response.text}")
                 raise SecretProviderException(f"Error storing secret: {response.text}")
         except Exception as e:
-            self.logger.error(f"Error storing secret: {e}")
+            message = f"Error storing secret: {e}"
+            self.logger.error(message)
+            raise SecretProviderException(message)
 
     def store(self, key: str, secret: str) -> None:
         """

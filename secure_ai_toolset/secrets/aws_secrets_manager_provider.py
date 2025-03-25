@@ -53,7 +53,7 @@ class AWSSecretsProvider(BaseSecretsProvider):
                 f'Error connecting to the secret provider: AWSSecretsProvider with this exception: {e.args[0]}'
             )
 
-    def get_secret_dictionary(self) -> Dict:
+    def get_secret_dictionary(self) -> Dict[str, str]:
         """
         Retrieves the secret dictionary from AWS Secrets Manager.
         

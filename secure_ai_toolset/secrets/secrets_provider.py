@@ -32,7 +32,7 @@ class BaseSecretsProvider(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def get_secret_dictionary(self) -> Optional[Dict]:
+    def get_secret_dictionary(self) -> Dict[str, str]:
         pass
 
     @abc.abstractmethod

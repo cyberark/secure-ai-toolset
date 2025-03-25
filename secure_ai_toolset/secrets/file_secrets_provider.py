@@ -25,7 +25,7 @@ class FileSecretsProvider(BaseSecretsProvider):
         self._namespace = DEFAULT_NAMESPACE if not namespace else namespace
         self._dictionary_path = f"{self._namespace}{DEFAULT_SECRET_ID}"
 
-    def get_secret_dictionary(self) -> Optional[Dict]:
+    def get_secret_dictionary(self) -> Dict[str, str]:
         """
         Retrieve the secret dictionary from the file.
 

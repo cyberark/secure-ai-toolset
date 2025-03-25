@@ -9,17 +9,17 @@ def provider(scope="module"):
     return ConjurSecretsProvider(namespace='data/test-toolset')
 
 
-@pytest.mark.aws
+@pytest.mark.conjur
 def test_provider_ctor(provider):
     assert provider is not None
 
 
-@pytest.mark.aws
+@pytest.mark.conjur
 def test_provider_connect(provider):
     assert provider.connect() is True
 
 
-@pytest.mark.aws
+@pytest.mark.conjur
 def test_store_secret(provider):
     key = "test_key"
     value = "test_value"
@@ -35,14 +35,14 @@ def test_store_secret(provider):
     assert not fetched_value
 
 
-@pytest.mark.aws
+@pytest.mark.conjur
 def test_get_secret(provider):
     provider.store("another_test_key", "another_test_value")
     fetched_value = provider.get("another_test_key")
     assert fetched_value == "another_test_value"
 
 
-@pytest.mark.aws
+@pytest.mark.conjur
 def test_store_secret_with_none_key(provider):
     with pytest.raises(SecretProviderException) as e:
         provider.store(None, "test_value")
@@ -50,7 +50,7 @@ def test_store_secret_with_none_key(provider):
         assert fetched_value is None
 
 
-@pytest.mark.aws
+@pytest.mark.conjur
 def test_store_secret_with_empty_key(provider):
     with pytest.raises(SecretProviderException) as e:
         provider.store("", "test_value")
@@ -58,7 +58,7 @@ def test_store_secret_with_empty_key(provider):
         assert fetched_value is None
 
 
-@pytest.mark.aws
+@pytest.mark.conjur
 def test_store_secret_with_none_value(provider):
     with pytest.raises(SecretProviderException) as e:
         provider.store("test_key", None)
@@ -66,7 +66,7 @@ def test_store_secret_with_none_value(provider):
         assert fetched_value is None
 
 
-@pytest.mark.aws
+@pytest.mark.conjur
 def test_store_secret_with_empty_value(provider):
     with pytest.raises(SecretProviderException) as e:
         provider.store("test_key", "")
@@ -74,13 +74,13 @@ def test_store_secret_with_empty_value(provider):
         assert fetched_value is None
 
 
-@pytest.mark.aws
+@pytest.mark.conjur
 def test_get_nonexistent_secret(provider):
     fetched_value = provider.get("nonexistent_key")
     assert fetched_value is None
 
 
-@pytest.mark.aws
+@pytest.mark.conjur
 def test_store_and_update_secret(provider):
     provider.store("update_test_key", "initial_value")
     provider.store("update_test_key", "updated_value")
