@@ -1,9 +1,3 @@
-import logging
-import os
-from typing import Dict
-
-from secure_ai_toolset.secrets.secrets_provider import BaseSecretsProvider
-
 """
 The EnvironmentVariablesManager class provides functionality for storing,
 retrieving, and deleting environment variables in a secrets provider. It also
@@ -11,6 +5,12 @@ has methods for populating and depopulating OS environment variables based on
 the stored secrets. Use set_env_vars decorator to seamlessly manage environment
 variables around function execution.
 """
+
+import logging
+import os
+from typing import Dict
+
+from secure_ai_toolset.secrets.secrets_provider import BaseSecretsProvider
 
 
 class EnvironmentVariablesManager:

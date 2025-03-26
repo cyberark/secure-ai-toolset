@@ -1,3 +1,15 @@
+"""
+This module contains classes and functions for handling messages and using tools
+to process those messages in an AI assistant context.
+
+Classes:
+    Message: A dataclass representing a message.
+    ToolUseAgent: An agent that uses tools to process messages.
+
+Functions:
+    get_stock_price: Get the stock price for a given ticker and date.
+"""
+
 import random
 from dataclasses import dataclass
 from typing import Annotated, List
@@ -10,6 +22,12 @@ from autogen_core.tools import ToolSchema
 
 @dataclass
 class Message:
+    """
+    A dataclass representing a message.
+
+    Attributes:
+        content (str): The content of the message.
+    """
     content: str
 
 
@@ -35,6 +53,12 @@ async def get_stock_price(ticker: str,
 class ToolUseAgent(RoutedAgent):
     """
     An agent that uses tools to process messages.
+
+    Attributes:
+        _system_messages (List[LLMMessage]): The system messages for the agent.
+        _model_client (ChatCompletionClient): The model client for chat completion.
+        _tool_schema (List[ToolSchema]): The schema of tools available to the agent.
+        _tool_agent_id (AgentId): The ID of the tool agent.
     """
 
     def __init__(self, model_client: ChatCompletionClient,

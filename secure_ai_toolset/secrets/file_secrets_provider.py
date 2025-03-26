@@ -1,3 +1,7 @@
+"""
+File Secrets Provider module.
+"""
+
 import os
 from typing import Dict, Optional
 

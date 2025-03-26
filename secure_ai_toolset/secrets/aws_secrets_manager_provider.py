@@ -1,3 +1,7 @@
+"""
+AWS Secrets Manager Provider module.
+"""
+
 import json
 from typing import Dict, Optional
 
@@ -47,11 +51,8 @@ class AWSSecretsProvider(BaseSecretsProvider):
 
         except Exception as e:
             self.logger.error(
-                f"Error initializing AWS Secrets Manager client: {e}")
-            raise SecretProviderException(
-                message=
-                f'Error connecting to the secret provider: AWSSecretsProvider with this exception: {e.args[0]}'
-            )
+                "Error initializing AWS Secrets Manager client: %s", e)
+            raise SecretProviderException(str(e)) from e
 
     def get_secret_dictionary(self) -> Dict[str, str]:
         """
@@ -74,14 +75,13 @@ class AWSSecretsProvider(BaseSecretsProvider):
             if secret_text:
                 secret_dict = json.loads(secret_text)
                 return secret_dict
-            else:
-                return {}
 
-        except self._client.exceptions.ResourceNotFoundException as e:
-            return {}
+        except self._client.exceptions.ResourceNotFoundException:
+            pass
 
         except Exception as e:
-            raise SecretProviderException(str(e))
+            raise SecretProviderException(str(e)) from e
+        return {}
 
     def store_secret_dictionary(self, secret_dictionary: Dict):
         """
@@ -104,9 +104,7 @@ class AWSSecretsProvider(BaseSecretsProvider):
             self._client.put_secret_value(SecretId=self._dictionary_path,
                                           SecretString=secret_text)
         except Exception as e:
-            message = f"Error storing secret: {e}"
-            self.logger.error(message)
-            raise SecretProviderException(message)
+            raise SecretProviderException(e) from e
 
     def store(self, key: str, secret: str) -> None:
         """
@@ -117,8 +115,9 @@ class AWSSecretsProvider(BaseSecretsProvider):
         :raises SecretProviderException: If key or secret is missing, or if there is an error storing the secret.
     
         Caution:
-        Concurrent access to secrets can cause issues. If two clients simultaneously list, update different environment variables,
-        and then store, one client's updates may override the other's if they are working on the same secret.
+        Concurrent access to secrets can cause issues. If two clients simultaneously list,
+        update different environment variables,and then store, one client's updates may override 
+        the other's if they are working on the same secret.
         This issue will be addressed in future versions.            
         """
         if not key or not secret:
@@ -142,13 +141,14 @@ class AWSSecretsProvider(BaseSecretsProvider):
         :return: The secret value if retrieval is successful, None otherwise.
         :raises SecretProviderException: If there is an error retrieving the secret.
         """
+        value = None
         if not key:
             self.logger.warning("get: key is missing, proceeding with default")
-
-        dictionary = self.get_secret_dictionary()
-
-        if dictionary:
-            return dictionary.get(key)
+        else:
+            dictionary = self.get_secret_dictionary()
+            if dictionary:
+                value = dictionary.get(key)
+        return value
 
     def delete(self, key: str) -> None:
         """

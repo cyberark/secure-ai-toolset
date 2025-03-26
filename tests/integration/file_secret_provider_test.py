@@ -6,15 +6,24 @@ from secure_ai_toolset.secrets.secrets_provider import BaseSecretsProvider, Secr
 
 @pytest.fixture(scope="module")
 def secret_provider() -> BaseSecretsProvider:
+    """
+    Fixture to provide a FileSecretsProvider instance.
+    """
     return FileSecretsProvider()
 
 
 def test_connect(secret_provider):
+    """
+    Test the connection to the secret provider.
+    """
     assert secret_provider
     assert secret_provider.connect() is True
 
 
 def test_get_nonexistent_secret(secret_provider):
+    """
+    Test getting a nonexistent secret returns None.
+    """
     secret_key = 'secret1'
     secret_provider.delete(secret_key)
     secret = secret_provider.get(secret_key)
@@ -22,6 +31,9 @@ def test_get_nonexistent_secret(secret_provider):
 
 
 def test_create_get_nonexistent_secret(secret_provider):
+    """
+    Test creating, getting, and deleting a secret.
+    """
     secret_key = 'key1'
     secret_provider.delete(secret_key)
     secret_value = 'value1'
@@ -33,13 +45,16 @@ def test_create_get_nonexistent_secret(secret_provider):
     # delete the secret and validate its empty
     secret_provider.delete(secret_key)
     fetched_secret = secret_provider.get(secret_key)
-    assert fetched_secret == None
+    assert not fetched_secret
 
     ## environment variables manager tests
 
 
 @pytest.mark.parametrize("key", ["", None])
 def test_delete_secret_none_empty(secret_provider, key):
-    with pytest.raises(SecretProviderException) as e:
+    """
+    Test deleting a secret with None or empty key raises an exception.
+    """
+    with pytest.raises(SecretProviderException):
         result = secret_provider.delete(key)
         assert result is None

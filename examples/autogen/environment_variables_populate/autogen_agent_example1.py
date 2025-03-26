@@ -1,3 +1,7 @@
+"""
+Example script for populating environment variables using autogen agent.
+"""
+
 import asyncio
 import os
 from typing import List
@@ -46,7 +50,7 @@ async def main() -> None:
         runtime.start()
 
         # Send a direct message to the tool agent.
-        prompt = f"What is the stock price of NVDA on 2024/06/01? "
+        prompt = "What is the stock price of NVDA on 2024/06/01? "
         tool_use_agent_id = AgentId(type="tool_use_agent", key="2")
         response = await runtime.send_message(Message(prompt),
                                               tool_use_agent_id)

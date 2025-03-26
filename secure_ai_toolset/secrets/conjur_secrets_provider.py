@@ -1,9 +1,13 @@
+"""
+Conjur Secrets Provider module.
+"""
+
 import base64
 import json
 import os
 import urllib.parse
 from datetime import datetime, timedelta
-from typing import Optional, Dict
+from typing import Dict, Optional
 
 import boto3
 import requests
@@ -13,6 +17,7 @@ from botocore.awsrequest import AWSRequest
 from secure_ai_toolset.secrets.secrets_provider import BaseSecretsProvider, SecretProviderException
 
 # Tokens should only be reused for 5 minutes (max lifetime is 8 minutes)
+MAX_TIMEOUT = 120
 DEFAULT_TOKEN_EXPIRATION = 8
 API_TOKEN_SAFETY_BUFFER = 3
 DEFAULT_API_TOKEN_DURATION = DEFAULT_TOKEN_EXPIRATION - API_TOKEN_SAFETY_BUFFER
@@ -24,6 +29,10 @@ DEFAULT_CONJUR_ACCOUNT = "conjur"
 
 
 class ConjurSecretsProvider(BaseSecretsProvider):
+    """
+    Provider for fetching secrets from Conjur.
+    """
+
     def __init__(self,
                  region_name=DEFAULT_REGION,
                  namespace=DEFAULT_NAMESPACE):
@@ -44,7 +53,8 @@ class ConjurSecretsProvider(BaseSecretsProvider):
         """
         Authenticates with Conjur using AWS IAM role.
 
-        This function uses AWS IAM credentials to authenticate with Conjur. It signs a request using the STS temporary credentials and then fetches an API token from Conjur.
+        This function uses AWS IAM credentials to authenticate with Conjur. 
+        It signs a request using the STS temporary credentials and then fetches an API token from Conjur.
 
         Returns:
             bool: True if the authentication succeeded, False if it failed.
@@ -66,7 +76,8 @@ class ConjurSecretsProvider(BaseSecretsProvider):
         headers = {"Accept-Encoding": "base64"}
         response = requests.post(conjur_authenticate_uri,
                                  data=signed_headers,
-                                 headers=headers)
+                                 headers=headers,
+                                 timeout=MAX_TIMEOUT)
         if response.status_code == 200:
             self._access_token = response.text
             return True
@@ -85,7 +96,8 @@ class ConjurSecretsProvider(BaseSecretsProvider):
         headers = {"Accept-Encoding": "base64"}
         response = requests.post(conjur_authenticate_uri,
                                  data=self._api_key,
-                                 headers=headers)
+                                 headers=headers,
+                                 timeout=MAX_TIMEOUT)
         if response.status_code == 200:
             self._access_token = response.text
             return True
@@ -106,16 +118,20 @@ class ConjurSecretsProvider(BaseSecretsProvider):
         try:
             # The token is in JSON format. Each field in the token is base64 encoded.
             # So we decode the payload filed and then extract the expiration date from it
-            decoded_token_payload = base64.b64decode(json.loads(self._access_token)['payload'].encode('ascii'))
+            decoded_token_payload = base64.b64decode(
+                json.loads(self._access_token)['payload'].encode('ascii'))
             token_expiration = json.loads(decoded_token_payload)['exp']
-            self._access_token_expiration = datetime.fromtimestamp(token_expiration) - timedelta(minutes=API_TOKEN_SAFETY_BUFFER)
+            self._access_token_expiration = datetime.fromtimestamp(
+                token_expiration) - timedelta(minutes=API_TOKEN_SAFETY_BUFFER)
         except:
             # If we can't extract the expiration from the token because we work with an older version
             # of Conjur, then we use the default expiration
-            self._access_token_expiration = datetime.now() + timedelta(minutes=DEFAULT_API_TOKEN_DURATION)
+            self._access_token_expiration = datetime.now() + timedelta(
+                minutes=DEFAULT_API_TOKEN_DURATION)
 
     def connect(self) -> bool:
-        if not self._access_token or datetime.now() > self._access_token_expiration:
+        if not self._access_token or datetime.now(
+        ) > self._access_token_expiration:
             if not self._authenticator_id:
                 return self._authenticate_api_key()
             elif self._authenticator_id.startswith("authn-iam"):
@@ -134,15 +150,18 @@ class ConjurSecretsProvider(BaseSecretsProvider):
         url = f"{self._url}/secrets/{self._account}/variable/{urllib.parse.quote(f'{self._branch}/{self._secret_name}')}"
 
         try:
-            response = requests.get(url, headers=self._get_conjur_headers())
+            response = requests.get(url,
+                                    headers=self._get_conjur_headers(),
+                                    timeout=MAX_TIMEOUT)
             if response.status_code == 404:
                 return {}
             elif response.status_code != 200:
-                self.logger.error(f"get: secret retrieval error: {response.text}")
+                self.logger.error("get: secret retrieval error:%s",
+                                  response.text)
                 raise SecretProviderException(response.text)
             return json.loads(response.text)
         except Exception as e:
-            self.logger.error(f"Error retrieving secret: {e}")
+            self.logger.error("Error retrieving secret: %s", str(e))
             raise SecretProviderException(str(e))
 
     def store_secret_dictionary(self, secret_dictionary: Dict):
@@ -166,18 +185,22 @@ class ConjurSecretsProvider(BaseSecretsProvider):
         try:
             response = requests.post(url,
                                      data=policy_body,
-                                     headers=self._get_conjur_headers())
+                                     headers=self._get_conjur_headers(),
+                                     timeout=MAX_TIMEOUT)
             if response.status_code != 201:
-                self.logger.error(f"Error creating secret: {response.text}")
-                raise SecretProviderException(f"Error storing secret: {response.text}")
+                self.logger.error("Error creating secret: %s", response.text)
+                raise SecretProviderException(
+                    f"Error storing secret: {response.text}")
 
             set_secret_url = f"{self._url}/secrets/conjur/variable/{urllib.parse.quote(f'{self._branch}/{self._secret_name}')}"
             response = requests.post(set_secret_url,
                                      data=json.dumps(secret_dictionary),
-                                     headers=self._get_conjur_headers())
+                                     headers=self._get_conjur_headers(),
+                                     timeout=MAX_TIMEOUT)
             if response.status_code != 201:
                 self.logger.error(f"Error storing secret: {response.text}")
-                raise SecretProviderException(f"Error storing secret: {response.text}")
+                raise SecretProviderException(
+                    f"Error storing secret: {response.text}")
         except Exception as e:
             message = f"Error storing secret: {e}"
             self.logger.error(message)
