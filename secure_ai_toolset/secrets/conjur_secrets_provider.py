@@ -26,12 +26,14 @@ DEFAULT_CONJUR_ACCOUNT = "conjur"
 class ConjurSecretsProvider(BaseSecretsProvider):
     def __init__(self,
                  region_name=DEFAULT_REGION,
-                 namespace=DEFAULT_NAMESPACE):
+                 namespace=DEFAULT_NAMESPACE,
+		 secret_id=DEFAULT_SECRET_ID):
         super().__init__()
 
         self._url = os.getenv("CONJUR_APPLIANCE_URL")
         self._workload_id = os.getenv("CONJUR_AUTHN_LOGIN")
         self._api_key = os.getenv("CONJUR_AUTHN_API_KEY", "")
+        self._jwt = os.getenv("CONJUR_AUTHN_JWT", "")
         self._authenticator_id = os.getenv("CONJUR_AUTHENTICATOR_ID")
         self._account = os.getenv("CONJUR_ACCOUNT", DEFAULT_CONJUR_ACCOUNT)
         self._region = os.getenv("CONJUR_AUTHN_IAM_REGION", region_name)
@@ -91,6 +93,35 @@ class ConjurSecretsProvider(BaseSecretsProvider):
             return True
         return False
 
+    def _authenticate_jwt(self) -> bool:
+        """
+        Authenticates with Conjur using a JSON web token (JWT).
+
+        JWT is pulled from environment variable CONJUR_AUTHN_JWT and stored in a private variable.
+        It may expire if it has a short TTL. Because of that we might consider bespoke _authenticate_jwt
+        functions for each issuer, similar to _authenticate_aws().
+
+        Returns:
+            bool: True if the authentication succeeded, False if it failed.
+        """
+
+        # Fetch an access token from Conjur
+        conjur_authenticate_uri = f'{self._url}/{self._authenticator_id}/{self._account}/authenticate'
+        headers = { "Content-Type": "application/x-www-form-urlencoded",
+    		    "Accept-Encoding": "base64"
+		  }
+        response = requests.post(conjur_authenticate_uri,
+                                 data=f"jwt={self._jwt}",
+                                 headers=headers)
+        if response.status_code == 200:
+            self._access_token = response.text
+            return True
+
+        print("Authentication error:")
+        print(f"  URI: {conjur_authenticate_uri}\n  Headers: {headers}")
+        print(f"  response: {response}\n  JWT: {self._jwt}")
+        return False
+
     def _get_conjur_headers(self) -> Dict[str, str]:
         if not self._access_token:
             self.connect()
@@ -120,7 +151,31 @@ class ConjurSecretsProvider(BaseSecretsProvider):
                 return self._authenticate_api_key()
             elif self._authenticator_id.startswith("authn-iam"):
                 return self._authenticate_aws()
+            elif self._authenticator_id.startswith("authn-jwt"):
+                return self._authenticate_jwt()
         return False
+
+    def get_secret(self, secret_id:str) -> str:
+        """
+        Retrieves a singular secret variable from Conjur.
+
+        :return: A string containing the secret value.
+        :raises SecretProviderException: If there is an error retrieving the secrets.
+        """
+        self.connect()
+        url = f"{self._url}/secrets/{self._account}/variable/{urllib.parse.quote(f'{secret_id}')}"
+
+        try:
+            response = requests.get(url, headers=self._get_conjur_headers())
+            if response.status_code == 404:
+                return {}
+            elif response.status_code != 200:
+                self.logger.error(f"get_secret(): secret retrieval error: {response.text}")
+                raise SecretProviderException(response.text)
+            return response.text
+        except Exception as e:
+            self.logger.error(f"Error retrieving secret: {e}")
+            raise SecretProviderException(str(e))
 
     def get_secret_dictionary(self) -> Dict[str, str]:
         """
