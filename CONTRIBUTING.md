@@ -28,19 +28,18 @@ From here your pull request will be reviewed and once you've responded to all
 feedback it will be merged into the project. Congratulations, you're a
 contributor!
 
-
 ## Development
 
 To start developing and testing using our development scripts, the following tools need to be installed:
-* Python = 3.11
+* Python = 3.10
 * Poetry = 2.1.1
-
 
 ## Testing
 
 1. Commit and push your changes to your repository.
 2. Clone the repository 
 3. Install the dependencies 
+
 ```bash 
 poetry install
 ```

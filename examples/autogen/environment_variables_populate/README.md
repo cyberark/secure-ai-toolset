@@ -2,10 +2,18 @@
 
 This directory contains examples demonstrating how to populate environment variables automatically.
 In both examples below, we use AWS Secrets Manager as a secret provider to store environment variables, and we use Azure OpenAI as the LLM.
+The examples assume that there is a secret stored in AWS Secrets Manager, named `default/agentic_env_vars` with a JSON object containing the following key-value pairs:
+
+```json
+{
+  "AZURE_OPENAI_ENDPOINT": "<your-azure-openai-endpoint>",
+  "AZURE_OPENAI_KEY": "<your-azure-openai-key>"
+}
+```
 
 ## Example 1
 
-Uses a decorator to populate and depopulate environment variables in the scope it's being used.
+This example uses a decorator to populate and depopulate environment variables in the scope it's being used. 
 
 ```python
 
@@ -21,9 +29,9 @@ async def main() -> None:
 Uses a 'with' statement to populate and depopulate environment variables.
 
 ```python
- with EnvironmentVariablesManager(AWSSecretsProvider()):   
+with EnvironmentVariablesManager(AWSSecretsProvider()):   
     runtime.start()
-
+    
     # Send a direct message to the tool agent.
     prompt = f"What is the stock price of NVDA on 2024/06/01? "
     tool_use_agent_id = AgentId(type="tool_use_agent", key="2")
