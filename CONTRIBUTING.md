@@ -62,7 +62,8 @@ Follow the guidelines in the [README.md](tests/integration/README.md) file insid
    source <your current working folder>/secure-ai-toolset/.venv/bin/activate
    ```
    Run this command above. This should activate the virtual environment.  
-   Finally, run the following command:
+   
+7. Finally, run the following command to sort, remove unused imports, and format the code:
    ```shell
    ./scripts/code_clean.bash
    ```
