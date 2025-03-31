@@ -7,7 +7,7 @@ The examples assume that there is a secret stored in AWS Secrets Manager, named 
 ```json
 {
   "AZURE_OPENAI_ENDPOINT": "<your-azure-openai-endpoint>",
-  "AZURE_OPENAI_KEY": "<your-azure-openai-key>"
+  "AZURE_OPENAI_API_KEY": "<your-azure-openai-key>"
 }
 ```
 
