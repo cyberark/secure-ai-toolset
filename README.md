@@ -81,4 +81,5 @@ poetry add secure-ai-toolset
 Please make sure to read the [CONTRIBUTING.md](CONTRIBUTING.md) file if you want to contribute to this project.
 
 ## Contact
-Feel free to contact us via github issues. If there are any feature requests or issues in the project you may contact me through linkedin: [Gil Adda](https://www.linkedin.com/in/gil-adda-6117b9/) 
+
+Feel free to contact us via GitHub issues or through LinkedIn: [Gil Adda](https://www.linkedin.com/in/gil-adda-6117b9/), [Rafi Schwarz](https://www.linkedin.com/in/rafi-schwarz/). 
