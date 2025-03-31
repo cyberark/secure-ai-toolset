@@ -162,11 +162,11 @@ class ConjurSecretsProvider(BaseSecretsProvider):
         self.logger.error(f"connect(): Unable to determine authentication method from authenticator ID: {self._authenticator_id}")
         return False
 
-    def get_secret(self, secret_id:str) -> str:
+    def get_secret(self, secret_id:str) -> Optional[str]:
         """
         Retrieves a singular secret variable from Conjur.
 
-        :return: A string containing the secret value.
+        :return: A string containing the secret value, None if secret is empty or not found..
         :raises SecretProviderException: If there is an error retrieving the secrets.
         """
         self.connect()
@@ -176,7 +176,7 @@ class ConjurSecretsProvider(BaseSecretsProvider):
             response = requests.get(url, headers=self._get_conjur_headers())
             if response.status_code == HTTP_NOTFOUND_OR_EMPTY:
                 self.logger.error(f"Secret {secret_id}: not found or has empty value.")
-                return {}
+                return None
             elif response.status_code != HTTP_SUCCESS:
                 self.logger.error(f"get_secret(): secret retrieval error: {response.text}")
                 raise SecretProviderException(response.text)
