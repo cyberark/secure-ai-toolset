@@ -14,6 +14,18 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all history for tags and branches
+          ref: ${{ github.ref_name }} # Ensure the correct branch is checked out
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install poetry python-semantic-release
 
       - name: Ensure label exists
         if: github.event_name == 'pull_request'
@@ -29,6 +41,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set release version for PR
+        if: github.event_name == 'pull_request'
+        run: |
+          semantic-release -vv version --print
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Create release without label
         if: github.ref == 'refs/heads/main'
         run: |
@@ -36,16 +55,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.11'
-
-      - name: Install dependencies
-        run: |
-          pip install poetry python-semantic-release
-
       - name: Run semantic release
-        run: semantic-release -vv --noop version --print
+        run: semantic-release -vv version --print
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

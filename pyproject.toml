@@ -5,26 +5,24 @@ description = "python toolset to secure AI agents with secret provisioning, auth
 readme = "README.md"
 license = "Apache Software License (Apache-2.0)"
 authors = ["CyberArk <acyberark@cyberark.com>"]
- 
-[tool.semantic_release]
+
+[tool.semantic_release.main]
+match = "(main|master|feature/.+|patch-release-.+)"
 version_variable = ["pyproject.toml:version"]
-branch = "main"
 upload_to_pypi = false
 upload_to_release = true
 build_command = "pip install poetry && poetry build"
 
-
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
- 
+
 [tool.poetry.dependencies]
 python = ">=3.10.0, <4.0"
 boto3 = "*"
 python-dotenv = "^1.0.1"
 requests = "^2.32.3"
 
- 
 [tool.poetry.dev-dependencies]
 pytest = "*"
 yapf = "^0.43.0"
@@ -32,6 +30,7 @@ isort = "^6.0.1"
 autoflake = "^2.3.1"
 toml = "^0.10.2"
 twine = "^6.1.0"
+python-semantic-release = "^9.21.0"
 
 [tool.poetry.group.aws.dependencies]
 boto3 = "*"
@@ -39,3 +38,5 @@ boto3 = "*"
 [tool.poetry.group.autogen.dependencies]
 autogen-core = ">=0.4.9.2,<0.5.0.0"
 autogen-ext = {extras = ["openai"], version = "^0.4.9.2"}
+
+
