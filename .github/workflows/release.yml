@@ -39,10 +39,12 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.8'
+          python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install poetry semantic-release
+        run: |
+          pip install poetry
+          npm install -g semantic-release
 
       - name: Run semantic release
         run: semantic-release publish
