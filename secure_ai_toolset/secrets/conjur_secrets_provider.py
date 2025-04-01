@@ -22,6 +22,8 @@ DEFAULT_NAMESPACE = "data/default"
 DEFAULT_SECRET_ID = "agentic_env_vars"
 DEFAULT_CONJUR_ACCOUNT = "conjur"
 
+DEFAULT_HTTP_TIMEOUT = 120
+
 
 class ConjurSecretsProvider(BaseSecretsProvider):
 
@@ -67,7 +69,8 @@ class ConjurSecretsProvider(BaseSecretsProvider):
         headers = {"Accept-Encoding": "base64"}
         response = requests.post(conjur_authenticate_uri,
                                  data=signed_headers,
-                                 headers=headers)
+                                 headers=headers,
+                                 timeout=DEFAULT_HTTP_TIMEOUT)
         if response.status_code == 200:
             self._access_token = response.text
             return True
@@ -86,7 +89,8 @@ class ConjurSecretsProvider(BaseSecretsProvider):
         headers = {"Accept-Encoding": "base64"}
         response = requests.post(conjur_authenticate_uri,
                                  data=self._api_key,
-                                 headers=headers)
+                                 headers=headers,
+                                 timeout=DEFAULT_HTTP_TIMEOUT)
         if response.status_code == 200:
             self._access_token = response.text
             return True
@@ -139,7 +143,9 @@ class ConjurSecretsProvider(BaseSecretsProvider):
         url = f"{self._url}/secrets/{self._account}/variable/{urllib.parse.quote(f'{self._branch}/{self._secret_name}')}"
 
         try:
-            response = requests.get(url, headers=self._get_conjur_headers())
+            response = requests.get(url,
+                                    headers=self._get_conjur_headers(),
+                                    timeout=DEFAULT_HTTP_TIMEOUT)
             if response.status_code == 404:
                 return {}
             elif response.status_code != 200:
@@ -172,7 +178,8 @@ class ConjurSecretsProvider(BaseSecretsProvider):
         try:
             response = requests.post(url,
                                      data=policy_body,
-                                     headers=self._get_conjur_headers())
+                                     headers=self._get_conjur_headers(),
+                                     timeout=DEFAULT_HTTP_TIMEOUT)
             if response.status_code != 201:
                 self.logger.error(f"Error creating secret: {response.text}")
                 raise SecretProviderException(
@@ -181,7 +188,8 @@ class ConjurSecretsProvider(BaseSecretsProvider):
             set_secret_url = f"{self._url}/secrets/conjur/variable/{urllib.parse.quote(f'{self._branch}/{self._secret_name}')}"
             response = requests.post(set_secret_url,
                                      data=json.dumps(secret_dictionary),
-                                     headers=self._get_conjur_headers())
+                                     headers=self._get_conjur_headers(),
+                                     timeout=DEFAULT_HTTP_TIMEOUT)
             if response.status_code != 201:
                 self.logger.error(f"Error storing secret: {response.text}")
                 raise SecretProviderException(
