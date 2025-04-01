@@ -35,8 +35,8 @@ async def main() -> None:
                 model='gpt-4o',
                 azure_endpoint=os.getenv('AZURE_OPENAI_ENDPOINT'),
                 azure_deployment='gpt-4o',
-                api_version='2024-02-01'),
-            [tool.schema for tool in tools], 'tool_executor_agent'),
+                api_version='2024-02-01'), [tool.schema for tool in tools],
+            'tool_executor_agent'),
     )
 
     try:
