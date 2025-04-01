@@ -15,6 +15,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Ensure label exists
+        if: github.event_name == 'pull_request'
+        run: |
+          gh label list | grep -q "${{ github.head_ref }}" || gh label create "${{ github.head_ref }}" --color "#0366d6"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Add branch name label
         if: github.event_name == 'pull_request'
         run: |
