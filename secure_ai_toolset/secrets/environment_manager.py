@@ -62,8 +62,7 @@ class EnvironmentVariablesManager:
         :return: A dictionary of environment variables.
         """
         try:
-            secret_dictionary: Dict[
-                str, str] = self.secret_provider.get_secret_dictionary()
+            secret_dictionary = self.secret_provider.get_secret_dictionary()
         except Exception as e:
             self._logger.warning(f"Failed to list environment variables: {e}")
             return {}

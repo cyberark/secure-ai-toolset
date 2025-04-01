@@ -22,7 +22,7 @@ DEFAULT_NAMESPACE = "data/default"
 DEFAULT_SECRET_ID = "agentic_env_vars"
 DEFAULT_CONJUR_ACCOUNT = "conjur"
 
-DEFAULT_HTTP_TIMEOUT = 120
+DEFAULT_HTTP_TIMEOUT = 30
 
 
 class ConjurSecretsProvider(BaseSecretsProvider):
