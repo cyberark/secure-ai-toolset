@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+  pull_request: # Trigger on pull requests
+    branches:
+      - '**'
 
 jobs:
   release:
@@ -12,12 +15,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-    #   - name: Get next version
-    #     uses: reecetech/version-increment@2024.10.1
-    #     id: version
-    #     with:
-    #       scheme: semver
-    #       increment: patch
+      - name: Add branch name label
+        if: github.event_name == 'pull_request'
+        run: |
+          gh pr edit ${{ github.event.pull_request.number }} --add-label "${{ github.head_ref }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create release without label
+        if: github.ref == 'refs/heads/main'
+        run: |
+          gh release create "$(date +'%Y%m%d%H%M%S')" --title "Release $(date +'%Y-%m-%d %H:%M:%S')" --notes "Automated release from main branch"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
         uses: actions/setup-python@v2
