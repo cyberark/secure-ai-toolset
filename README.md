@@ -8,10 +8,10 @@ This toolset is intended for AI agent builders to simplify your work and reduce 
 
 ### Secured environment variables provisioning 
 
-This toolset can populate API keys and secrets as environment variables. The secrets are stored in your secret management system of choice and are provisioned at runtime into your process memory.  
+You can populate API keys and secrets as environment variables. The secrets are stored in your secret management system of choice and are provisioned at runtime into your process memory.
 The secrets can be populated and depopulated for a specific context: Agent, Tool, or HTTP call.  
 
-Currently, [supported](secure_ai_toolset/secrets) secret providers:
+Currently [supported](secure_ai_toolset/secrets) secret providers:
 
 - AWS Secrets Manager
 - CyberArk Conjur
