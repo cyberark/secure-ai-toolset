@@ -52,13 +52,13 @@ async def main() -> None:
             print(response.content)
 
     except Exception as e:
-        print(f'An error occurred: {e}')
+        print(f'An error occurred: {e.args[0]}')
     finally:
         try:
             # Stop processing messages.
             await runtime.stop()
         except Exception as e:
-            print(f'An error occurred during cleanup: {e}')
+            print(f'An error occurred during cleanup: {e.args[0]}')
 
 
 if __name__ == '__main__':

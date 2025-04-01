@@ -12,10 +12,12 @@ has methods for populating and depopulating OS environment variables based on
 the stored secrets. Use set_env_vars decorator to seamlessly manage environment
 variables around function execution.
 
-* Caveat
-    When secrets are populated and depopulated, we delete their references from the garbage collector.
-    However, Python strings are immutable, so an old copy persists in memory.
-    Advanced techniques such as memory dumps can reveal them.
+Caveats
+   * When secrets are populated and depopulated, we delete their references from the garbage collector.
+     However, Python strings are immutable, so an old copy persists in memory.
+     Advanced techniques such as memory dumps can reveal them.
+   * When setting a new secret key, bear in mind it can override an existing environment variable with the same name.
+     Avoid overriding system variables such as PATH, SHELL, only if you are sure of what you are doing.
 """
 
 
@@ -64,7 +66,8 @@ class EnvironmentVariablesManager:
         try:
             secret_dictionary = self.secret_provider.get_secret_dictionary()
         except Exception as e:
-            self._logger.warning(f"Failed to list environment variables: {e}")
+            self._logger.warning(
+                f"Failed to list environment variables: {e.args[0]}")
             return {}
         return secret_dictionary
 
@@ -108,7 +111,7 @@ class EnvironmentVariablesManager:
                 secret_dictionary=secret_dictionary)
         except Exception as e:
             self._logger.error(
-                f"Failed to set environment variable '{key}': {e}")
+                f"Failed to set environment variable '{key}': {e.args[0]}")
         finally:
             # Clear the secret dictionary from process references
             del secret_dictionary
@@ -129,7 +132,7 @@ class EnvironmentVariablesManager:
                     secret_dictionary=secret_dictionary)
         except Exception as e:
             self._logger.error(
-                f"Failed to remove environment variable '{key}': {e}")
+                f"Failed to remove environment variable '{key}': {e.args[0]}")
         finally:
             # Clear the secret dictionary from process references
             del secret_dictionary
