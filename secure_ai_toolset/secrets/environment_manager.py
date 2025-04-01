@@ -1,6 +1,7 @@
+import gc
 import logging
 import os
-from typing import Dict
+from typing import Awaitable, Callable, Dict, Optional
 
 from secure_ai_toolset.secrets.secrets_provider import BaseSecretsProvider
 
@@ -10,6 +11,11 @@ retrieving, and deleting environment variables in a secrets provider. It also
 has methods for populating and depopulating OS environment variables based on
 the stored secrets. Use set_env_vars decorator to seamlessly manage environment
 variables around function execution.
+
+* Caveat
+    When secrets are populated and depopulated, we delete their references from the garbage collector.
+    However, Python strings are immutable, so an old copy persists in memory.
+    Advanced techniques such as memory dumps can reveal them.
 """
 
 
@@ -25,133 +31,168 @@ class EnvironmentVariablesManager:
         Initialize the EnvironmentVariablesManager.
 
         :param secret_provider: The secret provider to use for storing and retrieving secrets.
-        :param env_var_secret_id: The ID of the secret within for the environment variables.
         """
-        self.secret_provider = secret_provider
-        self._secret_dict = {}
-        self._logger = logging.getLogger(__name__)
+        self.secret_provider: BaseSecretsProvider = secret_provider
+        self._logger: logging.Logger = logging.getLogger(__name__)
 
     def __enter__(self):
         """
         Context manager entry method: populates environment variables into the system.
+
+        :return: The EnvironmentVariablesManager instance.
         """
         self.populate_env_vars()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Optional[type],
+                 exc_val: Optional[BaseException], exc_tb: Optional[object]):
         """
         Context manager exit method: removes environment variables from the system.
+
+        :param exc_type: The exception type, if any.
+        :param exc_val: The exception value, if any.
+        :param exc_tb: The traceback object, if any.
         """
         self.depopulate_env_vars()
 
     def list_env_vars(self) -> Dict[str, str]:
         """
         List all environment variables stored in the secret provider.
-        
+
         :return: A dictionary of environment variables.
         """
         try:
-            self._secret_dict = self.secret_provider.get_secret_dictionary()
+            secret_dictionary: Dict[
+                str, str] = self.secret_provider.get_secret_dictionary()
         except Exception as e:
-            self._logger.warning(e)
+            self._logger.warning(f"Failed to list environment variables: {e}")
             return {}
-        return self._secret_dict
+        return secret_dictionary
 
-    def _add_env_var(self, key: str, value: str):
+    def _add_env_var(self, key: str, value: str) -> None:
         """
         Add a new environment variable to the secret provider.
-        
+
         :param key: The key of the environment variable.
         :param value: The value of the environment variable.
         """
         self._set_env_var(key, value)
 
-    def _get_env_var(self, key: str) -> str:
+    def _get_env_var(self, key: str) -> Optional[str]:
         """
         Retrieve an environment variable from the secret provider.
-        
-        :param key: The key of the environment variable.
-        :return: The value of the environment variable.
-        """
-        return self.list_env_vars().get(key)
 
-    def _set_env_var(self, key: str, value: str):
+        :param key: The key of the environment variable.
+        :return: The value of the environment variable, or None if not found.
+        """
+        secret_dictionary: Dict[str, str] = self.list_env_vars()
+        secret_value: Optional[str] = secret_dictionary.get(key)
+
+        # Clear the secret dictionary from process references
+        del secret_dictionary
+        gc.collect()
+
+        return secret_value
+
+    def _set_env_var(self, key: str, value: str) -> None:
         """
         Set an environment variable in the secret provider.
-        
+
         :param key: The key of the environment variable.
         :param value: The value of the environment variable.
         """
         try:
-            self._secret_dict = self.secret_provider.get_secret_dictionary()
-
-            if not self._secret_dict:
-                self._secret_dict = {}
-
-            self._secret_dict[key.strip()] = value.strip()
-
+            secret_dictionary: Dict[
+                str, str] = self.secret_provider.get_secret_dictionary()
+            secret_dictionary[key.strip()] = value.strip()
             self.secret_provider.store_secret_dictionary(
-                secret_dictionary=self._secret_dict)
-
+                secret_dictionary=secret_dictionary)
         except Exception as e:
-            self._logger.error(e)
+            self._logger.error(
+                f"Failed to set environment variable '{key}': {e}")
+        finally:
+            # Clear the secret dictionary from process references
+            del secret_dictionary
+            gc.collect()
 
-    def _remove_env_var(self, key: str):
+    def _remove_env_var(self, key: str) -> None:
         """
         Remove an environment variable from the secret provider.
-        
+
         :param key: The key of the environment variable to remove.
         """
         try:
-            self._secret_dict = self.secret_provider.get_secret_dictionary()
-            if key in self._secret_dict:
-                del self._secret_dict[key]
+            secret_dictionary: Dict[
+                str, str] = self.secret_provider.get_secret_dictionary()
+            if key in secret_dictionary:
+                del secret_dictionary[key]
                 self.secret_provider.store_secret_dictionary(
-                    secret_dictionary=self._secret_dict)
-
+                    secret_dictionary=secret_dictionary)
         except Exception as e:
-            self._logger.error(e)
+            self._logger.error(
+                f"Failed to remove environment variable '{key}': {e}")
+        finally:
+            # Clear the secret dictionary from process references
+            del secret_dictionary
+            gc.collect()
 
-    def populate_env_vars(self):
+    def populate_env_vars(self) -> None:
         """
         Populate environment variables from the secret provider into the system environment.
         """
-        env_vars = self.list_env_vars()
+        env_vars: Dict[str, str] = self.list_env_vars()
         for key, value in env_vars.items():
             os.environ[key] = value
-            self._logger.info(f'populating env var with key:{key}')
+            self._logger.info(
+                f"Populating environment variable with key: {key}")
+            del value
 
-    def depopulate_env_vars(self):
+        # Clear the secret dictionary from process references
+        del env_vars
+        gc.collect()
+
+    def depopulate_env_vars(self) -> None:
         """
         Remove environment variables from the system environment.
         """
-        env_vars = self.list_env_vars()
+        env_vars: Dict[str, str] = self.list_env_vars()
         for key in env_vars.keys():
             if key in os.environ:
                 del os.environ[key]
                 self._logger.info(
-                    f'removing from memory env var with key:{key}')
+                    f"Removing environment variable with key: {key}")
+
+        # Clear the secret dictionary from process references
+        del env_vars
+        gc.collect()
 
     @staticmethod
-    def set_env_vars(secret_provider: BaseSecretsProvider):
+    def set_env_vars(
+        secret_provider: BaseSecretsProvider
+    ) -> Callable[[Callable[..., Awaitable]], Callable[..., Awaitable]]:
         """
         Decorator that populates environment variables from the given secret
         provider before the wrapped function is called, and depopulates them
         afterwards. This ensures that any environment variables needed for the
-        function are ready before execution and cleaned up afterward."
+        function are ready before execution and cleaned up afterward.
+
+        :param secret_provider: The secret provider to use for managing environment variables.
+        :return: A decorator for asynchronous functions.
         """
 
-        def async_decorator(func):
+        def async_decorator(
+                func: Callable[..., Awaitable]) -> Callable[..., Awaitable]:
 
-            async def wrapper(*args, **kwargs):
-
+            async def wrapper(*args, **kwargs) -> Awaitable:
                 env_var_mgr = EnvironmentVariablesManager(
                     secret_provider=secret_provider)
                 env_var_mgr.populate_env_vars()
 
-                result = await func(*args, **kwargs)
+                try:
+                    result = await func(*args, **kwargs)
+                finally:
+                    env_var_mgr.depopulate_env_vars()
 
-                env_var_mgr.depopulate_env_vars()
                 return result
 
             return wrapper
