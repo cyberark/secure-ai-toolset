@@ -12,10 +12,13 @@ has methods for populating and depopulating OS environment variables based on
 the stored secrets. Use set_env_vars decorator to seamlessly manage environment
 variables around function execution.
 
-* Caveat
-    When secrets are populated and depopulated, we delete their references from the garbage collector.
-    However, Python strings are immutable, so an old copy persists in memory.
-    Advanced techniques such as memory dumps can reveal them.
+Caveats
+   * When secrets are populated and depopulated, we delete their references from the garbage collector.
+      However, Python strings are immutable, so an old copy persists in memory.
+      Advanced techniques such as memory dumps can reveal them.
+   * Environment variables change can harm your OS if overridden
+      When setting a new secret key, bear in mind it can override an existing environment variable with the same name.
+      Avoid overriding system variables such as PATH, SHELL, only if you are sure of what you are doing.
 """
 
 
