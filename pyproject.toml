@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "secure-ai-toolset"
-version = "0.0.1"
+version = "0.1.0"
 description = "python toolset to secure AI agents with secret provisioning, authentication, call monitoring and authorization"
 readme = "README.md"
 license = "Apache Software License (Apache-2.0)"
