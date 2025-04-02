@@ -39,7 +39,7 @@ class FileSecretsProvider(BaseSecretsProvider):
             else:
                 return {}
         except Exception as e:
-            raise SecretProviderException(str(e))
+            raise SecretProviderException(str(e.args[0]))
 
         return secret_dictionary
 
@@ -59,7 +59,7 @@ class FileSecretsProvider(BaseSecretsProvider):
                 f.write(dictionary_text)
 
         except Exception as e:
-            raise SecretProviderException(str(e))
+            raise SecretProviderException(str(e.args[0]))
 
     def connect(self) -> bool:
         """
