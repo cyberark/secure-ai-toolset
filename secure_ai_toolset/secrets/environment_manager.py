@@ -14,8 +14,8 @@ variables around function execution.
 
 Caveats
    * When secrets are populated and depopulated, we delete their references from the garbage collector.
-      However, Python strings are immutable, so an old copy persists in memory.
-      Advanced techniques such as memory dumps can reveal them.
+     However, Python strings are immutable, so an old copy persists in memory.
+     Advanced techniques such as memory dumps can reveal them.
    * When setting a new secret key, bear in mind it can override an existing environment variable with the same name.
      Avoid overriding system variables such as PATH, SHELL, only if you are sure of what you are doing.
 """
