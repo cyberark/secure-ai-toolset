@@ -64,7 +64,8 @@ class EnvironmentVariablesManager:
         try:
             secret_dictionary = self.secret_provider.get_secret_dictionary()
         except Exception as e:
-            self._logger.warning(f"Failed to list environment variables: {e}")
+            self._logger.warning(
+                f"Failed to list environment variables: {e.args[0]}")
             return {}
         return secret_dictionary
 
@@ -108,7 +109,7 @@ class EnvironmentVariablesManager:
                 secret_dictionary=secret_dictionary)
         except Exception as e:
             self._logger.error(
-                f"Failed to set environment variable '{key}': {e}")
+                f"Failed to set environment variable '{key}': {e.args[0]}")
         finally:
             # Clear the secret dictionary from process references
             del secret_dictionary
@@ -129,7 +130,7 @@ class EnvironmentVariablesManager:
                     secret_dictionary=secret_dictionary)
         except Exception as e:
             self._logger.error(
-                f"Failed to remove environment variable '{key}': {e}")
+                f"Failed to remove environment variable '{key}': {e.args[0]}")
         finally:
             # Clear the secret dictionary from process references
             del secret_dictionary

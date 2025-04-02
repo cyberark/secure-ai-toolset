@@ -47,7 +47,7 @@ class AWSSecretsProvider(BaseSecretsProvider):
 
         except Exception as e:
             self.logger.error(
-                f"Error initializing AWS Secrets Manager client: {e}")
+                f"Error initializing AWS Secrets Manager client: {e.args[0]}")
             raise SecretProviderException(
                 message=
                 f'Error connecting to the secret provider: AWSSecretsProvider with this exception: {e.args[0]}'
@@ -81,7 +81,7 @@ class AWSSecretsProvider(BaseSecretsProvider):
             return {}
 
         except Exception as e:
-            raise SecretProviderException(str(e))
+            raise SecretProviderException(str(e.args[0]))
 
     def store_secret_dictionary(self, secret_dictionary: Dict):
         """
@@ -104,7 +104,7 @@ class AWSSecretsProvider(BaseSecretsProvider):
             self._client.put_secret_value(SecretId=self._dictionary_path,
                                           SecretString=secret_text)
         except Exception as e:
-            message = f"Error storing secret: {e}"
+            message = f"Error storing secret: {e.args[0]}"
             self.logger.error(message)
             raise SecretProviderException(message)
 

@@ -154,8 +154,8 @@ class ConjurSecretsProvider(BaseSecretsProvider):
                 raise SecretProviderException(response.text)
             return json.loads(response.text)
         except Exception as e:
-            self.logger.error(f"Error retrieving secret: {e}")
-            raise SecretProviderException(str(e))
+            self.logger.error(f"Error retrieving secret: {e.args[0]}")
+            raise SecretProviderException(str(e.args[0]))
 
     def store_secret_dictionary(self, secret_dictionary: Dict):
         """
@@ -195,7 +195,7 @@ class ConjurSecretsProvider(BaseSecretsProvider):
                 raise SecretProviderException(
                     f"Error storing secret: {response.text}")
         except Exception as e:
-            message = f"Error storing secret: {e}"
+            message = f"Error storing secret: {e.args[0]}"
             self.logger.error(message)
             raise SecretProviderException(message)
 
