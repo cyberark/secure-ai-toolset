@@ -1,61 +1,78 @@
-name: Release
+name: Set Release
 
 on:
   push:
     branches:
-      - main
-  pull_request: # Trigger on pull requests
-    branches:
       - '**'
 
 jobs:
-  release:
+  set-version:
     runs-on: ubuntu-latest
+
+    
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+
+      - name: Extract major and minor version from pyproject.toml
+        id: extract-version
+        run: |
+          VERSION=$(poetry version -s)
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+          echo "MAJOR=$MAJOR" >> $GITHUB_ENV
+          echo "MINOR=$MINOR" >> $GITHUB_ENV
+
+      - name: Get the latest release version
+        id: get-latest-release
+        run: |
+          LATEST_VERSION=$(gh release list --limit 1 --json tagName --jq '.[0].tagName' || echo "v0.0.0")
+          echo "LATEST_VERSION=$LATEST_VERSION" >> $GITHUB_ENV
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Increment patch version
+        id: increment-version
+        run: |
+          LATEST_VERSION=${{ env.LATEST_VERSION }}
+          BASE_VERSION=${LATEST_VERSION#v}
+          IFS='.' read -r _ _ LATEST_PATCH <<< "$BASE_VERSION"
+          PATCH=$((LATEST_PATCH + 1))
+          VERSION_NAME="${{ env.MAJOR }}.${{ env.MINOR }}.$PATCH"
+          BRANCH_NAME=${{ github.ref_name }}
+          if [ "$BRANCH_NAME" != "main" ]; then
+            SANITIZED_BRANCH_NAME=$(echo "$BRANCH_NAME" | tr '.' '-')
+            VERSION_NAME="$VERSION_NAME.dev1"
+          fi
+          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
+
+
+      - name: Print incremented version
+        run: |
+          echo "Incremented version: ${{ env.VERSION_NAME }}"
+
+      - name: Update pyproject.toml with incremented version
+        run: |
+          poetry version ${{env.VERSION_NAME}}
+      
+      - name: Build distribution
+        id: poetry-build-release
+        run: |
+          poetry build --clean -f wheel
+          ls -l dist/*
+
+      - name: Create release
+        if: startsWith(github.ref, 'refs/heads/main')
+        uses: actions/create-release@v1
         with:
-          fetch-depth: 0 # Fetch all history for tags and branches
-          ref: ${{ github.event.pull_request.head.ref || 'main' }} # Use PR branch or fallback to main
-
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.11'
-
-      - name: Install dependencies
-        run: |
-          pip install poetry python-semantic-release
-
-      - name: Ensure label exists
-        if: github.event_name == 'pull_request'
-        run: |
-          gh label list | grep -q "${{ github.head_ref }}" || gh label create "${{ github.head_ref }}" --color "#0366d6"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Add branch name label
-        if: github.event_name == 'pull_request'
-        run: |
-          gh pr edit ${{ github.event.pull_request.number }} --add-label "${{ github.head_ref }}"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set release version for PR
-        if: github.event_name == 'pull_request'
-        run: |
-          semantic-release -vv version --print
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create release without label
-        if: github.ref == 'refs/heads/main'
-        run: |
-          gh release create "$(date +'%Y%m%d%H%M%S')" --title "Release $(date +'%Y-%m-%d %H:%M:%S')" --notes "Automated release from main branch"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Run semantic release
-        run: semantic-release -vv version --print
+          tag_name: ${{ env.VERSION_NAME }}
+          release_name: ${{ env.VERSION_NAME }}
+          draft: false
+          prerelease: false
+          assets: |
+            dist/*.whl
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
