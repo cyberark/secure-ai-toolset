@@ -3,7 +3,7 @@ from typing import Dict, Optional
 
 from dotenv import dotenv_values
 
-from secure_ai_toolset.secrets.secrets_provider import BaseSecretsProvider, SecretProviderException
+from secure_ai_toolset.credentials.secrets_provider import BaseSecretsProvider, SecretProviderException
 
 DEFAULT_NAMESPACE = ""
 DEFAULT_SECRET_ID = ".env"

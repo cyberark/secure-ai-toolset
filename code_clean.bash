@@ -16,3 +16,6 @@ isort -l 120 -ir $python_files $python_tests
 
 # Perform a security scan of the code
 bandit -r $python_files
+
+# run gitleaks
+gitleaks -v git --no-banner
