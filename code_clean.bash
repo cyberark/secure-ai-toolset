@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define list of files to scan
-python_files=$(find secure_ai_toolset scripts examples -name "*.py" -not -path "*/.venv/*" | tr '\n' ' ')
+python_files=$(find secure_ai_toolset examples -name "*.py" -not -path "*/.venv/*" | tr '\n' ' ')
 python_tests=$(find tests -name "*.py" -not -path "*/.venv/*" | tr '\n' ' ')
 echo $python_files
 

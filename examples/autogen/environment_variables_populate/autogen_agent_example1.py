@@ -8,8 +8,8 @@ from autogen_core.tools import FunctionTool, Tool
 from autogen_ext.models.openai import AzureOpenAIChatCompletionClient
 
 from examples.autogen.environment_variables_populate.autogen_common import Message, ToolUseAgent, get_stock_price
-from secure_ai_toolset.secrets.aws_secrets_manager_provider import AWSSecretsProvider
-from secure_ai_toolset.secrets.environment_manager import EnvironmentVariablesManager
+from secure_ai_toolset.credentials.aws_secrets_manager_provider import AWSSecretsProvider
+from secure_ai_toolset.credentials.environment_manager import EnvironmentVariablesManager
 
 
 @EnvironmentVariablesManager.set_env_vars(AWSSecretsProvider())
