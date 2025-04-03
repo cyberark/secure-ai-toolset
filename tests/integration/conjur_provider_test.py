@@ -1,7 +1,7 @@
 import pytest
 
-from secure_ai_toolset.secrets.conjur_secrets_provider import ConjurSecretsProvider
-from secure_ai_toolset.secrets.secrets_provider import SecretProviderException
+from secure_ai_toolset.credentials.conjur_secrets_provider import ConjurSecretsProvider
+from secure_ai_toolset.credentials.secrets_provider import SecretProviderException
 
 
 @pytest.fixture()

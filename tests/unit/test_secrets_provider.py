@@ -3,9 +3,9 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from secure_ai_toolset.secrets.aws_secrets_manager_provider import AWSSecretsProvider
-from secure_ai_toolset.secrets.file_secrets_provider import FileSecretsProvider
-from secure_ai_toolset.secrets.secrets_provider import SecretProviderException
+from secure_ai_toolset.credentials.aws_secrets_manager_provider import AWSSecretsProvider
+from secure_ai_toolset.credentials.file_secrets_provider import FileSecretsProvider
+from secure_ai_toolset.credentials.secrets_provider import SecretProviderException
 
 
 @pytest.fixture(params=[AWSSecretsProvider, FileSecretsProvider])

@@ -1,7 +1,7 @@
 import pytest
 
-from secure_ai_toolset.secrets.aws_secrets_manager_provider import AWSSecretsProvider
-from secure_ai_toolset.secrets.secrets_provider import SecretProviderException
+from secure_ai_toolset.credentials.aws_secrets_manager_provider import AWSSecretsProvider
+from secure_ai_toolset.credentials.secrets_provider import SecretProviderException
 
 
 @pytest.fixture()
