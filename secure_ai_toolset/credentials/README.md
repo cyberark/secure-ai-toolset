@@ -17,7 +17,7 @@ A sample usage looks like:
 We protect sensitive data through the following measures:
 * OS environment variables are securely stored in a secret store, instead of in the operating system.
 * Environment variables are loaded into the application environment just-in-time (JIT) for usage and immediately cleared after their intended use, significantly reducing the potential attack surface.
-* Python memory references to secrets are cleared promptly by explicitly invoking the garbage collector.
+* Python secret object references are cleared promptly by explicitly invoking the garbage collector (after delete).
 
 Important Caveat: Python strings are immutable, which means they cannot be altered once created. Therefore, sensitive information may still be exposed if the process memory is captured or dumped.
 
