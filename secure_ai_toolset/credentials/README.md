@@ -38,22 +38,6 @@ provider.delete("my_secret_key")
 
 - **Extensible**: Implement custom secret providers by extending the `SecretsProvider` interface.
 
-
-## Components
-
-### 1. `EnvironmentVariablesManager`
-A utility for just-in-time provisioning of environment variables. It ensures that sensitive information like API keys is available only within a specific code block and is wiped immediately after.
-
-### 2. `AWSSecretsProvider`
-A provider implementation for AWS Secrets Manager. It allows secure retrieval and storage of secrets in AWS.
-
-### 3. `SecretsProvider`
-An interface that defines the contract for implementing custom secret providers. Any new provider must implement this interface.
-
-### 4. `SecretProviderException`
-A custom exception class used to handle errors related to secret management.
-
-
 ## Extensibility and Contributing
 The module is extensible. Add support for new secret management systems by implementing the `SecretsProvider` interface. For contributions, refer to the [CONTRIBUTING](../../CONTRIBUTING.md) file.
 
@@ -76,6 +60,15 @@ class MyCustomSecretsProvider(SecretsProvider):
     def delete(self, key):
         # Custom logic to delete a secret
         pass
+
+    def get_secret_dictionary(self) -> Dict[str, str]:
+        # Custom logic to get secret dictionary
+        pass
+
+    def store_secret_dictionary(self, secret_dictionary: Dict):
+        # Custom logic to store secret dictionary
+        pass
+
 ```
 
 ## License
