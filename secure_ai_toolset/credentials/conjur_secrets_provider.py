@@ -10,7 +10,7 @@ import requests
 from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
 
-from secure_ai_toolset.credentials.secrets_provider import BaseSecretsProvider, SecretProviderException
+from agent_guard_core.credentials.secrets_provider import BaseSecretsProvider, SecretProviderException
 
 # Tokens should only be reused for 5 minutes (max lifetime is 8 minutes)
 DEFAULT_TOKEN_EXPIRATION = 8

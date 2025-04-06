@@ -3,7 +3,7 @@ import logging
 import os
 from typing import Awaitable, Callable, Dict, Optional
 
-from secure_ai_toolset.credentials.secrets_provider import BaseSecretsProvider
+from agent_guard_core.credentials.secrets_provider import BaseSecretsProvider
 
 """
 The EnvironmentVariablesManager class provides functionality for storing,

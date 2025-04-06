@@ -3,20 +3,26 @@
 The `credentials` module simplifies managing sensitive information like API keys and secrets. It provides a unified interface for secure storage, retrieval, and management, supporting multiple secret providers and extensibility for custom implementations.
 
 ## Features
-- **Environment Variables Provisioning** just-in-time provisioning of API keys and other environment variables. The environment variables will be populated in a specific section and wiped right after.
+- **Environment Variables Provisioning**: Just-in-time provisioning of API keys and other environment variables. The environment variables will be populated in a specific section and wiped right after.
 A sample usage looks like:
 ```python
   with EnvironmentVariablesManager(AWSSecretsProvider()):
-    # environment variables as API Keys will be available only in this section
+    # Environment variables such as API keys will be available only in this section
 
     ...
     my agentic code
     ...
 ```
-- **Secure Secret Management**: Retrieve and store secrets securely using supported providers with a code example below:
+- **Secure Secret Management**: Retrieve and store secrets securely using supported providers with a code example below.
+We protect sensitive data through the following measures:
+* OS environment variables are securely stored in a secret store, instead of in the operating system.
+* Environment variables are loaded into the application environment just-in-time (JIT) for usage and immediately cleared after their intended use, significantly reducing the potential attack surface.
+* Python memory references to secrets are cleared promptly by explicitly invoking the garbage collector.
+
+Important Caveat: Python strings are immutable, which means they cannot be altered once created. Therefore, sensitive information may still be exposed if the process memory is captured or dumped.
 
 ```python
-from secure_ai_toolset.credentials.aws_secrets_manager_provider import AWSSecretsProvider
+from agent_guard_core.credentials.aws_secrets_manager_provider import AWSSecretsProvider
 
 # Initialize the provider
 provider = AWSSecretsProvider()
