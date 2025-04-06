@@ -1,5 +1,6 @@
 <p align="center">
-    <img src="https://raw.githubusercontent.com/cyberark/secure-ai-toolset/refs/heads/agent-guard/resources/logo.png" alt="agentwatch - AI Agent Observability Platform" width="400"/>
+    <img src="https://raw.githubusercontent.com/cyberark/agent-guard/refs/heads/main/resources/logo.png" alt="agentwatch - AI Agent Observability Platform" width="400"/>
+    
 </p>
 <h3 align="center" style="font-family: 'Fira Mono', Monospace;">Security Toolset for AI Agents</h3>
 
@@ -11,7 +12,7 @@
         <img alt="GitHub code size" src="https://img.shields.io/github/languages/code-size/cyberark/agent-guard">
     </a>
     <a href="https://github.com/cyberark/agent-guard/blob/main/LICENSE">
-        <img alt="GitHub License" src="https://img.shields.io/github/license/Cyberark/agent-guard" />
+        <img alt="GitHub License" src="https://img.shields.io/github/license/cyberark/agent-guard"/>
     </a>
 </p>
 
@@ -29,15 +30,15 @@ The toolset includes a [Python library](https://pypi.org/project/agent-guard-cor
 
 This toolset can populate API keys and secrets as environment variables. The secrets are stored in your secret management of choice and are provisioned at runtime into your process memory.
 The secrets can be populated and depopulated, for a specific context: Agent, Tool, HTTP call.
-Currently [supported](secure_ai_toolset/cerdentials) secret providers:
+Currently [supported](https://github.com/cyberark/agent-guard/tree/main/agent_guard_core/credentials) secret providers:
 - AWS Secret Manager
 - CyberArk Conjur
 - Local `.env` file (for development purposes)
-However, this functionality is extensible, by implementing a [SecretsProvider](agent_gaurd_core/credentials/secrets_provider.py) interface.
+However, this functionality is extensible, by implementing a [SecretsProvider](https://github.com/cyberark/agent-guard/tree/main/agent_guard_core/credentials) interface.
 
 #### Example
 
-For full, runnable examples, please see the [examples](examples) directory.
+For full, runnable examples, please see the [examples](https://github.com/cyberark/agent-guard/tree/main/examples) directory.
 
 ```python
 ...
@@ -74,8 +75,8 @@ async def main() -> None:
 
 ## ⚡ Getting Started
 
-1. Consume the toolset from [pypi](https://test.pypi.org/project/agent-guard-core/).
-2. Follow one of our [examples](examples) to see how to use the toolset.
+1. Consume the toolset from [pypi](https://pypi.org/project/agent-guard-core/).
+2. Follow one of our [examples](https://github.com/cyberark/agent-guard/tree/main/examples) to see how to use the toolset.
 
 ### pip
 
@@ -93,7 +94,7 @@ poetry add agent-guard-core
 
 ## 🤝 Contribution
 
-Please make sure to read the [CONTRIBUTING.md](CONTRIBUTING.md) file if you want to contribute to this project.
+Please make sure to read the [CONTRIBUTING.md](https://github.com/cyberark/agent-guard/blob/main/CONTRIBUTING.md) file if you want to contribute to this project.
 
 ## 💁  Contact
 
