@@ -41,5 +41,5 @@ autogen-core = ">=0.4.9.2,<0.5.0.0"
 autogen-ext = {extras = ["openai"], version = "^0.4.9.2"}
 
 [tool.poetry.packages]
-agent_guard_core = { from = "agent_guard_core" }
+packages = ["agent_guard_core"]
 
