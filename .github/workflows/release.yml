@@ -41,7 +41,7 @@ jobs:
           BASE_VERSION=${LATEST_VERSION#v}
           IFS='.' read -r _ _ LATEST_PATCH <<< "$BASE_VERSION"
           PATCH=$((LATEST_PATCH + 1))
-          VERSION_NAME="${{ env.MAJOR }}.${{ env.MINOR }}.$PATCH"
+          VERSION_NAME="v${{ env.MAJOR }}.${{ env.MINOR }}.$PATCH"
           BRANCH_NAME=${{ github.ref_name }}
           if [ "$BRANCH_NAME" != "main" ]; then
             SANITIZED_BRANCH_NAME=$(echo "$BRANCH_NAME" | tr '.' '-')

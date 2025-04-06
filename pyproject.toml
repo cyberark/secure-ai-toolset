@@ -1,10 +1,14 @@
 [tool.poetry]
-name = "secure-ai-toolset"
+name = "agent_guard_core"
 version = "0.1.0"
-description = "python toolset to secure AI agents with secret provisioning, authentication, call monitoring and authorization"
+description = "Python library to secure AI agents with environment credentials from multiple secret providers and more"
 readme = "README.md"
 license = "Apache Software License (Apache-2.0)"
 authors = ["CyberArk <acyberark@cyberark.com>"]
+packages = [
+    { include = "agent_guard_core" },
+]
+
 
 [tool.semantic_release.main]
 branch = "main"
@@ -39,4 +43,3 @@ boto3 = "*"
 [tool.poetry.group.autogen.dependencies]
 autogen-core = ">=0.4.9.2,<0.5.0.0"
 autogen-ext = {extras = ["openai"], version = "^0.4.9.2"}
-

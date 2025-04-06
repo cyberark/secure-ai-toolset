@@ -3,7 +3,7 @@ import logging
 import os
 from typing import Awaitable, Callable, Dict, Optional
 
-from secure_ai_toolset.secrets.secrets_provider import BaseSecretsProvider
+from agent_guard_core.credentials.secrets_provider import BaseSecretsProvider
 
 """
 The EnvironmentVariablesManager class provides functionality for storing,
@@ -23,8 +23,8 @@ Caveats
 
 class EnvironmentVariablesManager:
     """
-    Manages environment variables using a secrets provider. 
-    It enables setting, retrieving, and removing environment variables, 
+    Manages environment variables using a secrets provider.
+    It enables setting, retrieving, and removing environment variables,
     as well as populating and depopulating them from the OS environment.
     """
 

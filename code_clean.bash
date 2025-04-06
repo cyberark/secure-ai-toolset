@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define list of files to scan
-python_files=$(find secure_ai_toolset scripts examples -name "*.py" -not -path "*/.venv/*" | tr '\n' ' ')
+python_files=$(find agent_guard_core scripts examples -name "*.py" -not -path "*/.venv/*" | tr '\n' ' ')
 python_tests=$(find tests -name "*.py" -not -path "*/.venv/*" | tr '\n' ' ')
 echo $python_files
 
@@ -16,3 +16,6 @@ isort -l 120 -ir $python_files $python_tests
 
 # Perform a security scan of the code
 bandit -r $python_files
+
+# run gitleaks
+gitleaks -v git --no-banner

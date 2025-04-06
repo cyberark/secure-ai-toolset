@@ -1,6 +1,6 @@
 Copyright (c) 2025 CyberArk Software Ltd. All rights reserved
 
-Secure-AI-toolset is using the following open source components:
+Agent Guard is using the following open source components:
 
 1) boto / boto3 (https://github.com/boto/boto3): Apache Software License (Apache-2.0)
     Copyright 2013-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved
