@@ -38,7 +38,6 @@ toml = "^0.10.2"
 twine = "^6.1.0"
 python-semantic-release = "^9.21.0"
 bandit = "^1.8.3"
-get_pypi_latest_version = "*"
 
 [tool.poetry.group.aws.dependencies]
 boto3 = "*"
