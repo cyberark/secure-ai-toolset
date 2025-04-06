@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from secure_ai_toolset.credentials.conjur_secrets_provider import ConjurSecretsProvider
+from agent_guard_core.credentials.conjur_secrets_provider import ConjurSecretsProvider
 
 
 @pytest.fixture(params=[ConjurSecretsProvider])

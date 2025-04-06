@@ -1,7 +1,7 @@
 import pytest
 
-from secure_ai_toolset.credentials.file_secrets_provider import FileSecretsProvider
-from secure_ai_toolset.credentials.secrets_provider import BaseSecretsProvider, SecretProviderException
+from agent_guard_core.credentials.file_secrets_provider import FileSecretsProvider
+from agent_guard_core.credentials.secrets_provider import BaseSecretsProvider, SecretProviderException
 
 
 @pytest.fixture(scope="module")
