@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="resources/logo.png" alt="agentwatch - AI Agent Observability Platform" width="400"/>
+    <img src="https://raw.githubusercontent.com/cyberark/secure-ai-toolset/refs/heads/agent-guard/resources/logo.png" alt="agentwatch - AI Agent Observability Platform" width="400"/>
 </p>
 <h3 align="center" style="font-family: 'Fira Mono', Monospace;">Security Toolset for AI Agents</h3>
 
