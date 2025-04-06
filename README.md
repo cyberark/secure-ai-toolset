@@ -13,6 +13,9 @@
     <a href="https://github.com/cyberark/agent-guard/blob/main/LICENSE">
         <img alt="GitHub License" src="https://img.shields.io/github/license/Cyberark/agent-guard" />
     </a>
+    <a href="https://pypi.org/project/agent-guard-core">
+        <img alt="PYPI version" src="https://img.shields.io/pypi/v/agent-guard-core" />
+    </a>   
 </p>
 
 
