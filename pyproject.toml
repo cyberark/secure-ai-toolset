@@ -1,13 +1,15 @@
 [tool.poetry]
-name = "agent_guard_core"
+name = "agent-guard-core"
 version = "0.1.0"
 description = "Python library to secure AI agents with environment credentials from multiple secret providers and more"
 readme = "README.md"
-license = "Apache Software License (Apache-2.0)"
-authors = ["CyberArk <acyberark@cyberark.com>"]
+license = "Apache-2.0"
+authors = ["CyberArk <cyberark@cyberark.com>", "Gil Adda <gil.adda@cyberark.com", "Rafi Schwartz <rafi.schwartz@cyberark.com>"]
 packages = [
     { include = "agent_guard_core" },
 ]
+keywords = ["security", "AI", "secrets"]
+repository = "https://github.com/cyberark/agent-guard"
 
 
 [tool.semantic_release.main]
