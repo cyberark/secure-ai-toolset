@@ -64,15 +64,11 @@ jobs:
           poetry build --clean -f wheel
           ls -l dist/*
 
-      - name: Create release
+      - name: Create release with wheel file asset
         if: startsWith(github.ref, 'refs/heads/main')
-        uses: actions/create-release@v1
-        with:
-          tag_name: ${{ env.VERSION_NAME }}
-          release_name: ${{ env.VERSION_NAME }}
-          draft: false
-          prerelease: false
-          assets: |
-            dist/*.whl
+        id: create-release
+        run: |
+          gh release create ${{ env.VERSION_NAME }} ./dist/*.whl
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
