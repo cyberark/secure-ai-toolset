@@ -1,66 +1,107 @@
-# Getting started with a new project
-## Set up a new project
-To set up this example, create a new project and install the dependencies. 
-The instructions are given for Poetry and can be modified for other package managers.
+# Getting started with the credentials module
 
-To create a new project called 'test-secure-ai' run these commands:
-```bash
-poetry new test-secure-ai
-cd test-secure-ai
-poetry env activate
+## Add the dependencies
+
+Add agent-guard-core to your project. This module is available on PyPI and can be installed using pip or poetry.
+
+```shell
+poetry add agent-guard-core
 ```
 
-Add the project library and autogen dependencies:
-```bash
-poetry add secure-ai-toolset
-poetry add autogen-core
-poetry add "autogen-ext[openai]"
+Next step you should choose the method with which you want to manage your environment variables.
+
+## Local file (for development purposes, or non-sensitive data)
+
+Get environment variables from a local `.env` file.
+
+### Setup
+
+Create a local `.env` file in your project directory. This file should contain the environment variables you want to set.
+
+Example:
+
+```dotenv
+MY_ENVIRONMENT_VARIABLE_NAME="..."
 ```
 
-# Copy the following example to your project
+### Usage
 
-Copy the code below to your python main program. e.g main.py
+Sample using a `with` statement:
+```python
+  with EnvironmentVariablesManager(FileSecretsProvider()):
+    # environment variables will be available only in this section
+    ...
+    my agentic code
+    ...
+```
+
+## CyberArk Conjur
+
+Get environment variables from a secret in [CyberArk Conjur](https://www.conjur.org/).  
+
+### Setup
+
+The Conjur provider supports the following environment variables:
+
+| Environment Variable    | Description                                                                               | Required?                                  |
+|-------------------------|-------------------------------------------------------------------------------------------|--------------------------------------------|
+| CONJUR_APPLIANCE_URL    | The Conjur base URL. For example, "https://my-org.secretsmgr.cyberark.cloud/api"          | Yes                                        |
+| CONJUR_AUTHN_LOGIN      | The Conjur host (workload ID) with which the login to Conjur will be made                 | Yes                                        |
+| CONJUR_AUTHN_API_KEY    | The API key of the Conjur host (workload ID) to authenticate to Conjur                    | Yes, if API key authentication is used     |
+| CONJUR_AUTHENTICATOR_ID | If an API key is not used, which authenticator should be used to authenticate to Conjur   | Yes, if API key authentication is not used |
+| CONJUR_ACCOUNT          | The Conjur account. Default: "conjur"                                                     | No                                         |
+| CONJUR_AUTHN_IAM_REGION | If using an IAM authenticator, which AWS region should be accessed. Default: "us-east-1"  | No                                         |
+
+Define the environment variables for your program, based on the way you want to authenticate to Conjur.
+
+Example when authenticating to Conjur using an API key:
+
+```shell
+export CONJUR_APPLIANCE_URL="https://my-org.secretsmgr.cyberark.cloud/api"
+export CONJUR_AUTHN_LOGIN="<your workload ID>"
+export CONJUR_AUTHN_API_KEY="<API key>"
+```
+
+Example when authenticating to Conjur using an API key:
+
+```shell
+export CONJUR_APPLIANCE_URL="https://my-org.secretsmgr.cyberark.cloud/api"
+export CONJUR_AUTHN_LOGIN="<your workload ID>"
+export CONJUR_AUTHENTICATOR_ID="authn-iam/default"
+```
+
+Create the secret that will contain the environment variables.
+
+Save the following yaml file into `data.yml`:
+
+```yaml
+- !policy
+  id: my-app-policy
+  owner: !host my-workload
+  body:
+    - !variable agentic_env_vars
+```
+
+Load `data.yml`:
+
+```shell
+conjur policy load -b data -f data.yml
+```
+
+Then, store the environment variables in the secret:
+
+```shell
+conjur variable set -i data/my-app-policy/agentic_env_vars -v '{"MY_ENVIRONMENT_VARIABLE_NAME": "...", "MY_OTHER_ENVIRONMENT_VARIABLE_NAME": "..." }'
+```
+
+### Usage
+
+Sample using a `with` statement:
 
 ```python
-# ...existing code...
-
-from secure_ai_toolset.secrets.aws_secrets_manager_provider import AWSSecretsProvider
-from secure_ai_toolset.secrets.environment_manager import EnvironmentVariablesManager
-
-
-# Populate the environment variables from AWS Secrets Manager
-@EnvironmentVariablesManager.set_env_vars(AWSSecretsProvider())
-async def main() -> None:
-    runtime = SingleThreadedAgentRuntime()
-    tools: List[Tool] = [
-        FunctionTool(get_stock_price, description='Get the stock price.')
-    ]
-    
-    await ToolAgent.register(runtime, 'tool_executor_agent',
-                             lambda: ToolAgent('tool executor agent', tools))
-
-    await ToolUseAgent.register(
-        runtime,
-        'tool_use_agent',
-        lambda: ToolUseAgent(
-            AzureOpenAIChatCompletionClient(
-                model='gpt-4o',
-                azure_endpoint=os.getenv('AZURE_OPENAI_ENDPOINT'),
-                azure_deployment='gpt-4o',
-                api_version='2024-02-01'),
-            [tool.schema for tool in tools], 'tool_executor_agent'),
-    )
-
-    # ...existing code...
-```
-# Setup Environment File cre
-
-seup your local machine with AWS credentials or use another 
-
-# Run the example  
-
-run the code you copied to your python
-
-```bash
-python main,py
+  with EnvironmentVariablesManager(ConjurSecretsProvider(namespace="data/my-app-policy")):
+    # environment variables will be available only in this section
+    ...
+    my agentic code
+    ...
 ```
