@@ -65,6 +65,7 @@ jobs:
           ls -l dist/*
 
       - name: Create release
+        if: startsWith(github.ref, 'refs/heads/main')      
         id: create-release
         run: |
           gh release create ${{ env.VERSION_NAME }} ./dist/*.whl
