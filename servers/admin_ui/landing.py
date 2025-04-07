@@ -1,22 +1,13 @@
-import os
 
 import streamlit as st
 
-# Center the title
-st.markdown("<h1 style='text-align: center;'>Agent Guard</h1>",
-            unsafe_allow_html=True)
+from servers.admin_ui.common import print_header
 
-# Check if the logo file exists
-logo_path = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir,
-                         "resources", "logo.png")
-if os.path.exists(logo_path):
-    st.image(logo_path,
-             use_container_width=True)  # Display the logo if it exists
-else:
-    st.warning(
-        "Logo file not found. Please ensure 'agent_guard_logo.png' is in the correct directory."
-    )
+# configure streamlit
+st.set_page_config(layout="wide")
+print_header(title="Agent Guard", sub_title="Securing Agentic AI")
 
+st.write("\n\n")
 st.subheader("Welcome to Agent Guard!")
 st.write("""
 Agent Guard is your AI-driven security solution, offering the following capabilities:
@@ -24,6 +15,10 @@ Agent Guard is your AI-driven security solution, offering the following capabili
     - AWS Secrets Manager
     - CyberArk Conjur secret provider
     - Local file secret provider (for testing purposes and non sensitive data only) 
-- **Environment keys editor**: A user-friendly interface for managing environment keys. The keys are stored in a secret provider.
-- **RestAPI Server**: A rest api exposing the Agent Guard features. For more details, visit the [API server documentation](http://localhost:8081/docs).
+- **Environment keys editor**: A user-friendly interface for managing environment keys. 
+    - The keys are stored in the selected secret provider.
+- **RestAPI Server**: A rest api exposing the Agent Guard features. 
+    - The server abstracts multiple providers in a single endpoint. 
+    - It uses the provider selected in the configuration phase.
+    - For more details, visit the [API server documentation](http://localhost:8081/docs).
 """)

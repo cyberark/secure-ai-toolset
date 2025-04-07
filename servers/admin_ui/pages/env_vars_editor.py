@@ -3,20 +3,17 @@ import streamlit as st
 
 from agent_guard_core.credentials.aws_secrets_manager_provider import AWSSecretsProvider
 from agent_guard_core.credentials.secrets_provider import SecretProviderException
-from servers.admin_ui.common import get_secret_provider, get_secret_provider_name
-from servers.admin_ui.common import SecretProviderOptions
-
-st.title("Environment Variables Editor")
+from servers.admin_ui.common import get_secret_provider, get_secret_provider_name, print_header
 
 # get server configuration
 secrets_dictionary = None
 try:
-    secret_provider = get_secret_provider()    
+    secret_provider = get_secret_provider()
     secrets_dictionary = secret_provider.get_secret_dictionary()
 
 except SecretProviderException as e:  # Fixed typo in exception handling
-    if "ExpiredTokenException" in e.args[
-            0] and isinstance(secret_provider, AWSSecretsProvider):
+    if "ExpiredTokenException" in e.args[0] and isinstance(
+            secret_provider, AWSSecretsProvider):
         st.error(
             "Your AWS Token is expired. Please update your AWS credentials.")
     else:
@@ -27,8 +24,10 @@ except Exception as e:
              )  # Added generic exception handling
 
 # Display the name of the secret provider as a subheader using SecretProviderOptions
+st.set_page_config(layout="wide")
 secret_provider_name = get_secret_provider_name()
-st.subheader(f"Secret Provider: {secret_provider_name}")
+print_header(title="Environment Variables Editor",
+             sub_title=f"Secret Provider: {secret_provider_name}")
 
 # Display the secrets dictionary in a Streamlit data editor
 if secrets_dictionary is None:

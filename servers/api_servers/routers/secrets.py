@@ -37,10 +37,10 @@ async def read_secrets():
     """
     secret_provider = get_secret_provider()
     secrets_dictionary = secret_provider.get_secret_dictionary()
-    secrets_list = [
-        {"secret_key": key, "secret_value": value}
-        for key, value in secrets_dictionary.items()
-    ]
+    secrets_list = [{
+        "secret_key": key,
+        "secret_value": value
+    } for key, value in secrets_dictionary.items()]
     return secrets_list
 
 

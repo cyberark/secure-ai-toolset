@@ -3,7 +3,7 @@ import os  # Added import for os
 import streamlit as st
 
 from agent_guard_core.credentials.file_secrets_provider import FileSecretsProvider
-from servers.admin_ui.common import SecretProviderOptions
+from servers.admin_ui.common import SecretProviderOptions, print_header
 
 # Update configuration file location to the parent directory of this file
 config_file_dir = os.path.join(os.path.dirname(__file__), os.pardir)
@@ -19,8 +19,8 @@ SECRET_PROVIDER_KEY = "SECRET_PROVIDER"
 configuration = server_config_provider.get_secret_dictionary()
 
 # Display the title and subtitle of the page
-st.title("Configuration")
-st.subheader("Manage Agent Guard settings")
+st.set_page_config(layout="wide")
+print_header(title="Configuration", sub_title="Manage Agent Guard settings")
 
 # Retrieve the currently configured secret provider
 configured_secret_provider = configuration.get(SECRET_PROVIDER_KEY)
