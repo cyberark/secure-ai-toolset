@@ -20,8 +20,10 @@ else:
 st.subheader("Welcome to Agent Guard!")
 st.write("""
 Agent Guard is your AI-driven security solution, offering the following capabilities:
-- **Local Secret Provider**: Acts as a proxy to other secret providers.
-- **Prompt Guard Server**: Ensures secure and controlled interactions with AI models.
-- **Proxy Server**: Facilitates secure access to other servers.
-- **Authentication and Access Control Server**: Manages user authentication and access control.
+- **Secret Provider**: Acts as a proxy to the following secret providers:
+    - AWS Secrets Manager
+    - CyberArk Conjur secret provider
+    - Local file secret provider (for testing purposes and non sensitive data only) 
+- **Environment keys editor**: A user-friendly interface for managing environment keys. The keys are stored in a secret provider.
+- **RestAPI Server**: A rest api exposing the Agent Guard features. For more details, visit the [API server documentation](http://localhost:8081/docs).
 """)

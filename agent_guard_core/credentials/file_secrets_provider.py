@@ -5,7 +5,6 @@ from dotenv import dotenv_values
 
 from agent_guard_core.credentials.secrets_provider import BaseSecretsProvider, SecretProviderException
 
-DEFAULT_NAMESPACE = ""
 DEFAULT_SECRET_ID = ".env"
 
 
@@ -15,15 +14,17 @@ class FileSecretsProvider(BaseSecretsProvider):
     It provides methods to store, retrieve, and delete secrets in a file-based storage.
     """
 
-    def __init__(self, namespace: str = None):
+    def __init__(self, namespace: str = "", directory: str = None):
         """
-        Initialize the FileSecretsProvider with an optional namespace.
+        Initialize the FileSecretsProvider with an optional namespace and directory.
 
         :param namespace: The namespace to use for storing secrets. Defaults to an empty string.
+        :param directory: The directory to use for storing secrets. Defaults to None.
         """
         super().__init__()
-        self._namespace = DEFAULT_NAMESPACE if not namespace else namespace
-        self._dictionary_path = f"{self._namespace}{DEFAULT_SECRET_ID}"
+        base_path = directory or ""
+        self._dictionary_path = os.path.abspath(
+            os.path.join(base_path, namespace + DEFAULT_SECRET_ID))
 
     def get_secret_dictionary(self) -> Dict[str, str]:
         """
@@ -39,7 +40,8 @@ class FileSecretsProvider(BaseSecretsProvider):
             else:
                 return {}
         except Exception as e:
-            raise SecretProviderException(str(e.args[0]))
+            raise SecretProviderException(
+                str(e))  # Use str(e) for better reliability
 
         return secret_dictionary
 

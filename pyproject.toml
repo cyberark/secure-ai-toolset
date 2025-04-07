@@ -51,4 +51,5 @@ autogen-ext = {extras = ["openai"], version = "^0.4.9.2"}
 uvicorn = "^0.34.0"
 streamlit = "^1.44.1"
 fastapi = "^0.115.12"
+pandas = "*"
 
