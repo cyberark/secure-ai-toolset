@@ -1,3 +1,5 @@
+from agent_guard_core.credentials.aws_secrets_manager_provider import AWSSecretsProvider
+
 # Getting started with the credentials module
 
 ## Add the dependencies
@@ -27,6 +29,7 @@ MY_ENVIRONMENT_VARIABLE_NAME="..."
 ### Usage
 
 Sample using a `with` statement:
+
 ```python
   with EnvironmentVariablesManager(FileSecretsProvider()):
     # environment variables will be available only in this section
@@ -35,9 +38,33 @@ Sample using a `with` statement:
     ...
 ```
 
+## AWS Secrets Manager
+
+Get environment variables from a secret stored in AWS Secrets Manager.
+
+### Setup
+
+Make sure you have a valid AWS credentials configured. You can set them up using the AWS CLI or by setting the following environment variables. For example:
+
+```shell
+aws sso login --profile my-profile
+```
+
+### Usage
+
+Sample using a `with` statement:
+
+```python
+  with EnvironmentVariablesManager(AWSSecretsProvider(namespace='my-prefix')):
+    # environment variables will be available only in this section
+    ...
+    my agentic code
+    ...
+```
+
 ## CyberArk Conjur
 
-Get environment variables from a secret in [CyberArk Conjur](https://www.conjur.org/).  
+Get environment variables from a secret stored in [CyberArk Conjur](https://www.conjur.org/).  
 
 ### Setup
 
