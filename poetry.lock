@@ -633,15 +633,17 @@ files = [
 
 [[package]]
 name = "dotty-dict"
-version = "1.3.1"
+version = "1.3.0"
 description = "Dictionary wrapper for quick access to deeply nested keys."
 optional = false
-python-versions = ">=3.5,<4.0"
+python-versions = "*"
 groups = ["dev"]
 files = [
-    {file = "dotty_dict-1.3.1-py3-none-any.whl", hash = "sha256:5022d234d9922f13aa711b4950372a06a6d64cb6d6db9ba43d0ba133ebfce31f"},
-    {file = "dotty_dict-1.3.1.tar.gz", hash = "sha256:4b016e03b8ae265539757a53eba24b9bfda506fb94fbce0bee843c6f05541a15"},
+    {file = "dotty_dict-1.3.0.tar.gz", hash = "sha256:eb0035a3629ecd84397a68f1f42f1e94abd1c34577a19cd3eacad331ee7cbaf0"},
 ]
+
+[package.dependencies]
+setuptools_scm = "*"
 
 [[package]]
 name = "exceptiongroup"
@@ -687,12 +689,29 @@ description = "Get the latest version of the specified python package name in th
 optional = false
 python-versions = "*"
 groups = ["dev"]
+markers = "python_version >= \"3.12\""
 files = [
     {file = "get_pypi_latest_version-0.0.7-py3-none-any.whl", hash = "sha256:ed12ae9d1dbf3fc2e7725193760f4939abc08999a5af26e6eb91c7315ed6067d"},
 ]
 
 [package.dependencies]
 html5lib = ">=1.1"
+requests = ">=2.28.1"
+
+[[package]]
+name = "get-pypi-latest-version"
+version = "0.1.0"
+description = "Get the latest version of the specified python package name in the pypi."
+optional = false
+python-versions = "<3.13,>=3.6"
+groups = ["dev"]
+markers = "python_version <= \"3.11\""
+files = [
+    {file = "get_pypi_latest_version-0.1.0-py3-none-any.whl", hash = "sha256:cfed45689aaa92acb7144a33f576142ca24ec2b3e094fdb9d984c0ed8f263d2a"},
+]
+
+[package.dependencies]
+packaging = "*"
 requests = ">=2.28.1"
 
 [[package]]
@@ -748,6 +767,7 @@ description = "HTML parser based on the WHATWG HTML specification"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 groups = ["dev"]
+markers = "python_version >= \"3.12\""
 files = [
     {file = "html5lib-1.1-py2.py3-none-any.whl", hash = "sha256:0d78f8fde1c230e99fe37986a60526d7049ed4bf8a9fadbad5f00e22e58e041d"},
     {file = "html5lib-1.1.tar.gz", hash = "sha256:b2e5b40261e20f354d198eae92afc10d750afb487ed5e50f9c4eaf07c184146f"},
@@ -2577,6 +2597,28 @@ test = ["build[virtualenv] (>=1.0.3)", "filelock (>=3.4.0)", "ini2toml[lite] (>=
 type = ["importlib_metadata (>=7.0.2) ; python_version < \"3.10\"", "jaraco.develop (>=7.21) ; sys_platform != \"cygwin\"", "mypy (==1.14.*)", "pytest-mypy"]
 
 [[package]]
+name = "setuptools-scm"
+version = "8.2.0"
+description = "the blessed package to manage your versions by scm tags"
+optional = false
+python-versions = ">=3.8"
+groups = ["dev"]
+files = [
+    {file = "setuptools_scm-8.2.0-py3-none-any.whl", hash = "sha256:136e2b1d393d709d2bcf26f275b8dec06c48b811154167b0fd6bb002aad17d6d"},
+    {file = "setuptools_scm-8.2.0.tar.gz", hash = "sha256:a18396a1bc0219c974d1a74612b11f9dce0d5bd8b1dc55c65f6ac7fd609e8c28"},
+]
+
+[package.dependencies]
+packaging = ">=20"
+setuptools = ">=61"
+tomli = {version = ">=1", markers = "python_version < \"3.11\""}
+
+[package.extras]
+docs = ["entangled-cli (>=2.0,<3.0)", "mkdocs", "mkdocs-entangled-plugin", "mkdocs-material", "mkdocstrings[python]", "pygments"]
+rich = ["rich"]
+test = ["build", "pytest", "rich", "typing-extensions ; python_version < \"3.11\"", "wheel"]
+
+[[package]]
 name = "shellingham"
 version = "1.5.4"
 description = "Tool to Detect Surrounding Shell"
@@ -2599,6 +2641,7 @@ files = [
     {file = "six-1.17.0-py2.py3-none-any.whl", hash = "sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274"},
     {file = "six-1.17.0.tar.gz", hash = "sha256:ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81"},
 ]
+markers = {dev = "python_version >= \"3.12\""}
 
 [[package]]
 name = "smmap"
@@ -3005,6 +3048,7 @@ description = "Character encoding aliases for legacy web content"
 optional = false
 python-versions = "*"
 groups = ["dev"]
+markers = "python_version >= \"3.12\""
 files = [
     {file = "webencodings-0.5.1-py2.py3-none-any.whl", hash = "sha256:a0af1213f3c2226497a97e2b3aa01a7e4bee4f403f95be16fc9acd2947514a78"},
     {file = "webencodings-0.5.1.tar.gz", hash = "sha256:b36a1c245f2d304965eb4e0a82848379241dc04b865afcc4aab16748587e1923"},
@@ -3138,5 +3182,5 @@ type = ["pytest-mypy"]
 
 [metadata]
 lock-version = "2.1"
-python-versions = ">=3.10.0, <4.0"
-content-hash = "5a451285b57b4c7e781c91861d82cab1082f45e2c067d42fe86ea17b7f3f2dc9"
+python-versions = ">=3.10.0"
+content-hash = "74d930b39f4fa8b3035bce44ec4031f082f6f09edbdcff42047b7cbcfc35121c"
