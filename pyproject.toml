@@ -46,3 +46,9 @@ boto3 = "*"
 [tool.poetry.group.autogen.dependencies]
 autogen-core = ">=0.4.9.2,<0.5.0.0"
 autogen-ext = {extras = ["openai"], version = "^0.4.9.2"}
+
+[tool.poetry.group.servers.dependencies]
+uvicorn = "^0.34.0"
+streamlit = "^1.44.1"
+fastapi = "^0.115.12"
+
