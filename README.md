@@ -78,22 +78,7 @@ async def main() -> None:
 
 ## ⚡ Getting Started
 
-1. Consume the toolset from [pypi](https://pypi.org/project/agent-guard-core/).
-2. Follow one of our [examples](https://github.com/cyberark/agent-guard/tree/main/examples) to see how to use the toolset.
-
-### pip
-
-```bash
-pip3 install agent-guard-core
-```
-
-### poetry
-
-```bash
-poetry add agent-guard-core
-```
-
-**Note:** Please ensure you are using Poetry version >=2.1.1.
+Please take a look at our [getting started](https://github.com/cyberark/agent-guard/blob/main/GETTING_STARTED.md) page and try it out!
 
 ## 🤝 Contribution
 

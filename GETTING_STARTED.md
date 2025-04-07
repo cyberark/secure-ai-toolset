@@ -2,15 +2,24 @@
 
 ## Add the dependencies
 
-Add agent-guard-core to your project. This module is available on PyPI and can be installed using pip or poetry.
+This module is available on PyPI. Add agent-guard-core to your project:
 
-```shell
+### pip
+
+```bash
+pip3 install agent-guard-core
+```
+
+### poetry
+
+```bash
 poetry add agent-guard-core
 ```
 
-Next step you should choose the method with which you want to manage your environment variables.
+**_NOTE:_** Please ensure you are using Poetry version >=2.1.1.
 
-**_NOTE:_** You can also combine providers. For example, use the local file provider for non-sensitive environment variables and then a secret manager for the sensitive variables.
+Then choose the method with which you want to manage your environment variables.  
+You can also combine providers. For example, use the local file provider for non-sensitive environment variables and then a secret manager for the sensitive variables.
 
 ## Local file (for development purposes, or non-sensitive data)
 
