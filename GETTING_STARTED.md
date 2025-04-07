@@ -18,14 +18,19 @@ poetry add agent-guard-core
 
 **_NOTE:_** Please ensure you are using Poetry version >=2.1.1.
 
-Then choose the method with which you want to manage your environment variables.  
-You can also combine providers. For example, use the local file provider for non-sensitive environment variables and then a secret manager for the sensitive variables.
+## Choose a provider
 
-## Local file (for development purposes, or non-sensitive data)
+Choose the provider with which you want to manage your environment variables.  
+The `namespace` parameter determines the location of the secret/file in which the variables are stored.   
 
-Get environment variables from a local `.env` file.
+**_NOTE:_** You can also combine providers. For example, use the local file provider for non-sensitive environment variables and then a secret manager for the sensitive variables.
 
-### Setup
+### Local file (for development purposes, or non-sensitive data)
+
+Get environment variables from a local `.env` file.  
+You can use a different file name, using the `namespace` parameter.
+
+#### Setup
 
 Create a local `.env` file in your project directory. This file should contain the environment variables you want to set.
 
@@ -35,7 +40,7 @@ Example:
 MY_ENVIRONMENT_VARIABLE_NAME="..."
 ```
 
-### Usage
+#### Usage
 
 Example using a `with` statement:
 
@@ -47,11 +52,12 @@ Example using a `with` statement:
     ...
 ```
 
-## AWS Secrets Manager
+### AWS Secrets Manager
 
-Get environment variables from a secret stored in AWS Secrets Manager.
+Get environment variables from a secret stored in AWS Secrets Manager.  
+The secret name is determined by the `namespace` parameter as follows: `<namespace>/agentic_env_vars`
 
-### Setup
+#### Setup
 
 Make sure you have a valid AWS credentials configured. You can set them up using the AWS CLI or by setting the following environment variables. For example:
 
@@ -59,7 +65,7 @@ Make sure you have a valid AWS credentials configured. You can set them up using
 aws sso login --profile my-profile
 ```
 
-### Usage
+#### Usage
 
 Example using a `with` statement:
 
@@ -71,11 +77,12 @@ Example using a `with` statement:
     ...
 ```
 
-## CyberArk Conjur
+### CyberArk Conjur
 
 Get environment variables from a secret stored in [CyberArk Conjur](https://www.conjur.org/).  
+The secret name is determined by the `namespace` parameter as follows: `<namespace>/agentic_env_vars`
 
-### Setup
+#### Setup
 
 The Conjur provider supports the following environment variables:
 
@@ -130,7 +137,7 @@ Then, store the environment variables in the secret:
 conjur variable set -i data/my-app-policy/agentic_env_vars -v '{"MY_ENVIRONMENT_VARIABLE_NAME": "...", "MY_OTHER_ENVIRONMENT_VARIABLE_NAME": "..." }'
 ```
 
-### Usage
+#### Usage
 
 Example using a `with` statement:
 
