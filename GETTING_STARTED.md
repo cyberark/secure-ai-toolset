@@ -1,5 +1,3 @@
-from agent_guard_core.credentials.aws_secrets_manager_provider import AWSSecretsProvider
-
 # Getting started with the credentials module
 
 ## Add the dependencies
@@ -11,6 +9,8 @@ poetry add agent-guard-core
 ```
 
 Next step you should choose the method with which you want to manage your environment variables.
+
+**_NOTE:_** You can also combine providers. For example, use the local file provider for non-sensitive environment variables and then a secret manager for the sensitive variables.
 
 ## Local file (for development purposes, or non-sensitive data)
 
@@ -28,7 +28,7 @@ MY_ENVIRONMENT_VARIABLE_NAME="..."
 
 ### Usage
 
-Sample using a `with` statement:
+Example using a `with` statement:
 
 ```python
   with EnvironmentVariablesManager(FileSecretsProvider()):
@@ -52,7 +52,7 @@ aws sso login --profile my-profile
 
 ### Usage
 
-Sample using a `with` statement:
+Example using a `with` statement:
 
 ```python
   with EnvironmentVariablesManager(AWSSecretsProvider(namespace='my-prefix')):
@@ -89,7 +89,7 @@ export CONJUR_AUTHN_LOGIN="<your workload ID>"
 export CONJUR_AUTHN_API_KEY="<API key>"
 ```
 
-Example when authenticating to Conjur using an API key:
+Example when authenticating to Conjur using the AWS IAM authenticator:
 
 ```shell
 export CONJUR_APPLIANCE_URL="https://my-org.secretsmgr.cyberark.cloud/api"
@@ -123,7 +123,7 @@ conjur variable set -i data/my-app-policy/agentic_env_vars -v '{"MY_ENVIRONMENT_
 
 ### Usage
 
-Sample using a `with` statement:
+Example using a `with` statement:
 
 ```python
   with EnvironmentVariablesManager(ConjurSecretsProvider(namespace="data/my-app-policy")):
