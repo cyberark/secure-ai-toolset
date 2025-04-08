@@ -7,7 +7,7 @@ from autogen_core.tool_agent import ToolAgent
 from autogen_core.tools import FunctionTool, Tool
 from autogen_ext.models.openai import AzureOpenAIChatCompletionClient
 
-from agent_guard_core.credentials.aws_secrets_manager_provider import AWSSecretsProvider
+from agent_guard_core.credentials.conjur_secrets_provider import ConjurSecretsProvider
 from agent_guard_core.credentials.environment_manager import EnvironmentVariablesManager
 from examples.autogen.environment_variables_populate.autogen_common import Message, ToolUseAgent, get_stock_price
 
@@ -15,6 +15,15 @@ from examples.autogen.environment_variables_populate.autogen_common import Messa
 async def main() -> None:
     """
     The main function to run the agent.
+
+    Steps:
+    1. Create a runtime for managing agents.
+    2. Define tools and register a ToolAgent to execute them.
+    3. Register a ToolUseAgent that interacts with the ToolAgent using Azure OpenAI.
+    4. Use EnvironmentVariablesManager to inject environment variables securely.
+    5. Start the runtime and send a message to the ToolUseAgent to get a stock price.
+    6. Print the response and handle any errors during execution.
+    7. Ensure proper cleanup by stopping the runtime.
     """
     # Create a runtime.
     runtime = SingleThreadedAgentRuntime()
@@ -41,7 +50,13 @@ async def main() -> None:
 
     try:
         # Start processing messages.
-        with EnvironmentVariablesManager(AWSSecretsProvider()):
+        before_os_dict = os.environ.copy()
+        with EnvironmentVariablesManager(ConjurSecretsProvider()):
+            # Print the environment variables after injection
+            new_keys = set(os.environ.keys()) - set(before_os_dict.keys())
+            print("New environment keys after injection:")
+            print("\n".join(new_keys))
+
             runtime.start()
 
             # Send a direct message to the tool agent.
@@ -50,6 +65,10 @@ async def main() -> None:
             response = await runtime.send_message(Message(prompt),
                                                   tool_use_agent_id)
             print(response.content)
+
+       # Print the environment variables after injection
+        print("New environment keys after injection:")
+        new_keys = set(os.environ.keys()) - set(before_os_dict.keys())
 
     except Exception as e:
         print(f'An error occurred: {e.args[0]}')

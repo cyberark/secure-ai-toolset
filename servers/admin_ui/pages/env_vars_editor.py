@@ -3,12 +3,22 @@ import streamlit as st
 
 from agent_guard_core.credentials.aws_secrets_manager_provider import AWSSecretsProvider
 from agent_guard_core.credentials.secrets_provider import SecretProviderException
-from servers.admin_ui.common import get_secret_provider, get_secret_provider_name, print_header
+from servers.admin_ui.common import (get_secret_provider, get_secret_provider_name, get_secret_provider_namespace,
+                                     print_header)
 
 # get server configuration
 secrets_dictionary = None
 try:
     secret_provider = get_secret_provider()
+    # Display the name of the secret provider as a subheader using SecretProviderOptions
+    secret_provider_name = get_secret_provider_name()
+    secret_provider_namespace = get_secret_provider_namespace()
+    print_header(
+        title="Environment Variables Editor",
+        sub_title=
+        f"Secret Provider: {secret_provider_name} (Namespace: {secret_provider_namespace})"
+    )
+
     secrets_dictionary = secret_provider.get_secret_dictionary()
 
 except SecretProviderException as e:  # Fixed typo in exception handling
@@ -22,12 +32,6 @@ except SecretProviderException as e:  # Fixed typo in exception handling
 except Exception as e:
     st.error(f"An unexpected error occurred: {str(e)}"
              )  # Added generic exception handling
-
-# Display the name of the secret provider as a subheader using SecretProviderOptions
-st.set_page_config(layout="wide")
-secret_provider_name = get_secret_provider_name()
-print_header(title="Environment Variables Editor",
-             sub_title=f"Secret Provider: {secret_provider_name}")
 
 # Display the secrets dictionary in a Streamlit data editor
 if secrets_dictionary is None:

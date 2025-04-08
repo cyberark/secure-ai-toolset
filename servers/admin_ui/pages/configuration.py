@@ -3,7 +3,7 @@ import os  # Added import for os
 import streamlit as st
 
 from agent_guard_core.credentials.file_secrets_provider import FileSecretsProvider
-from servers.admin_ui.common import SecretProviderOptions, print_header
+from servers.admin_ui.common import SECRET_NAMESPACE_KEY, SecretProviderOptions, print_header
 
 # Update configuration file location to the parent directory of this file
 config_file_dir = os.path.join(os.path.dirname(__file__), os.pardir)
@@ -19,7 +19,6 @@ SECRET_PROVIDER_KEY = "SECRET_PROVIDER"
 configuration = server_config_provider.get_secret_dictionary()
 
 # Display the title and subtitle of the page
-st.set_page_config(layout="wide")
 print_header(title="Configuration", sub_title="Manage Agent Guard settings")
 
 # Retrieve the currently configured secret provider
@@ -57,7 +56,13 @@ selected_secret_provider_key = {
     for key, option in SecretProviderOptions.__members__.items()
 }.get(secret_provider_value)
 
-# Display Conjur-specific inputs only if the selected provider is Conjur
+# Retrieve existing configuration values
+namespace = configuration.get(SECRET_NAMESPACE_KEY)  # Retrieve namespace
+
+# Input field for namespace (common for all providers)
+namespace = st.text_input(SECRET_NAMESPACE_KEY, namespace)
+
+# Display provider-specific inputs
 if selected_secret_provider_key == SecretProviderOptions.CONJUR_SECRET_PROVIDER.name:
     # Retrieve existing Conjur configuration values
     conjur_authn_login = configuration.get(CONJUR_AUTHN_LOGIN_KEY)
@@ -81,5 +86,15 @@ with st.form("configuration_form"):
         # Save the selected secret provider key
         server_config_provider.store(SECRET_PROVIDER_KEY,
                                      selected_secret_provider_key)
+        # Save namespace for all providers
+        server_config_provider.store(SECRET_NAMESPACE_KEY, namespace)
+        # Save Conjur-specific configuration if applicable
+        if selected_secret_provider_key == SecretProviderOptions.CONJUR_SECRET_PROVIDER.name:
+            server_config_provider.store(CONJUR_AUTHN_LOGIN_KEY,
+                                         conjur_authn_login)
+            server_config_provider.store(CONJUR_AUTHN_API_KEY_KEY,
+                                         conjur_authn_api_key)
+            server_config_provider.store(CONJUR_APPLIANCE_URL_KEY,
+                                         conjur_appliance_url)
         # Display a success message
         st.success("Configuration saved successfully!")

@@ -9,6 +9,7 @@ import boto3
 import requests
 from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
+from dotenv import load_dotenv
 
 from agent_guard_core.credentials.secrets_provider import BaseSecretsProvider, SecretProviderException
 
@@ -31,6 +32,7 @@ class ConjurSecretsProvider(BaseSecretsProvider):
                  region_name=DEFAULT_REGION,
                  namespace=DEFAULT_NAMESPACE):
         super().__init__()
+        load_dotenv()
 
         self._url = os.getenv("CONJUR_APPLIANCE_URL")
         self._workload_id = os.getenv("CONJUR_AUTHN_LOGIN")

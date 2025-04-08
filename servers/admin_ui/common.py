@@ -14,6 +14,7 @@ CONJUR_AUTHN_LOGIN_KEY = "CONJUR_AUTHN_LOGIN"
 CONJUR_AUTHN_API_KEY_KEY = "CONJUR_AUTHN_API_KEY"
 CONJUR_APPLIANCE_URL_KEY = "CONJUR_APPLIANCE_URL"
 SECRET_PROVIDER_KEY = "SECRET_PROVIDER"
+SECRET_NAMESPACE_KEY = "SECRET_NAMESPACE"
 
 
 class SecretProviderOptions(Enum):
@@ -23,27 +24,32 @@ class SecretProviderOptions(Enum):
 
 
 secret_provider_name = None
+secret_provider_namespace = None
 
 
 def get_secret_provider():
-    global secret_provider_name
+    global secret_provider_name, secret_provider_namespace
 
     config_file_dir = os.path.join(os.path.dirname(__file__))
     config_provider = FileSecretsProvider(directory=config_file_dir)
 
     configuration = config_provider.get_secret_dictionary()
     secret_provider_id = configuration.get(SECRET_PROVIDER_KEY)
+    config_namespace = configuration.get(SECRET_NAMESPACE_KEY)
+    secret_provider_namespace = config_namespace if config_namespace else ""
 
     if secret_provider_id == SecretProviderOptions.FILE_SECRET_PROVIDER.name:
-        secret_provider = FileSecretsProvider(namespace="secrets",
-                                              directory=config_file_dir)
+        secret_provider = FileSecretsProvider(
+            namespace=secret_provider_namespace, directory=config_file_dir)
         secret_provider_name = SecretProviderOptions.FILE_SECRET_PROVIDER.value
     elif secret_provider_id == SecretProviderOptions.AWS_SECRET_MANAGER.name:
-        secret_provider = AWSSecretsProvider()
+        secret_provider = AWSSecretsProvider(
+            namespace=secret_provider_namespace)
         secret_provider_name = SecretProviderOptions.AWS_SECRET_MANAGER.value
     elif secret_provider_id == SecretProviderOptions.CONJUR_SECRET_PROVIDER.name:
         with EnvironmentVariablesManager(config_provider):
-            secret_provider = ConjurSecretsProvider(namespace='data/test')
+            secret_provider = ConjurSecretsProvider(
+                namespace=secret_provider_namespace)
         secret_provider_name = SecretProviderOptions.CONJUR_SECRET_PROVIDER.value
     else:
         raise Exception("Secret provider undefined")
@@ -58,9 +64,16 @@ def get_secret_provider_name() -> str:
     return secret_provider_name
 
 
+def get_secret_provider_namespace() -> str:
+    global secret_provider_namespace
+    if secret_provider_namespace is None:
+        get_secret_provider()
+    return secret_provider_namespace
+
+
 def print_header(title: str, sub_title: str):
     col0, col1, col2 = st.columns([2, 1, 6],
-                                  gap='medium',
+                                  gap='small',
                                   vertical_alignment='top',
                                   border=False)
     with col0:
@@ -78,5 +91,5 @@ def print_header(title: str, sub_title: str):
     with col1:
         pass
     with col2:
-        st.title(title)
-        st.header(sub_title)
+        st.header(title)
+        st.subheader(sub_title)
