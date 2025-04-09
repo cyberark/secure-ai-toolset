@@ -66,7 +66,7 @@ async def main() -> None:
                                                   tool_use_agent_id)
             print(response.content)
 
-       # Print the environment variables after injection
+    # Print the environment variables after injection
         print("New environment keys after injection:")
         new_keys = set(os.environ.keys()) - set(before_os_dict.keys())
 

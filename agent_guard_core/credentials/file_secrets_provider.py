@@ -14,17 +14,36 @@ class FileSecretsProvider(BaseSecretsProvider):
     It provides methods to store, retrieve, and delete secrets in a file-based storage.
     """
 
-    def __init__(self, namespace: str = "", directory: str = None):
+    def __init__(self, namespace: str = ""):
         """
-        Initialize the FileSecretsProvider with an optional namespace and directory.
+        Initialize the FileSecretsProvider with a namespace.
 
-        :param namespace: The namespace to use for storing secrets. Defaults to an empty string.
-        :param directory: The directory to use for storing secrets. Defaults to None.
+        :param namespace: The namespace to use for storing secrets. It can include slashes to represent a directory structure.
         """
         super().__init__()
-        base_path = directory or ""
+        if not namespace:
+            raise SecretProviderException("Namespace cannot be empty")
+
+        # Use namespace as directory structure, last part as file name
+        base_path, file_name = os.path.split(namespace)
+        if not file_name:
+            raise SecretProviderException("Namespace must include a file name")
+
+        if base_path and not os.path.exists(base_path):
+            os.makedirs(base_path, exist_ok=True)
+
         self._dictionary_path = os.path.abspath(
-            os.path.join(base_path, namespace + DEFAULT_SECRET_ID))
+            os.path.join(base_path, file_name + DEFAULT_SECRET_ID))
+
+        # Check if the file exists, if not, create it
+        if not os.path.exists(self._dictionary_path):
+            try:
+
+                with open(self._dictionary_path, "w") as f:
+                    pass  # Create an empty file
+            except Exception as e:
+                raise SecretProviderException(
+                    f"Failed to create secrets file: {e}")
 
     def get_secret_dictionary(self) -> Dict[str, str]:
         """
@@ -40,8 +59,7 @@ class FileSecretsProvider(BaseSecretsProvider):
             else:
                 return {}
         except Exception as e:
-            raise SecretProviderException(
-                str(e))  # Use str(e) for better reliability
+            raise SecretProviderException(e) from e
 
         return secret_dictionary
 

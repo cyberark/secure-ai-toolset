@@ -1,6 +1,7 @@
 # Define an Enum for secret provider options
 import os
 from enum import Enum
+from pathlib import Path
 
 import streamlit as st
 
@@ -15,10 +16,11 @@ CONJUR_AUTHN_API_KEY_KEY = "CONJUR_AUTHN_API_KEY"
 CONJUR_APPLIANCE_URL_KEY = "CONJUR_APPLIANCE_URL"
 SECRET_PROVIDER_KEY = "SECRET_PROVIDER"
 SECRET_NAMESPACE_KEY = "SECRET_NAMESPACE"
+CONFIG_NAMESPACE = 'server'
 
 
 class SecretProviderOptions(Enum):
-    AWS_SECRET_MANAGER = "AWS Secret Manager"
+    AWS_SECRETS_MANAGER_PROVIDER = "AWS Secrets Manager"
     FILE_SECRET_PROVIDER = "local.env file"
     CONJUR_SECRET_PROVIDER = "CyberArk Conjur Cloud"
 
@@ -30,22 +32,21 @@ secret_provider_namespace = None
 def get_secret_provider():
     global secret_provider_name, secret_provider_namespace
 
-    config_file_dir = os.path.join(os.path.dirname(__file__))
-    config_provider = FileSecretsProvider(directory=config_file_dir)
+    config_provider = FileSecretsProvider(namespace=CONFIG_NAMESPACE)
 
     configuration = config_provider.get_secret_dictionary()
     secret_provider_id = configuration.get(SECRET_PROVIDER_KEY)
-    config_namespace = configuration.get(SECRET_NAMESPACE_KEY)
-    secret_provider_namespace = config_namespace if config_namespace else ""
+    namespace = configuration.get(SECRET_NAMESPACE_KEY)
+    secret_provider_namespace = namespace if namespace else ""
 
     if secret_provider_id == SecretProviderOptions.FILE_SECRET_PROVIDER.name:
         secret_provider = FileSecretsProvider(
-            namespace=secret_provider_namespace, directory=config_file_dir)
+            namespace=secret_provider_namespace)
         secret_provider_name = SecretProviderOptions.FILE_SECRET_PROVIDER.value
-    elif secret_provider_id == SecretProviderOptions.AWS_SECRET_MANAGER.name:
+    elif secret_provider_id == SecretProviderOptions.AWS_SECRETS_MANAGER_PROVIDER.name:
         secret_provider = AWSSecretsProvider(
             namespace=secret_provider_namespace)
-        secret_provider_name = SecretProviderOptions.AWS_SECRET_MANAGER.value
+        secret_provider_name = SecretProviderOptions.AWS_SECRETS_MANAGER_PROVIDER.value
     elif secret_provider_id == SecretProviderOptions.CONJUR_SECRET_PROVIDER.name:
         with EnvironmentVariablesManager(config_provider):
             secret_provider = ConjurSecretsProvider(
@@ -78,8 +79,8 @@ def print_header(title: str, sub_title: str):
                                   border=False)
     with col0:
         # Check if the logo file exists
-        logo_path = os.path.join(os.path.dirname(__file__), os.pardir,
-                                 os.pardir, "resources", "logo.png")
+        logo_path = os.path.join(str(Path(__file__).parent.parent.parent),
+                                 "resources", "logo.png")
         if os.path.exists(logo_path):
             st.image(
                 logo_path,
