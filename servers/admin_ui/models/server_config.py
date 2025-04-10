@@ -29,12 +29,6 @@ class ServerConfig(BaseModel):
                     f"Missing fields required for CONJUR_SECRET_PROVIDER: {', '.join(missing_fields)}"
                 )
 
-        # # Add validation for FILE_SECRET_PROVIDER
-        # if self.SECRET_PROVIDER == "FILE_SECRET_PROVIDER" and self.SECRET_NAMESPACE:
-        #     if "/" in self.SECRET_NAMESPACE or "\\" in self.SECRET_NAMESPACE:
-        #         raise ValueError(
-        #             "SECRET_NAMESPACE cannot contain '/' or '\\' when using FILE_SECRET_PROVIDER"
-        #         )
         return self
 
     @staticmethod

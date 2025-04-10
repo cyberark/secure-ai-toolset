@@ -43,7 +43,6 @@ try:
         f"Secret Provider: {secret_provider_name} (Namespace: {secret_provider_namespace})"
     )
 
-    # Initialize the secret provider without the 'directory' argument
     secrets_dictionary = secret_provider.get_secret_dictionary()
 
 except SecretProviderException as e:
