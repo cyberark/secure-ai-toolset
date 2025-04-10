@@ -13,7 +13,7 @@ def save_edits(edited_secrets: pd.DataFrame):
         updated_secrets = {}
         for row in edited_secrets.iterrows():
             key, value = row[1]
-            if key and value and key not in updated_secrets:
+            if key and key not in updated_secrets:
                 updated_secrets[key] = value
             elif key in updated_secrets:
                 st.warning(f"Duplicate key found:{key}")

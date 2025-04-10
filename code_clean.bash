@@ -19,3 +19,7 @@ bandit -r $python_files
 
 # run gitleaks
 gitleaks -v git --no-banner
+
+# add pylint
+echo pylint check
+pylint $python_files

@@ -19,7 +19,8 @@ def file_selector(folder_path='.'):
         if os.path.isdir(os.path.join(folder_path, entry))
         and not entry.startswith('.')
     ]
-    selected_directory = st.selectbox('Select a directory (From users home)', directories)
+    selected_directory = st.selectbox('Select a directory (From users home)',
+                                      directories)
     return os.path.join(folder_path, selected_directory)
 
 
@@ -86,11 +87,15 @@ selected_secret_provider_key = {
 }.get(secret_provider_value)
 config.SECRET_PROVIDER = selected_secret_provider_key
 
-
 users_home = Path.home()
 if selected_secret_provider_key == SecretProviderOptions.FILE_SECRET_PROVIDER.name:
+    if config.SECRET_NAMESPACE:
+        folder_path = Path(config.SECRET_NAMESPACE).parent
+        file_name = Path(config.SECRET_NAMESPACE).name
+    else:
+        folder_path = users_home
     dir = file_selector(folder_path=users_home)
-    file_name = st.text_input("File Name")
+    file_name = st.text_input("File Name", file_name)
     namespace = os.path.join(dir, file_name)
     st.write(f"File location: {namespace}")
 else:
@@ -118,8 +123,5 @@ with st.form("configuration_form"):
     # Submit button to save the configuration
     submitted = st.form_submit_button("Save Configuration")
     if submitted:
-        if selected_secret_provider_key == SecretProviderOptions.FILE_SECRET_PROVIDER.name and not file_name.strip():
-            st.error("File Name is required!")
-        else:
-            save_configuration(provider=config_provider, config=config)
-            st.success("Configuration saved successfully!")
+        save_configuration(provider=config_provider, config=config)
+        st.success("Configuration saved successfully!")

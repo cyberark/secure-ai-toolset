@@ -16,18 +16,9 @@ keywords = ["security", "AI", "secrets"]
 repository = "https://github.com/cyberark/agent-guard"
 requires-python = ">=3.9"
 dependencies = [
-    "boto3",
     "python-dotenv",
-     "requests"
+    "requests",
 ]
-
-
-[tool.semantic_release.main]
-branch = "main"
-version_variable = ["pyproject.toml:version"]
-upload_to_pypi = false
-upload_to_release = true
-build_command = "pip install poetry && poetry build"
 
 [build-system]
 requires = ["poetry-core"]
@@ -45,9 +36,14 @@ dev = [
     "twine",
     "python-semantic-release",
     "bandit",
-    "twine"
+    "twine",
+    "pylint",
 ]
 servers = [
     "uvicorn", "streamlit", "fastapi", "pandas"
 ]
 autogen = [ "autogen-core", "autogen-ext[openai]" ]
+
+aws = ["boto3"]
+
+openai = ["h2>=4.2.0", "httpx>=0.28.1",]
