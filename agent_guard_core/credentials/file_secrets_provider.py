@@ -5,8 +5,6 @@ from dotenv import dotenv_values
 
 from agent_guard_core.credentials.secrets_provider import BaseSecretsProvider, SecretProviderException
 
-DEFAULT_SECRET_ID = ".env"
-
 
 class FileSecretsProvider(BaseSecretsProvider):
     """
@@ -33,7 +31,7 @@ class FileSecretsProvider(BaseSecretsProvider):
             os.makedirs(base_path, exist_ok=True)
 
         self._dictionary_path = os.path.abspath(
-            os.path.join(base_path, file_name + DEFAULT_SECRET_ID))
+            os.path.join(base_path, file_name))
 
         # Check if the file exists, if not, create it
         if not os.path.exists(self._dictionary_path):

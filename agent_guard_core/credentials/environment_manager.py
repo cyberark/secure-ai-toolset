@@ -66,8 +66,8 @@ class EnvironmentVariablesManager:
         try:
             secret_dictionary = self.secret_provider.get_secret_dictionary()
         except Exception as e:
-            self._logger.warning(
-                f"Failed to list environment variables: {e.args[0]}")
+            self._logger.warning("Failed to list environment variables: %s",
+                                 e.args[0])
             return {}
         return secret_dictionary
 
@@ -110,8 +110,8 @@ class EnvironmentVariablesManager:
             self.secret_provider.store_secret_dictionary(
                 secret_dictionary=secret_dictionary)
         except Exception as e:
-            self._logger.error(
-                f"Failed to set environment variable '{key}': {e.args[0]}")
+            self._logger.error("Failed to set environment variable '%s': %s",
+                               key, e.args[0])
         finally:
             # Clear the secret dictionary from process references
             del secret_dictionary
@@ -132,7 +132,8 @@ class EnvironmentVariablesManager:
                     secret_dictionary=secret_dictionary)
         except Exception as e:
             self._logger.error(
-                f"Failed to remove environment variable '{key}': {e.args[0]}")
+                "Failed to remove environment variable '%s': %s", key,
+                e.args[0])
         finally:
             # Clear the secret dictionary from process references
             del secret_dictionary
@@ -145,8 +146,8 @@ class EnvironmentVariablesManager:
         env_vars: Dict[str, str] = self.list_env_vars()
         for key, value in env_vars.items():
             os.environ[key] = value
-            self._logger.info(
-                f"Populating environment variable with key: {key}")
+            self._logger.info("Populating environment variable with key: %s",
+                              key)
             del value
 
         # Clear the secret dictionary from process references
@@ -161,8 +162,8 @@ class EnvironmentVariablesManager:
         for key in env_vars.keys():
             if key in os.environ:
                 del os.environ[key]
-                self._logger.info(
-                    f"Removing environment variable with key: {key}")
+                self._logger.info("Removing environment variable with key: %s",
+                                  key)
 
         # Clear the secret dictionary from process references
         del env_vars

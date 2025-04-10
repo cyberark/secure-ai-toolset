@@ -7,8 +7,8 @@ from autogen_core.tool_agent import ToolAgent
 from autogen_core.tools import FunctionTool, Tool
 from autogen_ext.models.openai import AzureOpenAIChatCompletionClient
 
-from agent_guard_core.secrets.aws_secrets_manager_provider import AWSSecretsProvider
-from agent_guard_core.secrets.environment_manager import EnvironmentVariablesManager
+from agent_guard_core.credentials.aws_secrets_manager_provider import AWSSecretsProvider
+from agent_guard_core.credentials.environment_manager import EnvironmentVariablesManager
 from examples.autogen.environment_variables_populate.autogen_common import Message, ToolUseAgent, get_stock_price
 
 

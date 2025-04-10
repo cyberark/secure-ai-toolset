@@ -10,7 +10,10 @@ current_dir = Path(__file__).resolve().parent
 os.chdir(current_dir)
 
 # configure streamlit
-st.set_page_config(layout="wide")
+st.set_page_config(page_title="Agent Guard Management UI",
+                   page_icon="🛡️",
+                   layout="wide")
+
 print_header(title="Agent Guard", sub_title="Securing Agentic AI")
 
 st.write("\n\n")

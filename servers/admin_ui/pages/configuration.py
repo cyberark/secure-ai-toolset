@@ -1,3 +1,7 @@
+import os
+# Replace the text input with a file picker if the selected provider is FileSecretsProvider
+from pathlib import Path
+
 import streamlit as st
 
 from agent_guard_core.credentials.file_secrets_provider import FileSecretsProvider
@@ -7,13 +11,47 @@ from servers.admin_ui.common import (CONFIG_NAMESPACE, CONJUR_APPLIANCE_URL_KEY,
 from servers.admin_ui.models.server_config import ServerConfig
 
 
+def file_selector(folder_path: str):
+    if not folder_path:
+        raise Exception("No folder defined for selection")
+    # List only directories not starting with '.'
+    entries = os.listdir(folder_path)
+    directories = [
+        entry for entry in entries
+        if os.path.isdir(os.path.join(folder_path, entry))
+        and not entry.startswith('.')
+    ]
+    selected_directory = st.selectbox('Select a directory (From users home)',
+                                      directories)
+    return os.path.join(folder_path, selected_directory)
+
+
+def get_file_namespace_input(config) -> str:
+    if config.SECRET_NAMESPACE:
+        start_dir = str(Path(config.SECRET_NAMESPACE).parent.parent)
+        file_name = str(Path(config.SECRET_NAMESPACE).name)
+    else:
+        start_dir = str(Path.home())
+
+    # Pick the folder
+    folder_path = file_selector(folder_path=start_dir)
+
+    # Update the file name
+    file_name = st.text_input("File Name", file_name)
+
+    namespace = os.path.join(folder_path, file_name)
+    st.write(f"File location: {namespace}")
+
+    return namespace
+
+
 def save_configuration(provider: FileSecretsProvider, config: ServerConfig):
 
     provider.store(SECRET_PROVIDER_KEY, config.SECRET_PROVIDER)
     provider.store(SECRET_NAMESPACE_KEY, config.SECRET_NAMESPACE)
 
     # Save Conjur-specific configuration if applicable
-    if 'CONJUR_SECRET_PROVIDER' is config.SECRET_PROVIDER:
+    if 'CONJUR_SECRET_PROVIDER' == config.SECRET_PROVIDER:
         provider.store(CONJUR_AUTHN_LOGIN_KEY, config.CONJUR_AUTHN_LOGIN)
         provider.store(CONJUR_AUTHN_API_KEY_KEY, config.CONJUR_AUTHN_API_KEY)
         provider.store(CONJUR_APPLIANCE_URL_KEY, config.CONJUR_APPLIANCE_URL)
@@ -69,9 +107,12 @@ selected_secret_provider_key = {
     for key, option in SecretProviderOptions.__members__.items()
 }.get(secret_provider_value)
 config.SECRET_PROVIDER = selected_secret_provider_key
-# Retrieve existing configuration values
-# Input field for namespace (common for all providers)
-namespace = st.text_input(SECRET_NAMESPACE_KEY, config.SECRET_NAMESPACE)
+
+if selected_secret_provider_key == SecretProviderOptions.FILE_SECRET_PROVIDER.name:
+    namespace = get_file_namespace_input(config=config)
+else:
+    namespace = st.text_input(SECRET_NAMESPACE_KEY, config.SECRET_NAMESPACE)
+
 config.SECRET_NAMESPACE = namespace
 # Display provider-specific inputs
 if selected_secret_provider_key == SecretProviderOptions.CONJUR_SECRET_PROVIDER.name:
