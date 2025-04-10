@@ -4,14 +4,18 @@
 
 This module is available on PyPI. Add agent-guard-core to your project:
 
-### pip
+### uv
+```bash
+uv add agent-guard-core
+```
 
+### pip
 ```bash
 pip3 install agent-guard-core
 ```
 
-### poetry
 
+### poetry
 ```bash
 poetry add agent-guard-core
 ```

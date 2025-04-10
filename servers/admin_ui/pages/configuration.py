@@ -1,3 +1,7 @@
+import os
+# Replace the text input with a file picker if the selected provider is FileSecretsProvider
+from pathlib import Path
+
 import streamlit as st
 
 from agent_guard_core.credentials.file_secrets_provider import FileSecretsProvider
@@ -7,13 +11,25 @@ from servers.admin_ui.common import (CONFIG_NAMESPACE, CONJUR_APPLIANCE_URL_KEY,
 from servers.admin_ui.models.server_config import ServerConfig
 
 
+def file_selector(folder_path='.'):
+    # List only directories not starting with '.'
+    entries = os.listdir(folder_path)
+    directories = [
+        entry for entry in entries
+        if os.path.isdir(os.path.join(folder_path, entry))
+        and not entry.startswith('.')
+    ]
+    selected_directory = st.selectbox('Select a directory (From users home)', directories)
+    return os.path.join(folder_path, selected_directory)
+
+
 def save_configuration(provider: FileSecretsProvider, config: ServerConfig):
 
     provider.store(SECRET_PROVIDER_KEY, config.SECRET_PROVIDER)
     provider.store(SECRET_NAMESPACE_KEY, config.SECRET_NAMESPACE)
 
     # Save Conjur-specific configuration if applicable
-    if 'CONJUR_SECRET_PROVIDER' is config.SECRET_PROVIDER:
+    if 'CONJUR_SECRET_PROVIDER' in config.SECRET_PROVIDER:
         provider.store(CONJUR_AUTHN_LOGIN_KEY, config.CONJUR_AUTHN_LOGIN)
         provider.store(CONJUR_AUTHN_API_KEY_KEY, config.CONJUR_AUTHN_API_KEY)
         provider.store(CONJUR_APPLIANCE_URL_KEY, config.CONJUR_APPLIANCE_URL)
@@ -69,9 +85,17 @@ selected_secret_provider_key = {
     for key, option in SecretProviderOptions.__members__.items()
 }.get(secret_provider_value)
 config.SECRET_PROVIDER = selected_secret_provider_key
-# Retrieve existing configuration values
-# Input field for namespace (common for all providers)
-namespace = st.text_input(SECRET_NAMESPACE_KEY, config.SECRET_NAMESPACE)
+
+
+users_home = Path.home()
+if selected_secret_provider_key == SecretProviderOptions.FILE_SECRET_PROVIDER.name:
+    dir = file_selector(folder_path=users_home)
+    file_name = st.text_input("File Name")
+    namespace = os.path.join(dir, file_name)
+    st.write(f"File location: {namespace}")
+else:
+    namespace = st.text_input(SECRET_NAMESPACE_KEY, config.SECRET_NAMESPACE)
+
 config.SECRET_NAMESPACE = namespace
 # Display provider-specific inputs
 if selected_secret_provider_key == SecretProviderOptions.CONJUR_SECRET_PROVIDER.name:
@@ -94,5 +118,8 @@ with st.form("configuration_form"):
     # Submit button to save the configuration
     submitted = st.form_submit_button("Save Configuration")
     if submitted:
-        save_configuration(provider=config_provider, config=config)
-        st.success("Configuration saved successfully!")
+        if selected_secret_provider_key == SecretProviderOptions.FILE_SECRET_PROVIDER.name and not file_name.strip():
+            st.error("File Name is required!")
+        else:
+            save_configuration(provider=config_provider, config=config)
+            st.success("Configuration saved successfully!")

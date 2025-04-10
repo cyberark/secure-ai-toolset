@@ -1,15 +1,25 @@
-[tool.poetry]
+[project]
 name = "agent-guard-core"
 version = "0.1.0"
 description = "Python library to secure AI agents with environment credentials from multiple secret providers and more"
 readme = "README.md"
 license = "Apache-2.0"
-authors = ["CyberArk <cyberark@cyberark.com>", "Gil Adda <gil.adda@cyberark.com", "Rafi Schwartz <rafi.schwartz@cyberark.com>"]
+authors = [
+    { name = "CyberArk", email = "cyberark@cyberark.com" },
+    { name = "Gil Adda", email = "gil.adda@cyberark.com" },
+    { name = "Rafi Schwartz", email = "rafi.schwartz@cyberark.com" }
+]
 packages = [
     { include = "agent_guard_core" },
 ]
 keywords = ["security", "AI", "secrets"]
 repository = "https://github.com/cyberark/agent-guard"
+requires-python = ">=3.9"
+dependencies = [
+    "boto3",
+    "python-dotenv",
+     "requests"
+]
 
 
 [tool.semantic_release.main]
@@ -23,31 +33,21 @@ build_command = "pip install poetry && poetry build"
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.poetry.dependencies]
-python = ">=3.10.0"
-boto3 = "*"
-python-dotenv = "^1.0.0"
-requests = ">=2.32.2"
 
-[tool.poetry.dev-dependencies]
-pytest = "*"
-yapf = "^0.43.0"
-isort = "^6.0.1"
-autoflake = "^2.3.1"
-toml = "^0.10.2"
-twine = "^6.1.0"
-python-semantic-release = "^9.21.0"
-bandit = "^1.8.3"
-[tool.poetry.group.aws.dependencies]
-boto3 = "*"
-
-[tool.poetry.group.autogen.dependencies]
-autogen-core = ">=0.4.9.2,<0.5.0.0"
-autogen-ext = {extras = ["openai"], version = "^0.4.9.2"}
-
-[tool.poetry.group.servers.dependencies]
-uvicorn = "^0.34.0"
-streamlit = "^1.44.1"
-fastapi = "^0.115.12"
-pandas = "*"
-
+[project.optional-dependencies]
+dev = [
+    "uv",
+    "pytest",
+    "yapf",
+    "isort",
+    "autoflake",
+    "toml",
+    "twine",
+    "python-semantic-release",
+    "bandit",
+    "twine"
+]
+servers = [
+    "uvicorn", "streamlit", "fastapi", "pandas"
+]
+autogen = [ "autogen-core", "autogen-ext[openai]" ]

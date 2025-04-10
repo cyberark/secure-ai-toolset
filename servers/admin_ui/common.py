@@ -33,28 +33,33 @@ def get_secret_provider():
     global secret_provider_name, secret_provider_namespace
 
     config_provider = FileSecretsProvider(namespace=CONFIG_NAMESPACE)
-
     configuration = config_provider.get_secret_dictionary()
     secret_provider_id = configuration.get(SECRET_PROVIDER_KEY)
     namespace = configuration.get(SECRET_NAMESPACE_KEY)
     secret_provider_namespace = namespace if namespace else ""
 
-    if secret_provider_id == SecretProviderOptions.FILE_SECRET_PROVIDER.name:
-        secret_provider = FileSecretsProvider(
-            namespace=secret_provider_namespace)
-        secret_provider_name = SecretProviderOptions.FILE_SECRET_PROVIDER.value
-    elif secret_provider_id == SecretProviderOptions.AWS_SECRETS_MANAGER_PROVIDER.name:
-        secret_provider = AWSSecretsProvider(
-            namespace=secret_provider_namespace)
-        secret_provider_name = SecretProviderOptions.AWS_SECRETS_MANAGER_PROVIDER.value
-    elif secret_provider_id == SecretProviderOptions.CONJUR_SECRET_PROVIDER.name:
-        with EnvironmentVariablesManager(config_provider):
-            secret_provider = ConjurSecretsProvider(
-                namespace=secret_provider_namespace)
-        secret_provider_name = SecretProviderOptions.CONJUR_SECRET_PROVIDER.value
-    else:
+    provider_mapping = {
+        SecretProviderOptions.FILE_SECRET_PROVIDER.name:
+        (FileSecretsProvider,
+         SecretProviderOptions.FILE_SECRET_PROVIDER.value),
+        SecretProviderOptions.AWS_SECRETS_MANAGER_PROVIDER.name:
+        (AWSSecretsProvider,
+         SecretProviderOptions.AWS_SECRETS_MANAGER_PROVIDER.value),
+        SecretProviderOptions.CONJUR_SECRET_PROVIDER.name:
+        (ConjurSecretsProvider,
+         SecretProviderOptions.CONJUR_SECRET_PROVIDER.value),
+    }
+
+    provider_info = provider_mapping.get(secret_provider_id)
+    if not provider_info:
         raise Exception("Secret provider undefined")
 
+    provider_class, provider_name = provider_info
+
+    with EnvironmentVariablesManager(config_provider):
+        secret_provider = provider_class(namespace=secret_provider_namespace)
+
+    secret_provider_name = provider_name
     return secret_provider
 
 
