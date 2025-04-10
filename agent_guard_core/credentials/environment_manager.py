@@ -71,7 +71,7 @@ class EnvironmentVariablesManager:
             return {}
         return secret_dictionary
 
-    def _add_env_var(self, key: str, value: str) -> None:
+    def add_env_var(self, key: str, value: str) -> None:
         """
         Add a new environment variable to the secret provider.
 
@@ -80,7 +80,7 @@ class EnvironmentVariablesManager:
         """
         self._set_env_var(key, value)
 
-    def _get_env_var(self, key: str) -> Optional[str]:
+    def get_env_var(self, key: str) -> Optional[str]:
         """
         Retrieve an environment variable from the secret provider.
 
