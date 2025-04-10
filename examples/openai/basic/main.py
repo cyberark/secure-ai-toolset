@@ -5,13 +5,13 @@ from agent_guard_core.credentials.file_secrets_provider import FileSecretsProvid
 
 with EnvironmentVariablesManager(
         FileSecretsProvider("/Users/gil.adda/Music/demo.env")):
-    
+
     client = OpenAI()
 
-    # 
+    #
     # Use this code if you face an enterprise MITM proxy re-signing the certificates
     # and you want to disable SSL certificate verification
-    # 
+    #
     # httpx_client = httpx.Client(http2=True, verify=False)
     # client = OpenAI(http_client=httpx_client)
 
