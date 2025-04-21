@@ -10,7 +10,7 @@ import requests
 from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
 
-from secure_ai_toolset.secrets.secrets_provider import BaseSecretsProvider, SecretProviderException
+from agent_guard_core.credentials.secrets_provider import BaseSecretsProvider, SecretProviderException
 
 # Tokens should only be reused for 5 minutes (max lifetime is 8 minutes)
 DEFAULT_TOKEN_EXPIRATION = 8
@@ -28,25 +28,51 @@ HTTP_CREATED=201
 HTTP_NOTFOUND_OR_EMPTY=404
 
 class ConjurSecretsProvider(BaseSecretsProvider):
+    """
+      namespace: Conjur policy base branch
+      ext_authn_cred_provider: externally defined function to provide Conjur authn creds (authn method dependent)
+
+      Passing function references allows for user-defined functions 
+      for providing authn creds. Useful defaults are provided by the class.
+    """
     def __init__(self,
-                 region_name=DEFAULT_REGION,
                  namespace=DEFAULT_NAMESPACE,
-		 secret_id=DEFAULT_SECRET_ID):
+                 ext_authn_cred_provider=None):
         super().__init__()
 
-        self._url = os.getenv("CONJUR_APPLIANCE_URL")
-        self._workload_id = os.getenv("CONJUR_AUTHN_LOGIN")
-        self._api_key = os.getenv("CONJUR_AUTHN_API_KEY", "")
-        self._jwt = os.getenv("CONJUR_AUTHN_JWT", "")
-        self._authenticator_id = os.getenv("CONJUR_AUTHENTICATOR_ID")
+        # reference to external authn credential provider function
+        self._ext_authn_cred_provider = ext_authn_cred_provider
+
+        init_error = False
+        # common authn values for all authn endpoints
+        self._url = os.getenv("CONJUR_APPLIANCE_URL", None)
+        if self._url is None:
+          self.logger.error(f"ConjurSecretsProvider:__init__(): Required env var CONJUR_APPLIANCE_URL is missing.")
+          init_error = True
+
+        self._authenticator_id = os.getenv("CONJUR_AUTHENTICATOR_ID", None)
+        if self._authenticator_id is None:
+          self.logger.error(f"ConjurSecretsProvider:__init__(): Required env var CONJUR_AUTHENTICATOR_ID is missing.")
+          init_error = True
+
+        self._workload_id = os.getenv("CONJUR_AUTHN_LOGIN", None)
+        if self._workload_id is None:
+          self.logger.error(f"ConjurSecretsProvider:__init__(): Required env var CONJUR_AUTHN_LOGIN is missing.")
+          init_error = True
+
+        if init_error:
+          raise SecretProviderException(f"ConjurSecretsProvider: One or more required environment variables are missing.")
+          
         self._account = os.getenv("CONJUR_ACCOUNT", DEFAULT_CONJUR_ACCOUNT)
-        self._region = os.getenv("CONJUR_AUTHN_IAM_REGION", region_name)
-        self._access_token = None
-        self._access_token_expiration = datetime.now()
-        self._branch = namespace
+        self._branch = namespace 
         self._secret_name = DEFAULT_SECRET_ID
 
-    def _authenticate_aws(self) -> bool:
+        # placeholder for Conjur token & expiry time
+        self._access_token = None
+        self._access_token_expiration = datetime.now()
+
+    # ---- AWS authentication ----
+    def _authenticate_aws_iam(self) -> bool:
         """
         Authenticates with Conjur using AWS IAM role.
 
@@ -56,11 +82,17 @@ class ConjurSecretsProvider(BaseSecretsProvider):
             bool: True if the authentication succeeded, False if it failed.
         """
 
-        session = boto3.Session()
-        credentials = session.get_credentials()
-        credentials = credentials.get_frozen_credentials()
+        if self._ext_authn_cred_provider is not None:
+          credentials = self._ext_authn_cred_provider()
+        else:
+          session = boto3.Session()
+          credentials = session.get_credentials()
+          credentials = credentials.get_frozen_credentials()
+        if credentials is None:
+          self.logger.error(f"ConjurSecretsProvider:_authenticate_api_key(): No API key provided.")
 
         # Sign the request using the STS temporary credentials
+        self._region = os.getenv("CONJUR_AUTHN_IAM_REGION", DEFAULT_REGION)
         sigv4 = SigV4Auth(credentials, "sts", self._region)
         sts_uri = f"https://sts.{self._region}.amazonaws.com/?Action=GetCallerIdentity&Version=2011-06-15"
         request = AWSRequest(method="GET", url=sts_uri)
@@ -79,6 +111,8 @@ class ConjurSecretsProvider(BaseSecretsProvider):
             return True
         return False
 
+
+    # ---- API key authentication ----
     def _authenticate_api_key(self) -> bool:
         """
         Authenticates with Conjur using an API key.
@@ -86,7 +120,13 @@ class ConjurSecretsProvider(BaseSecretsProvider):
         Returns:
             bool: True if the authentication succeeded, False if it failed.
         """
-
+        if self._ext_authn_cred_provider is not None:
+          api_key = self._ext_authn_cred_provider()
+        else:
+          api_key = os.getenv("CONJUR_AUTHN_API_KEY", None) 
+        if api_key is None:
+          self.logger.error(f"ConjurSecretsProvider:_authenticate_api_key(): No API key provided.")
+          
         # Fetch an access token from Conjur
         conjur_authenticate_uri = f'{self._url}/authn/{self._account}/{self._workload_id.replace("/", "%2F")}/authenticate'
         headers = {"Accept-Encoding": "base64"}
@@ -99,17 +139,29 @@ class ConjurSecretsProvider(BaseSecretsProvider):
             return True
         return False
 
+    # ---- JWT authentication ----
     def _authenticate_jwt(self) -> bool:
         """
         Authenticates with Conjur using a JSON web token (JWT).
 
-        JWT is pulled from environment variable CONJUR_AUTHN_JWT and stored in a private variable.
-        It may expire if it has a short TTL. Because of that we might consider bespoke _authenticate_jwt
-        functions for each issuer, similar to _authenticate_aws().
+        Default behavior is the JWT is expected to be in an environment 
+        variable named CONJUR_AUTHN_JWT. As the JWT may expire if it has a 
+        short TTL, the default behavior is intended for dev/test only.
+
+        The intention is the user should define an external function that 
+        returns a current JWT per the operating environment. A reference to
+        the provider function should be passed at instance creation.
 
         Returns:
             bool: True if the authentication succeeded, False if it failed.
         """
+
+        if self._ext_authn_cred_provider is not None:
+          self._jwt = self._ext_authn_cred_provider()
+        else:
+          self._jwt = os.getenv("CONJUR_AUTHN_JWT", None)
+        if self._jwt is None:
+          self.logger.error(f"ConjurSecretsProvider:_authenticate_jwt(): No JWT provided.")
 
         # Fetch an access token from Conjur
         conjur_authenticate_uri = f'{self._url}/{self._authenticator_id}/{self._account}/authenticate'
@@ -124,9 +176,10 @@ class ConjurSecretsProvider(BaseSecretsProvider):
             self._access_token = response.text
             return True
 
-        self.logger.error(f"_authenticate_jwt(): authentication error: {response.text}")
+        self.logger.error(f"ConjurSecretsProvider:_authenticate_jwt(): authentication error: {response.text}")
         raise SecretProviderException(response.text)
         return False
+
 
     def _get_conjur_headers(self) -> Dict[str, str]:
         if not self._access_token:
