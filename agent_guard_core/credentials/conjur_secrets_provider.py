@@ -83,13 +83,15 @@ class ConjurSecretsProvider(BaseSecretsProvider):
         """
 
         if self._ext_authn_cred_provider is not None:
+          self.logger.debug(f"ConjurSecretsProvider:_authenticate_aws_iam(): Calling external credential provider function...")
           credentials = self._ext_authn_cred_provider()
         else:
           session = boto3.Session()
           credentials = session.get_credentials()
           credentials = credentials.get_frozen_credentials()
         if credentials is None:
-          self.logger.error(f"ConjurSecretsProvider:_authenticate_api_key(): No API key provided.")
+          self.logger.error(f"ConjurSecretsProvider:_authenticate_aws_iam(): Error getting AWS IAM credentials.")
+          raise SecretProviderException(f"ConjurSecretsProvider:_authenticate_aws_iam(): Error getting AWS IAM credentials.")
 
         # Sign the request using the STS temporary credentials
         self._region = os.getenv("CONJUR_AUTHN_IAM_REGION", DEFAULT_REGION)
@@ -120,12 +122,17 @@ class ConjurSecretsProvider(BaseSecretsProvider):
         Returns:
             bool: True if the authentication succeeded, False if it failed.
         """
+
         if self._ext_authn_cred_provider is not None:
+          self.logger.debug(f"ConjurSecretsProvider:_authenticate_api_key(): Calling external credential provider function...")
           api_key = self._ext_authn_cred_provider()
         else:
-          api_key = os.getenv("CONJUR_AUTHN_API_KEY", None) 
+          api_key = os.getenv("CONJUR_AUTHN_API_KEY", None)
+          if api_key is None:
+            self.logger.error(f"ConjurSecretsProvider:_authenticate_api_key(): Required env var CONJUR_AUTHN_API_KEY is missing.")
         if api_key is None:
           self.logger.error(f"ConjurSecretsProvider:_authenticate_api_key(): No API key provided.")
+          raise SecretProviderException(f"ConjurSecretsProvider:_authenticate_api_key(): No API key provided.")
           
         # Fetch an access token from Conjur
         conjur_authenticate_uri = f'{self._url}/authn/{self._account}/{self._workload_id.replace("/", "%2F")}/authenticate'
@@ -157,11 +164,15 @@ class ConjurSecretsProvider(BaseSecretsProvider):
         """
 
         if self._ext_authn_cred_provider is not None:
+          self.logger.debug(f"ConjurSecretsProvider:_authenticate_jwt(): Calling external credential provider function...")
           self._jwt = self._ext_authn_cred_provider()
         else:
           self._jwt = os.getenv("CONJUR_AUTHN_JWT", None)
+          if self._jwt is None:
+            self.logger.error(f"ConjurSecretsProvider:_authenticate_jwt(): Required env var CONJUR_AUTHN_JWT is missing.")
         if self._jwt is None:
           self.logger.error(f"ConjurSecretsProvider:_authenticate_jwt(): No JWT provided.")
+          raise SecretProviderException(f"ConjurSecretsProvider:_authenticate_jwt(): No JWT provided.")
 
         # Fetch an access token from Conjur
         conjur_authenticate_uri = f'{self._url}/{self._authenticator_id}/{self._account}/authenticate'
