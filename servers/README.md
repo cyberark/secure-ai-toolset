@@ -13,22 +13,37 @@ The `servers` directory includes the following:
 
 ### 1. Install Dependencies
 Navigate to the specific server directory and create a virtual environment:
+
+#### Install dependencies using pip
 ```bash
-poetry env activate
-poetry install --with servers
+virtualenv .venv
+source .venv/bin/activate 
+pip install -r requirements.txt 
 ```
 
-### 2. Run the Landing Page
-Assuming you are at the root directory of the project, start the landing page (Main UX) using Streamlit on port 8080:
+#### Install dependencies using uv
+
+uv installation documentation can be found [here](https://docs.astral.sh/uv/getting-started/installation/)
+
 ```bash
-streamlit run servers/admin_ui/landing.py --server.port 8080
+uv venv
+uv sync
+```
+
+
+
+### 2. Run the Admin UI Landing Page
+Open a new terminal.
+Assuming you are at the root directory of the project, start the landing page (Main UX) on port 8080 using these commands:
+```bash
+python  -m streamlit run servers/admin_ui/landing.py --server.port 8080 &
 ```
 
 ### 3. Run the API Server
-Start the API server using Uvicorn on port 8081:
+Open a new terminal.
+Assuming you are at the root directory of the project, start the API server on port 8081 using these commands:
 ```bash
-cd servers/api_servers
-python -m uvicorn main:app --host 0.0.0.0 --port 8081
+python -m uvicorn servers.api_servers.main:app --host 0.0.0.0 --port 8081
 ```
 
 #### Invoke the API to Get All Secrets

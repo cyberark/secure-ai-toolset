@@ -3,9 +3,10 @@ from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse
-from routers.config import config_router
-from routers.default import default_router
-from routers.environment_variables import environment_variables_router
+
+from servers.api_servers.routers.config import config_router
+from servers.api_servers.routers.default import default_router
+from servers.api_servers.routers.environment_variables import environment_variables_router
 
 app = FastAPI(
     title="AgentGuard",

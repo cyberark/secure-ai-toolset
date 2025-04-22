@@ -39,7 +39,9 @@ To start developing and testing using our development scripts, the following too
 3. Install the dependencies
 
 ```bash
-poetry install
+virtualenv .venv
+source .venv/bin/activate 
+pip install -r requirements.txt 
 ```
 4. Run the unit tests
 

@@ -16,7 +16,6 @@ CONJUR_AUTHN_API_KEY_KEY = "CONJUR_AUTHN_API_KEY"
 CONJUR_APPLIANCE_URL_KEY = "CONJUR_APPLIANCE_URL"
 SECRET_PROVIDER_KEY = "SECRET_PROVIDER"
 SECRET_NAMESPACE_KEY = "SECRET_NAMESPACE"
-CONFIG_NAMESPACE = '../server.env'
 
 
 class SecretProviderOptions(Enum):
@@ -29,11 +28,28 @@ secret_provider_name = None
 secret_provider_namespace = None
 
 
-def get_secret_provider():
-    global secret_provider_name, secret_provider_namespace
+def get_config_file_path():
+    file_dir = Path(__file__).parent.parent
+    file_path = os.path.join(file_dir, "server_config.env")
+    return file_path
 
-    config_provider = FileSecretsProvider(namespace=CONFIG_NAMESPACE)
+
+def get_config_provider():
+    config_provider = FileSecretsProvider(namespace=get_config_file_path())
+    return config_provider
+
+
+def get_config_dict():
+    configuration = get_config_provider().get_secret_dictionary()
+    return configuration
+
+
+def get_secret_provider():
+    # global secret_provider_name, secret_provider_namespace
+
+    config_provider = get_config_provider()
     configuration = config_provider.get_secret_dictionary()
+
     secret_provider_id = configuration.get(SECRET_PROVIDER_KEY)
     namespace = configuration.get(SECRET_NAMESPACE_KEY)
     secret_provider_namespace = namespace if namespace else ""
@@ -56,10 +72,9 @@ def get_secret_provider():
 
     provider_class, provider_name = provider_info
 
-    with EnvironmentVariablesManager(config_provider):
+    with EnvironmentVariablesManager(get_config_provider()):
         secret_provider = provider_class(namespace=secret_provider_namespace)
 
-    secret_provider_name = provider_name
     return secret_provider
 
 
@@ -84,7 +99,7 @@ def print_header(title: str, sub_title: str):
                                   border=False)
     with col0:
         # Check if the logo file exists
-        logo_path = os.path.join(str(Path(__file__).parent.parent.parent),
+        logo_path = os.path.join(str(Path(__file__).parent.parent),
                                  "resources", "logo.png")
         if os.path.exists(logo_path):
             st.image(

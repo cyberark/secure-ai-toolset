@@ -5,10 +5,10 @@ from pathlib import Path
 import streamlit as st
 
 from agent_guard_core.credentials.file_secrets_provider import FileSecretsProvider
-from servers.admin_ui.common import (CONFIG_NAMESPACE, CONJUR_APPLIANCE_URL_KEY, CONJUR_AUTHN_API_KEY_KEY,
-                                     CONJUR_AUTHN_LOGIN_KEY, SECRET_NAMESPACE_KEY, SECRET_PROVIDER_KEY,
-                                     SecretProviderOptions, print_header)
 from servers.admin_ui.models.server_config import ServerConfig
+from servers.common import (CONJUR_APPLIANCE_URL_KEY, CONJUR_AUTHN_API_KEY_KEY, CONJUR_AUTHN_LOGIN_KEY,
+                            SECRET_NAMESPACE_KEY, SECRET_PROVIDER_KEY, SecretProviderOptions, get_config_dict,
+                            get_config_file_path, print_header)
 
 
 def file_selector(folder_path: str):
@@ -21,15 +21,20 @@ def file_selector(folder_path: str):
         if os.path.isdir(os.path.join(folder_path, entry))
         and not entry.startswith('.')
     ]
-    selected_directory = st.selectbox('Select a directory (From users home)',
+    selected_directory = st.selectbox('**Select a directory for secrets**',
                                       directories)
     return os.path.join(folder_path, selected_directory)
 
 
 def get_file_namespace_input(config) -> str:
+
+    # set the home dir as the secret file location
     if config.SECRET_NAMESPACE:
-        start_dir = str(Path(config.SECRET_NAMESPACE).parent.parent)
-        file_name = str(Path(config.SECRET_NAMESPACE).name)
+        start_dir = str(Path.home())
+        file_name = "secrets"
+        config = get_config_dict()
+        if config:
+            file_name = config.get()
     else:
         start_dir = str(Path.home())
 
@@ -57,25 +62,27 @@ def save_configuration(provider: FileSecretsProvider, config: ServerConfig):
         provider.store(CONJUR_APPLIANCE_URL_KEY, config.CONJUR_APPLIANCE_URL)
 
 
+## Configuration form beginning
+print_header(title="Configuration", sub_title="Manage Secret Store Settings")
+
+# Read configuration file
 try:
-    config_provider = FileSecretsProvider(namespace=CONFIG_NAMESPACE)
+    config_file_path = get_config_file_path()
+    config_provider = FileSecretsProvider(namespace=config_file_path)
+    configuration_dict = config_provider.get_secret_dictionary()
+    if not configuration_dict:
+        st.warning(
+            "Configuration file is missing or empty. Generating default settings"
+        )
+        configuration_dict = {}
+    config: ServerConfig = ServerConfig.load_from_dict(configuration_dict)
+    save_configuration(provider=config_provider, config=config)
 except Exception as e:
     st.error(f"Failed to initialize FileSecretsProvider: {e}")
     st.stop()
 
-# Display the title and subtitle of the page
-print_header(title="Configuration", sub_title="Manage Agent Guard settings")
-
 # Load configuration from server_config
-configuration_dict = config_provider.get_secret_dictionary()
-config: ServerConfig = ServerConfig.load_from_dict(configuration_dict)
-if not configuration_dict:
-    st.warning(
-        "Configuration file is missing or empty. Generating default settings")
-    save_configuration(provider=config_provider, config=config)
-
-# Retrieve the currently configured secret provider
-# configured_secret_provider = config.SECRET_PROVIDER
+configured_secret_provider = config.SECRET_PROVIDER
 configured_secret_provider_value = SecretProviderOptions[
     config.SECRET_PROVIDER].value
 
@@ -108,12 +115,9 @@ selected_secret_provider_key = {
 }.get(secret_provider_value)
 config.SECRET_PROVIDER = selected_secret_provider_key
 
-if selected_secret_provider_key == SecretProviderOptions.FILE_SECRET_PROVIDER.name:
-    namespace = get_file_namespace_input(config=config)
-else:
-    namespace = st.text_input(SECRET_NAMESPACE_KEY, config.SECRET_NAMESPACE)
-
-config.SECRET_NAMESPACE = namespace
+# Get the namespace
+config.SECRET_NAMESPACE = st.text_input("**Namespace**",
+                                        config.SECRET_NAMESPACE)
 # Display provider-specific inputs
 if selected_secret_provider_key == SecretProviderOptions.CONJUR_SECRET_PROVIDER.name:
     # Retrieve existing Conjur configuration values
@@ -129,7 +133,6 @@ if selected_secret_provider_key == SecretProviderOptions.CONJUR_SECRET_PROVIDER.
                                          type="password")
     conjur_appliance_url = st.text_input(CONJUR_APPLIANCE_URL_KEY,
                                          conjur_appliance_url)
-
 # Wrap the form logic
 with st.form("configuration_form"):
     # Submit button to save the configuration

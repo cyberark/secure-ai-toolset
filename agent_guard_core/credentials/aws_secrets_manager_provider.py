@@ -74,14 +74,14 @@ class AWSSecretsProvider(BaseSecretsProvider):
             if secret_text:
                 secret_dict = json.loads(secret_text)
                 return secret_dict
-            else:
-                return {}
 
         except self._client.exceptions.ResourceNotFoundException as e:
-            return {}
+            self.logger.warning("Secret not found: %s", e.args[0])
 
         except Exception as e:
             raise SecretProviderException(str(e.args[0]))
+
+        return {}
 
     def store_secret_dictionary(self, secret_dictionary: Dict):
         """
