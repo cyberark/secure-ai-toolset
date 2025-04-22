@@ -14,6 +14,9 @@ autoflake --remove-all-unused-imports --remove-unused-variables --in-place $pyth
 # Run isort to sort imports in Python code
 isort -l 120 -ir --float-to-top $python_files $python_tests
 
+# remove unused function using vulture
+vulture $python_files
+
 # Perform a security scan of the code
 bandit -r $python_files
 
@@ -23,3 +26,4 @@ gitleaks -v git --no-banner
 # add pylint
 echo pylint check
 pylint $python_files
+

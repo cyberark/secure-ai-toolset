@@ -1,53 +1,12 @@
-import os
 # Replace the text input with a file picker if the selected provider is FileSecretsProvider
-from pathlib import Path
 
 import streamlit as st
 
 from agent_guard_core.credentials.file_secrets_provider import FileSecretsProvider
 from servers.admin_ui.models.server_config import ServerConfig
 from servers.common import (CONJUR_APPLIANCE_URL_KEY, CONJUR_AUTHN_API_KEY_KEY, CONJUR_AUTHN_LOGIN_KEY,
-                            SECRET_NAMESPACE_KEY, SECRET_PROVIDER_KEY, SecretProviderOptions, get_config_dict,
-                            get_config_file_path, print_header)
-
-
-def file_selector(folder_path: str):
-    if not folder_path:
-        raise Exception("No folder defined for selection")
-    # List only directories not starting with '.'
-    entries = os.listdir(folder_path)
-    directories = [
-        entry for entry in entries
-        if os.path.isdir(os.path.join(folder_path, entry))
-        and not entry.startswith('.')
-    ]
-    selected_directory = st.selectbox('**Select a directory for secrets**',
-                                      directories)
-    return os.path.join(folder_path, selected_directory)
-
-
-def get_file_namespace_input(config) -> str:
-
-    # set the home dir as the secret file location
-    if config.SECRET_NAMESPACE:
-        start_dir = str(Path.home())
-        file_name = "secrets"
-        config = get_config_dict()
-        if config:
-            file_name = config.get()
-    else:
-        start_dir = str(Path.home())
-
-    # Pick the folder
-    folder_path = file_selector(folder_path=start_dir)
-
-    # Update the file name
-    file_name = st.text_input("File Name", file_name)
-
-    namespace = os.path.join(folder_path, file_name)
-    st.write(f"File location: {namespace}")
-
-    return namespace
+                            SECRET_NAMESPACE_KEY, SECRET_PROVIDER_KEY, SecretProviderOptions, get_config_file_path,
+                            print_header)
 
 
 def save_configuration(provider: FileSecretsProvider, config: ServerConfig):
@@ -82,12 +41,11 @@ except Exception as e:
     st.stop()
 
 # Load configuration from server_config
-configured_secret_provider = config.SECRET_PROVIDER
 configured_secret_provider_value = SecretProviderOptions[
     config.SECRET_PROVIDER].value
 
 
-# Callback function to handle changes in the secret provider selectbox
+# Callback function to handle changes in the secret provider select box
 # This sets a flag in the session state to trigger a rerun
 def on_secret_provider_change():
     st.session_state.trigger_rerun = True
@@ -116,8 +74,9 @@ selected_secret_provider_key = {
 config.SECRET_PROVIDER = selected_secret_provider_key
 
 # Get the namespace
-config.SECRET_NAMESPACE = st.text_input("**Namespace**",
-                                        config.SECRET_NAMESPACE)
+label = "**File Path(Namespace)**" if selected_secret_provider_key == SecretProviderOptions.FILE_SECRET_PROVIDER.name else "**Namespace**"
+config.SECRET_NAMESPACE = st.text_input(label, config.SECRET_NAMESPACE)
+
 # Display provider-specific inputs
 if selected_secret_provider_key == SecretProviderOptions.CONJUR_SECRET_PROVIDER.name:
     # Retrieve existing Conjur configuration values

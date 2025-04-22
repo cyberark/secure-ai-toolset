@@ -36,7 +36,7 @@ uv sync
 Open a new terminal.
 Assuming you are at the root directory of the project, start the landing page (Main UX) on port 8080 using these commands:
 ```bash
-python  -m streamlit run servers/admin_ui/landing.py --server.port 8080 &
+python  -m streamlit run servers/admin_ui/landing.py --server.port 8080
 ```
 
 ### 3. Run the API Server

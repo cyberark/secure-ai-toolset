@@ -1,11 +1,6 @@
-from pathlib import Path
-
 import streamlit as st
 
 from servers.common import print_header
-
-# Set the working directory to the file's directory
-current_dir = Path(__file__).resolve().parent
 
 # configure streamlit
 st.set_page_config(page_title="Agent Guard Management UI",

@@ -37,7 +37,7 @@ class FileSecretsProvider(BaseSecretsProvider):
         if not os.path.exists(self._dictionary_path):
             try:
 
-                with open(self._dictionary_path, "w") as f:
+                with open(self._dictionary_path, "w"):
                     pass  # Create an empty file
             except Exception as e:
                 raise SecretProviderException(

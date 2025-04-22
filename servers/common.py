@@ -10,6 +10,10 @@ from agent_guard_core.credentials.conjur_secrets_provider import ConjurSecretsPr
 from agent_guard_core.credentials.environment_manager import EnvironmentVariablesManager
 from agent_guard_core.credentials.file_secrets_provider import FileSecretsProvider
 
+# Define globals for cache
+secret_provider_name = None
+secret_provider_namespace = None
+
 # Define constants for configuration keys
 CONJUR_AUTHN_LOGIN_KEY = "CONJUR_AUTHN_LOGIN"
 CONJUR_AUTHN_API_KEY_KEY = "CONJUR_AUTHN_API_KEY"
@@ -24,10 +28,6 @@ class SecretProviderOptions(Enum):
     CONJUR_SECRET_PROVIDER = "CyberArk Conjur Cloud"
 
 
-secret_provider_name = None
-secret_provider_namespace = None
-
-
 def get_config_file_path():
     file_dir = Path(__file__).parent.parent
     file_path = os.path.join(file_dir, "server_config.env")
@@ -39,14 +39,7 @@ def get_config_provider():
     return config_provider
 
 
-def get_config_dict():
-    configuration = get_config_provider().get_secret_dictionary()
-    return configuration
-
-
 def get_secret_provider():
-    # global secret_provider_name, secret_provider_namespace
-
     config_provider = get_config_provider()
     configuration = config_provider.get_secret_dictionary()
 
@@ -70,7 +63,7 @@ def get_secret_provider():
     if not provider_info:
         raise Exception("Secret provider undefined")
 
-    provider_class, provider_name = provider_info
+    provider_class, _ = provider_info
 
     with EnvironmentVariablesManager(get_config_provider()):
         secret_provider = provider_class(namespace=secret_provider_namespace)
