@@ -1,12 +1,33 @@
+import shutil
+from pathlib import Path
+
 import pytest
 
-from secure_ai_toolset.secrets.conjur_secrets_provider import ConjurSecretsProvider
-from secure_ai_toolset.secrets.secrets_provider import SecretProviderException
+from agent_guard_core.credentials.conjur_secrets_provider import ConjurSecretsProvider
+from agent_guard_core.credentials.secrets_provider import SecretProviderException
 
 
 @pytest.fixture()
 def provider(scope="module"):
-    return ConjurSecretsProvider(namespace='data/test-toolset')
+    # Backup the existing .env and copy .env.conjur to .env
+    env_path = Path(".env")
+    backup_path = Path(".env.backup")
+    conjur_env_path = Path(".env.conjur")
+
+    if env_path.exists():
+        shutil.copy(env_path, backup_path)
+    shutil.copy(conjur_env_path, env_path)
+
+    provider_instance = ConjurSecretsProvider(namespace='data/test-toolset')
+
+    yield provider_instance
+
+    # Restore the backup after use
+    if backup_path.exists():
+        shutil.copy(backup_path, env_path)
+        backup_path.unlink()
+    else:
+        env_path.unlink()
 
 
 @pytest.mark.conjur

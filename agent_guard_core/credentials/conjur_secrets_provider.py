@@ -3,12 +3,13 @@ import json
 import os
 import urllib.parse
 from datetime import datetime, timedelta
-from typing import Optional, Dict
+from typing import Dict, Optional
 
 import boto3
 import requests
 from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
+from dotenv import load_dotenv
 
 from agent_guard_core.credentials.secrets_provider import BaseSecretsProvider, SecretProviderException
 
@@ -22,6 +23,7 @@ DEFAULT_NAMESPACE = "data/default"
 DEFAULT_SECRET_ID = "agentic_env_vars"
 DEFAULT_CONJUR_ACCOUNT = "conjur"
 
+<<<<<<< HEAD:agent_guard_core/credentials/conjur_secrets_provider.py
 HTTP_TIMEOUT_SECS=2.0
 HTTP_SUCCESS=200
 HTTP_CREATED=201
@@ -35,10 +37,18 @@ class ConjurSecretsProvider(BaseSecretsProvider):
       Passing function references allows for user-defined functions 
       for providing authn creds. Useful defaults are provided by the class.
     """
+=======
+DEFAULT_HTTP_TIMEOUT = 30
+
+
+class ConjurSecretsProvider(BaseSecretsProvider):
+
+>>>>>>> origin/main:secure_ai_toolset/secrets/conjur_secrets_provider.py
     def __init__(self,
                  namespace=DEFAULT_NAMESPACE,
                  ext_authn_cred_provider=None):
         super().__init__()
+        load_dotenv()
 
         # reference to external authn credential provider function
         self._ext_authn_cred_provider = ext_authn_cred_provider
@@ -107,8 +117,13 @@ class ConjurSecretsProvider(BaseSecretsProvider):
         response = requests.post(conjur_authenticate_uri,
                                  data=signed_headers,
                                  headers=headers,
+<<<<<<< HEAD:agent_guard_core/credentials/conjur_secrets_provider.py
                                  timeout=HTTP_TIMEOUT_SECS)
         if response.status_code == HTTP_SUCCESS:
+=======
+                                 timeout=DEFAULT_HTTP_TIMEOUT)
+        if response.status_code == 200:
+>>>>>>> origin/main:secure_ai_toolset/secrets/conjur_secrets_provider.py
             self._access_token = response.text
             return True
         return False
@@ -140,8 +155,13 @@ class ConjurSecretsProvider(BaseSecretsProvider):
         response = requests.post(conjur_authenticate_uri,
                                  data=self._api_key,
                                  headers=headers,
+<<<<<<< HEAD:agent_guard_core/credentials/conjur_secrets_provider.py
                                  timeout=HTTP_TIMEOUT_SECS)
         if response.status_code == HTTP_SUCCESS:
+=======
+                                 timeout=DEFAULT_HTTP_TIMEOUT)
+        if response.status_code == 200:
+>>>>>>> origin/main:secure_ai_toolset/secrets/conjur_secrets_provider.py
             self._access_token = response.text
             return True
         return False
@@ -207,16 +227,20 @@ class ConjurSecretsProvider(BaseSecretsProvider):
         try:
             # The token is in JSON format. Each field in the token is base64 encoded.
             # So we decode the payload filed and then extract the expiration date from it
-            decoded_token_payload = base64.b64decode(json.loads(self._access_token)['payload'].encode('ascii'))
+            decoded_token_payload = base64.b64decode(
+                json.loads(self._access_token)['payload'].encode('ascii'))
             token_expiration = json.loads(decoded_token_payload)['exp']
-            self._access_token_expiration = datetime.fromtimestamp(token_expiration) - timedelta(minutes=API_TOKEN_SAFETY_BUFFER)
+            self._access_token_expiration = datetime.fromtimestamp(
+                token_expiration) - timedelta(minutes=API_TOKEN_SAFETY_BUFFER)
         except:
             # If we can't extract the expiration from the token because we work with an older version
             # of Conjur, then we use the default expiration
-            self._access_token_expiration = datetime.now() + timedelta(minutes=DEFAULT_API_TOKEN_DURATION)
+            self._access_token_expiration = datetime.now() + timedelta(
+                minutes=DEFAULT_API_TOKEN_DURATION)
 
     def connect(self) -> bool:
-        if not self._access_token or datetime.now() > self._access_token_expiration:
+        if not self._access_token or datetime.now(
+        ) > self._access_token_expiration:
             if not self._authenticator_id:
                 return self._authenticate_api_key()
             elif self._authenticator_id.startswith("authn-iam"):
@@ -261,17 +285,28 @@ class ConjurSecretsProvider(BaseSecretsProvider):
         url = f"{self._url}/secrets/{self._account}/variable/{urllib.parse.quote(f'{self._branch}/{self._secret_name}')}"
 
         try:
+<<<<<<< HEAD:agent_guard_core/credentials/conjur_secrets_provider.py
             response = requests.get(url, headers=self._get_conjur_headers())
             if response.status_code == HTTP_NOTFOUND_OR_EMPTY:
                 self.logger.error(f"Secret {self._secret_name}: not found or has empty value.")
                 return {}
             elif response.status_code != HTTP_SUCCESS:
                 self.logger.error(f"get: secret retrieval error: {response.text}")
+=======
+            response = requests.get(url,
+                                    headers=self._get_conjur_headers(),
+                                    timeout=DEFAULT_HTTP_TIMEOUT)
+            if response.status_code == 404:
+                return {}
+            elif response.status_code != 200:
+                self.logger.error(
+                    f"get: secret retrieval error: {response.text}")
+>>>>>>> origin/main:secure_ai_toolset/secrets/conjur_secrets_provider.py
                 raise SecretProviderException(response.text)
             return json.loads(response.text)
         except Exception as e:
-            self.logger.error(f"Error retrieving secret: {e}")
-            raise SecretProviderException(str(e))
+            self.logger.error(f"Error retrieving secret: {e.args[0]}")
+            raise SecretProviderException(str(e.args[0]))
 
     def store_secret_dictionary(self, secret_dictionary: Dict):
         """
@@ -295,21 +330,33 @@ class ConjurSecretsProvider(BaseSecretsProvider):
             response = requests.post(url,
                                      data=policy_body,
                                      headers=self._get_conjur_headers(),
+<<<<<<< HEAD:agent_guard_core/credentials/conjur_secrets_provider.py
                                      timeout=HTTP_TIMEOUT_SECS)
             if response.status_code != HTTP_CREATED:
+=======
+                                     timeout=DEFAULT_HTTP_TIMEOUT)
+            if response.status_code != 201:
+>>>>>>> origin/main:secure_ai_toolset/secrets/conjur_secrets_provider.py
                 self.logger.error(f"Error creating secret: {response.text}")
-                raise SecretProviderException(f"Error storing secret: {response.text}")
+                raise SecretProviderException(
+                    f"Error storing secret: {response.text}")
 
             set_secret_url = f"{self._url}/secrets/conjur/variable/{urllib.parse.quote(f'{self._branch}/{self._secret_name}')}"
             response = requests.post(set_secret_url,
                                      data=json.dumps(secret_dictionary),
                                      headers=self._get_conjur_headers(),
+<<<<<<< HEAD:agent_guard_core/credentials/conjur_secrets_provider.py
                                      timeout=HTTP_TIMEOUT_SECS)
             if response.status_code != HTTP_CREATED:
+=======
+                                     timeout=DEFAULT_HTTP_TIMEOUT)
+            if response.status_code != 201:
+>>>>>>> origin/main:secure_ai_toolset/secrets/conjur_secrets_provider.py
                 self.logger.error(f"Error storing secret: {response.text}")
-                raise SecretProviderException(f"Error storing secret: {response.text}")
+                raise SecretProviderException(
+                    f"Error storing secret: {response.text}")
         except Exception as e:
-            message = f"Error storing secret: {e}"
+            message = f"Error storing secret: {e.args[0]}"
             self.logger.error(message)
             raise SecretProviderException(message)
 

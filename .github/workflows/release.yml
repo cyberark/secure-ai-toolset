@@ -1,0 +1,74 @@
+name: Set Release
+
+on:
+  push:
+    branches:
+      - '**'
+
+jobs:
+  set-version:
+    runs-on: ubuntu-latest
+
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+
+      - name: Extract major and minor version from pyproject.toml
+        id: extract-version
+        run: |
+          VERSION=$(poetry version -s)
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+          echo "MAJOR=$MAJOR" >> $GITHUB_ENV
+          echo "MINOR=$MINOR" >> $GITHUB_ENV
+
+      - name: Get the latest release version
+        id: get-latest-release
+        run: |
+          LATEST_VERSION=$(gh release list --limit 1 --json tagName --jq '.[0].tagName' || echo "v0.0.0")
+          echo "LATEST_VERSION=$LATEST_VERSION" >> $GITHUB_ENV
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Increment patch version
+        id: increment-version
+        run: |
+          LATEST_VERSION=${{ env.LATEST_VERSION }}
+          BASE_VERSION=${LATEST_VERSION#v}
+          IFS='.' read -r _ _ LATEST_PATCH <<< "$BASE_VERSION"
+          PATCH=$((LATEST_PATCH + 1))
+          VERSION_NAME="v${{ env.MAJOR }}.${{ env.MINOR }}.$PATCH"
+          BRANCH_NAME=${{ github.ref_name }}
+          if [ "$BRANCH_NAME" != "main" ]; then
+            SANITIZED_BRANCH_NAME=$(echo "$BRANCH_NAME" | tr '.' '-')
+            VERSION_NAME="$VERSION_NAME.dev1"
+          fi
+          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
+
+
+      - name: Print incremented version
+        run: |
+          echo "Incremented version: ${{ env.VERSION_NAME }}"
+
+      - name: Update pyproject.toml with incremented version
+        run: |
+          poetry version ${{env.VERSION_NAME}}
+      
+      - name: Build distribution
+        id: poetry-build-release
+        run: |
+          poetry build --clean -f wheel
+          ls -l dist/*
+
+      - name: Create release with wheel file asset
+        if: startsWith(github.ref, 'refs/heads/main')
+        id: create-release
+        run: |
+          gh release create ${{ env.VERSION_NAME }} ./dist/*.whl
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash

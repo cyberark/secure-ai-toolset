@@ -21,7 +21,7 @@ class AWSSecretsProvider(BaseSecretsProvider):
                  namespace: Optional[str] = None):
         """
         Initializes the AWS Secrets Manager client with the specified region.
-        
+
         :param region_name: AWS region name where the secrets manager is located. Defaults to 'us-east-1'.
         :param namespace: Optional namespace for the secrets. Defaults to 'default'.
         """
@@ -34,7 +34,7 @@ class AWSSecretsProvider(BaseSecretsProvider):
     def connect(self) -> bool:
         """
         Establishes a connection to the AWS Secrets Manager service.
-        
+
         :return: True if connection is successful, raises SecretProviderException otherwise.
         """
         if self._client:
@@ -47,16 +47,16 @@ class AWSSecretsProvider(BaseSecretsProvider):
 
         except Exception as e:
             self.logger.error(
-                f"Error initializing AWS Secrets Manager client: {e}")
+                "Error initializing AWS Secrets Manager client: %s", e.args[0])
             raise SecretProviderException(
                 message=
-                f'Error connecting to the secret provider: AWSSecretsProvider with this exception: {e.args[0]}'
-            )
+                "Error connecting to the secret provider: AWSSecretsProvider with this exception: %s"
+                % e.args[0])
 
     def get_secret_dictionary(self) -> Dict[str, str]:
         """
         Retrieves the secret dictionary from AWS Secrets Manager.
-        
+
         :return: A dictionary containing the secrets.
         :raises SecretProviderException: If there is an error retrieving the secrets.
         """
@@ -81,12 +81,11 @@ class AWSSecretsProvider(BaseSecretsProvider):
             return {}
 
         except Exception as e:
-            raise SecretProviderException(str(e))
+            raise SecretProviderException(str(e.args[0]))
 
     def store_secret_dictionary(self, secret_dictionary: Dict):
         """
         Stores the secret dictionary in AWS Secrets Manager.
-        
         :param secret_dictionary: The dictionary containing secrets to store.
         :raises SecretProviderException: If there is an error storing the secrets.
         """
@@ -104,22 +103,21 @@ class AWSSecretsProvider(BaseSecretsProvider):
             self._client.put_secret_value(SecretId=self._dictionary_path,
                                           SecretString=secret_text)
         except Exception as e:
-            message = f"Error storing secret: {e}"
-            self.logger.error(message)
-            raise SecretProviderException(message)
+            self.logger.error("Error storing secret: %s", e.args[0])
+            raise SecretProviderException("Error storing secret: %s" %
+                                          e.args[0])
 
     def store(self, key: str, secret: str) -> None:
         """
         Stores a secret in AWS Secrets Manager. Creates or updates the secret.
-        
         :param key: The name of the secret.
         :param secret: The secret value to store.
         :raises SecretProviderException: If key or secret is missing, or if there is an error storing the secret.
-    
+
         Caution:
         Concurrent access to secrets can cause issues. If two clients simultaneously list, update different environment variables,
         and then store, one client's updates may override the other's if they are working on the same secret.
-        This issue will be addressed in future versions.            
+        This issue will be addressed in future versions.
         """
         if not key or not secret:
             message = "store: key or secret is missing"
@@ -137,7 +135,7 @@ class AWSSecretsProvider(BaseSecretsProvider):
     def get(self, key: str) -> Optional[str]:
         """
         Retrieves a secret from AWS Secrets Manager by key.
-        
+
         :param key: The name of the secret to retrieve.
         :return: The secret value if retrieval is successful, None otherwise.
         :raises SecretProviderException: If there is an error retrieving the secret.
@@ -153,7 +151,7 @@ class AWSSecretsProvider(BaseSecretsProvider):
     def delete(self, key: str) -> None:
         """
         Deletes a secret from AWS Secrets Manager by key.
-        
+
         :param key: The name of the secret to delete.
         :raises SecretProviderException: If key is missing or if there is an error deleting the secret.
         """

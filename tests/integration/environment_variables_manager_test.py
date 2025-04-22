@@ -3,9 +3,9 @@ import uuid
 
 import pytest
 
-from secure_ai_toolset.secrets.aws_secrets_manager_provider import AWSSecretsProvider
-from secure_ai_toolset.secrets.environment_manager import EnvironmentVariablesManager
-from secure_ai_toolset.secrets.file_secrets_provider import FileSecretsProvider
+from agent_guard_core.credentials.aws_secrets_manager_provider import AWSSecretsProvider
+from agent_guard_core.credentials.environment_manager import EnvironmentVariablesManager
+from agent_guard_core.credentials.file_secrets_provider import FileSecretsProvider
 
 
 @pytest.fixture(params=[

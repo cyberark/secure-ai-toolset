@@ -7,9 +7,9 @@ from autogen_core.tool_agent import ToolAgent
 from autogen_core.tools import FunctionTool, Tool
 from autogen_ext.models.openai import AzureOpenAIChatCompletionClient
 
+from agent_guard_core.credentials.aws_secrets_manager_provider import AWSSecretsProvider
+from agent_guard_core.credentials.environment_manager import EnvironmentVariablesManager
 from examples.autogen.environment_variables_populate.autogen_common import Message, ToolUseAgent, get_stock_price
-from secure_ai_toolset.secrets.aws_secrets_manager_provider import AWSSecretsProvider
-from secure_ai_toolset.secrets.environment_manager import EnvironmentVariablesManager
 
 
 @EnvironmentVariablesManager.set_env_vars(AWSSecretsProvider())
@@ -36,9 +36,8 @@ async def main() -> None:
                 model='gpt-4o',
                 azure_endpoint=os.getenv('AZURE_OPENAI_ENDPOINT'),
                 azure_deployment='gpt-4o',
-                api_version='2024-02-01',
-                api_key=os.getenv('AZURE_OPENAI_KEY')),
-            [tool.schema for tool in tools], 'tool_executor_agent'),
+                api_version='2024-02-01'), [tool.schema for tool in tools],
+            'tool_executor_agent'),
     )
 
     try:
@@ -53,13 +52,13 @@ async def main() -> None:
         print(response.content)
 
     except Exception as e:
-        print(f'An error occurred: {e}')
+        print(f'An error occurred: {e.args[0]}')
     finally:
         try:
             # Stop processing messages.
             await runtime.stop()
         except Exception as e:
-            print(f'An error occurred during cleanup: {e}')
+            print(f'An error occurred during cleanup: {e.args[0]}')
 
 
 if __name__ == '__main__':

@@ -1,10 +1,10 @@
 # Contributing
 
-Thank you for considering contributing to Secure-AI-Toolset! 
-We welcome contributions to improve this project. For general contributions and community guidelines, please see the repo.
+Thank you for considering contributing to Agent-Guard!
+We welcome contributions to improve this project. For general contributions and community guidelines, please see the [repo](https://github.com/cyberark/community/).
 
 ## Legal
-Any submission of work, including any modification of, or addition to, an existing work (“Contribution”) to [complete project name] shall be governed by and subject to the terms of the Apache License 2.0 (the “License”) and to the following complementary terms. In case of any conflict or inconsistency between the provision of the License and the complementary terms, the complementary terms shall prevail.
+Any submission of work, including any modification of, or addition to, an existing work (“Contribution”) to "Agent-Guard" shall be governed by and subject to the terms of the Apache License 2.0 (the “License”) and to the following complementary terms. In case of any conflict or inconsistency between the provision of the License and the complementary terms, the complementary terms shall prevail.
 By submitting the Contribution, you represent and warrant that the Contribution is your original creation and you own all right, title and interest in the Contribution. You represent that you are legally entitled to grant the rights set out in the License and herein, without violation of, or conflict with, the rights of any other party. You represent that your Contribution includes complete details of any third-party license or other restriction associated with any part of your Contribution of which you are personally aware.
 
 ## Table of Contents
@@ -28,62 +28,43 @@ From here your pull request will be reviewed and once you've responded to all
 feedback it will be merged into the project. Congratulations, you're a
 contributor!
 
-
 ## Development
-
 To start developing and testing using our development scripts, the following tools need to be installed:
-* Python >=3.9 and <4.0
-* Poetry >=1.8.0
-
+* Python = 3.10
+* Poetry = 2.1.1
 
 ## Testing
-
 1. Commit and push your changes to your repository.
-2. Clone the repository 
-3. Install the dependencies 
-```bash 
+2. Clone the repository
+3. Install the dependencies
+
+```bash
 poetry install
 ```
 4. Run the unit tests
 
 The working directory is the project root
-```bash 
+```bash
 pytest -v ./tests/unit
 ```
 5. Run the integration test
-Integration tests run on different secret providers, therefore run the test one the 
-existing groups:
+Follow the guidelines in the [README.md](tests/integration/README.md) file inside the `tests/integration` folder.
 
-### Running tests related to AWS Secrets Manager Secret Provider
+6. Make sure that your code is clean, by running the `code_clean.bash` script:
+   First run:
+   ```shell
+   poetry env activate
+   ```
+   Then run the command it has outputted. Should look as follows:
+   ```shell
+   source <your current working folder>/agent-guard/.venv/bin/activate
+   ```
+   Run this command above. This should activate the virtual environment.
 
-Enure that you:
-* Have an AWS Account
-* An IAM role with CRUD permissions for AWS Secrets Manager
-* Valid AWS credentials to access the account using the designated role (via ACS CLI / EC2 instance etc..)
-
-run the tests usign that 
-```bash
-pytest -v -m aws ./tests/integration
-```
-
-### Running tests related to Conjur Secret Provider
-
-Enure that you: 
-* Have a CyberArk Conjur environment
-* Environment variables set to:
-```text
-WORKLOAD_ID=<iam-role>
-CONJUR_API_KEY = <conjur-api-key>
-CONJUR_URL=https://<conjur-tenant-dns>.secretsmgr.integration-cyberark.cloud/api
-CONJUR_REGION=<default-aws-region>
-```
-
-run this command to 
-
-```bash
-pytest -v -m conjur ./tests/integration
-```
-
+7. Finally, run the following command to sort, remove unused imports, and format the code:
+   ```shell
+   ./scripts/code_clean.bash
+   ```
 
 ## Releases
 
@@ -93,4 +74,3 @@ Maintainers only should create releases. Follow these steps to prepare for a rel
 Review recent commits and ensure the changelog includes all relevant changes, with references to GitHub issues or PRs when applicable.
 Verify that any updated dependencies are accurately reflected in the NOTICES.
 Confirm that the required documentation is complete and has been approved.
-

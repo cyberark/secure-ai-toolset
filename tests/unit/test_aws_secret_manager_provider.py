@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from secure_ai_toolset.secrets.aws_secrets_manager_provider import AWSSecretsProvider
+from agent_guard_core.credentials.aws_secrets_manager_provider import AWSSecretsProvider
 
 
 @pytest.fixture(params=[AWSSecretsProvider])
