@@ -13,6 +13,15 @@
 # Exit immediately if any command exits with non-zero status
 set -e
 
+# Activate the virtual environment
+echo "Activating virtual environment..."
+source ./.venv/bin/activate
+if [ $? -ne 0 ]; then
+    echo "ERROR: Failed to activate virtual environment. Make sure it exists at ./.venv/"
+    exit 1
+fi
+echo "Virtual environment activated successfully."
+
 # Function to cleanup processes on exit
 cleanup() {
     echo -e "\nShutting down all servers..."
