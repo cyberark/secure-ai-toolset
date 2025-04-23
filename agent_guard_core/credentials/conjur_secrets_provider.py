@@ -1,3 +1,5 @@
+""" Defines utility class ConjurSecretsProvider for authenticating to Conjur & retrieving secrets """
+
 import base64
 import json
 import os
@@ -23,43 +25,99 @@ DEFAULT_NAMESPACE = "data/default"
 DEFAULT_SECRET_ID = "agentic_env_vars"
 DEFAULT_CONJUR_ACCOUNT = "conjur"
 
-DEFAULT_HTTP_TIMEOUT = 30
+HTTP_TIMEOUT_SECS = 2.0
+HTTP_SUCCESS = 200
+HTTP_CREATED = 201
+HTTP_NOTFOUND_OR_EMPTY = 404
 
 
 class ConjurSecretsProvider(BaseSecretsProvider):
+    """
+    namespace: Conjur policy base branch
+    ext_authn_cred_provider: externally defined function to provide Conjur authn creds (authn method dependent)
+
+    Passing function references allows for user-defined functions
+    for providing authn creds. Useful defaults are provided by the class.
+    """
 
     def __init__(self,
-                 region_name=DEFAULT_REGION,
-                 namespace=DEFAULT_NAMESPACE):
+                 namespace=DEFAULT_NAMESPACE,
+                 ext_authn_cred_provider=None):
         super().__init__()
         load_dotenv()
 
-        self._url = os.getenv("CONJUR_APPLIANCE_URL")
-        self._workload_id = os.getenv("CONJUR_AUTHN_LOGIN")
-        self._api_key = os.getenv("CONJUR_AUTHN_API_KEY", "")
-        self._authenticator_id = os.getenv("CONJUR_AUTHENTICATOR_ID")
+        # reference to external authn credential provider function
+        self._ext_authn_cred_provider = ext_authn_cred_provider
+
+        init_error = False
+        # common authn values for all authn endpoints
+        self._url = os.getenv("CONJUR_APPLIANCE_URL", None)
+        if self._url is None:
+            self.logger.error(
+                "ConjurSecretsProvider:__init__(): Required env var CONJUR_APPLIANCE_URL is missing."
+            )
+            init_error = True
+
+        self._authenticator_id = os.getenv("CONJUR_AUTHENTICATOR_ID", None)
+        if self._authenticator_id is None:
+            self.logger.error(
+                "ConjurSecretsProvider:__init__(): Required env var CONJUR_AUTHENTICATOR_ID is missing."
+            )
+            init_error = True
+
+        self._workload_id = os.getenv("CONJUR_AUTHN_LOGIN", None)
+        if self._workload_id is None:
+            self.logger.error(
+                "ConjurSecretsProvider:__init__(): Required env var CONJUR_AUTHN_LOGIN is missing."
+            )
+            init_error = True
+
+        if init_error:
+            raise SecretProviderException(
+                "ConjurSecretsProvider: One or more required environment variables are missing."
+            )
+
         self._account = os.getenv("CONJUR_ACCOUNT", DEFAULT_CONJUR_ACCOUNT)
-        self._region = os.getenv("CONJUR_AUTHN_IAM_REGION", region_name)
-        self._access_token = None
-        self._access_token_expiration = datetime.now()
         self._branch = namespace
         self._secret_name = DEFAULT_SECRET_ID
 
-    def _authenticate_aws(self) -> bool:
+        # Define private vars initialized elsewhere
+        self._access_token = None
+        self._access_token_expiration = datetime.now()
+        self._region = None
+
+    # ---- AWS authentication ----
+    def _authenticate_aws_iam(self) -> bool:
         """
         Authenticates with Conjur using AWS IAM role.
 
-        This function uses AWS IAM credentials to authenticate with Conjur. It signs a request using the STS temporary credentials and then fetches an API token from Conjur.
+        This function uses AWS IAM credentials to authenticate with
+        Conjur. It signs a request using the STS temporary credentials
+        and then fetches an API token from Conjur.
 
         Returns:
             bool: True if the authentication succeeded, False if it failed.
         """
 
-        session = boto3.Session()
-        credentials = session.get_credentials()
-        credentials = credentials.get_frozen_credentials()
+        if self._ext_authn_cred_provider is not None:
+            self.logger.debug(
+                "ConjurSecretsProvider:_authenticate_aws_iam(): Calling external credential provider function..."
+            )
+            credentials = self._ext_authn_cred_provider()
+        else:
+            session = boto3.Session()
+            credentials = session.get_credentials()
+            credentials = credentials.get_frozen_credentials()
+        if credentials is None:
+            self.logger.error(
+                "ConjurSecretsProvider:_authenticate_aws_iam(): Error getting AWS IAM credentials."
+            )
+            raise SecretProviderException(
+                "ConjurSecretsProvider:_authenticate_aws_iam(): Error getting AWS IAM credentials."
+            )
 
         # Sign the request using the STS temporary credentials
+        self._region = os.getenv("CONJUR_AUTHN_IAM_REGION", DEFAULT_REGION)
         sigv4 = SigV4Auth(credentials, "sts", self._region)
         sts_uri = f"https://sts.{self._region}.amazonaws.com/?Action=GetCallerIdentity&Version=2011-06-15"
         request = AWSRequest(method="GET", url=sts_uri)
@@ -69,15 +127,18 @@ class ConjurSecretsProvider(BaseSecretsProvider):
         # Fetch an access token from Conjur
         conjur_authenticate_uri = f'{self._url}/{self._authenticator_id}/{self._account}/{self._workload_id.replace("/", "%2F")}/authenticate'
         headers = {"Accept-Encoding": "base64"}
-        response = requests.post(conjur_authenticate_uri,
-                                 data=signed_headers,
-                                 headers=headers,
-                                 timeout=DEFAULT_HTTP_TIMEOUT)
-        if response.status_code == 200:
+        response = requests.post(
+            conjur_authenticate_uri,
+            data=signed_headers,
+            headers=headers,
+            timeout=HTTP_TIMEOUT_SECS,
+        )
+        if response.status_code == HTTP_SUCCESS:
             self._access_token = response.text
             return True
         return False
 
+    # ---- API key authentication ----
     def _authenticate_api_key(self) -> bool:
         """
         Authenticates with Conjur using an API key.
@@ -86,24 +147,102 @@ class ConjurSecretsProvider(BaseSecretsProvider):
             bool: True if the authentication succeeded, False if it failed.
         """
 
+        if self._ext_authn_cred_provider is not None:
+            self.logger.debug(
+                "ConjurSecretsProvider:_authenticate_api_key(): Calling external credential provider function..."
+            )
+            api_key = self._ext_authn_cred_provider()
+        else:
+            api_key = os.getenv("CONJUR_AUTHN_API_KEY", None)
+            if api_key is None:
+                self.logger.error(
+                    "ConjurSecretsProvider:_authenticate_api_key(): Required env var CONJUR_AUTHN_API_KEY is missing."
+                )
+        if api_key is None:
+            self.logger.error(
+                "ConjurSecretsProvider:_authenticate_api_key(): No API key provided."
+            )
+            raise SecretProviderException(
+                "ConjurSecretsProvider:_authenticate_api_key(): No API key provided."
+            )
+
         # Fetch an access token from Conjur
         conjur_authenticate_uri = f'{self._url}/authn/{self._account}/{self._workload_id.replace("/", "%2F")}/authenticate'
         headers = {"Accept-Encoding": "base64"}
-        response = requests.post(conjur_authenticate_uri,
-                                 data=self._api_key,
-                                 headers=headers,
-                                 timeout=DEFAULT_HTTP_TIMEOUT)
-        if response.status_code == 200:
+        response = requests.post(
+            conjur_authenticate_uri,
+            data=api_key,
+            headers=headers,
+            timeout=HTTP_TIMEOUT_SECS,
+        )
+        if response.status_code == HTTP_SUCCESS:
             self._access_token = response.text
             return True
         return False
 
-    def _get_conjur_headers(self) -> Dict[str, str]:
-        if not self._access_token:
-            self.connect()
+    # ---- JWT authentication ----
+    def _authenticate_jwt(self) -> bool:
+        """
+        Authenticates with Conjur using a JSON web token (JWT).
+
+        Default behavior is the JWT is expected to be in an environment
+        variable named CONJUR_AUTHN_JWT. As the JWT may expire if it has a
+        short TTL, the default behavior is intended for dev/test only.
+
+        The intention is the user should define an external function that
+        returns a current JWT per the operating environment. A reference to
+        the provider function should be passed at instance creation.
+
+        Returns:
+            bool: True if the authentication succeeded, False if it failed.
+        """
+
+        if self._ext_authn_cred_provider is not None:
+            self.logger.debug(
+                "ConjurSecretsProvider:_authenticate_jwt(): Calling external credential provider function..."
+            )
+            local_jwt = self._ext_authn_cred_provider()
+        else:
+            local_jwt = os.getenv("CONJUR_AUTHN_JWT", None)
+            if local_jwt is None:
+                self.logger.error(
+                    "ConjurSecretsProvider:_authenticate_jwt(): Required env var CONJUR_AUTHN_JWT is missing."
+                )
+        if local_jwt is None:
+            self.logger.error(
+                "ConjurSecretsProvider:_authenticate_jwt(): No JWT provided.")
+            raise SecretProviderException(
+                "ConjurSecretsProvider:_authenticate_jwt(): No JWT provided.")
+
+        # Fetch an access token from Conjur
+        conjur_authenticate_uri = (
+            f"{self._url}/{self._authenticator_id}/{self._account}/authenticate"
+        )
         headers = {
-            'Authorization': f'Token token="{self._access_token}"',
-            'Content-Type': 'text/plain'
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Accept-Encoding": "base64",
+        }
+        response = requests.post(
+            conjur_authenticate_uri,
+            data=f"jwt={local_jwt}",
+            headers=headers,
+            timeout=HTTP_TIMEOUT_SECS,
+        )
+        if response.status_code == HTTP_SUCCESS:
+            self._access_token = response.text
+            return True
+
+        self.logger.error(
+            "ConjurSecretsProvider:_authenticate_jwt(): authentication error: %s",
+            response.text,
+        )
+        return False
+
+    def _get_conjur_headers(self) -> Dict[str, str]:
+        self.connect()
+        headers = {
+            "Authorization": f'Token token="{self._access_token}"',
+            "Content-Type": "text/plain",
         }
 
         return headers
@@ -114,8 +253,8 @@ class ConjurSecretsProvider(BaseSecretsProvider):
             # The token is in JSON format. Each field in the token is base64 encoded.
             # So we decode the payload filed and then extract the expiration date from it
             decoded_token_payload = base64.b64decode(
-                json.loads(self._access_token)['payload'].encode('ascii'))
-            token_expiration = json.loads(decoded_token_payload)['exp']
+                json.loads(self._access_token)["payload"].encode("ascii"))
+            token_expiration = json.loads(decoded_token_payload)["exp"]
             self._access_token_expiration = datetime.fromtimestamp(
                 token_expiration) - timedelta(minutes=API_TOKEN_SAFETY_BUFFER)
         except:
@@ -127,11 +266,47 @@ class ConjurSecretsProvider(BaseSecretsProvider):
     def connect(self) -> bool:
         if not self._access_token or datetime.now(
         ) > self._access_token_expiration:
-            if not self._authenticator_id:
+            if self._authenticator_id.startswith("authn-jwt"):
+                return self._authenticate_jwt()
+            if self._authenticator_id.startswith("authn-iam"):
+                return self._authenticate_aws_iam()
+            if not self._authenticator_id or self._authenticator_id.startswith(
+                    "authn-api"):
                 return self._authenticate_api_key()
-            elif self._authenticator_id.startswith("authn-iam"):
-                return self._authenticate_aws()
+            self.logger.error(
+                "connect(): Unable to determine authentication method from authenticator ID: %s",
+                self._authenticator_id,
+            )
         return False
+
+    def get_secret(self, secret_id: str) -> Optional[str]:
+        """
+        Retrieves a singular secret variable from Conjur.
+
+        :return: A string containing the secret value, None if secret is empty or not found..
+        :raises SecretProviderException: If there is an error retrieving the secrets.
+        """
+        self.connect()
+        url = f"{self._url}/secrets/{self._account}/variable/{urllib.parse.quote(f'{secret_id}')}"
+
+        try:
+            response = requests.get(
+                url,
+                headers=self._get_conjur_headers(),
+                timeout=HTTP_TIMEOUT_SECS,
+            )
+            if response.status_code == HTTP_NOTFOUND_OR_EMPTY:
+                self.logger.error("Secret %s: not found or has empty value.",
+                                  secret_id)
+                return None
+            if response.status_code != HTTP_SUCCESS:
+                self.logger.error("get_secret(): secret retrieval error: %s",
+                                  response.text)
+                raise SecretProviderException(response.text)
+            return response.text
+        except Exception as e:
+            self.logger.error("Error retrieving secret: %s", e)
+            raise SecretProviderException(str(e)) from e
 
     def get_secret_dictionary(self) -> Dict[str, str]:
         """
@@ -145,19 +320,23 @@ class ConjurSecretsProvider(BaseSecretsProvider):
         url = f"{self._url}/secrets/{self._account}/variable/{urllib.parse.quote(f'{self._branch}/{self._secret_name}')}"
 
         try:
-            response = requests.get(url,
-                                    headers=self._get_conjur_headers(),
-                                    timeout=DEFAULT_HTTP_TIMEOUT)
-            if response.status_code == 404:
+            response = requests.get(
+                url,
+                headers=self._get_conjur_headers(),
+                timeout=HTTP_TIMEOUT_SECS,
+            )
+            if response.status_code == HTTP_NOTFOUND_OR_EMPTY:
+                self.logger.error("Secret %s: not found or has empty value.",
+                                  self._secret_name)
                 return {}
-            elif response.status_code != 200:
-                self.logger.error(
-                    f"get: secret retrieval error: {response.text}")
+            if response.status_code != HTTP_SUCCESS:
+                self.logger.error("get: secret retrieval error: %s",
+                                  response.text)
                 raise SecretProviderException(response.text)
             return json.loads(response.text)
         except Exception as e:
-            self.logger.error(f"Error retrieving secret: {e.args[0]}")
-            raise SecretProviderException(str(e.args[0]))
+            self.logger.error("Error retrieving secret: %s", e.args[0])
+            raise SecretProviderException(str(e.args[0])) from e
 
     def store_secret_dictionary(self, secret_dictionary: Dict):
         """
@@ -178,28 +357,32 @@ class ConjurSecretsProvider(BaseSecretsProvider):
                   id: {self._secret_name}
                 """
         try:
-            response = requests.post(url,
-                                     data=policy_body,
-                                     headers=self._get_conjur_headers(),
-                                     timeout=DEFAULT_HTTP_TIMEOUT)
-            if response.status_code != 201:
-                self.logger.error(f"Error creating secret: {response.text}")
+            response = requests.post(
+                url,
+                data=policy_body,
+                headers=self._get_conjur_headers(),
+                timeout=HTTP_TIMEOUT_SECS,
+            )
+            if response.status_code != HTTP_CREATED:
+                self.logger.error("Error creating secret: %s", response.text)
                 raise SecretProviderException(
                     f"Error storing secret: {response.text}")
 
             set_secret_url = f"{self._url}/secrets/conjur/variable/{urllib.parse.quote(f'{self._branch}/{self._secret_name}')}"
-            response = requests.post(set_secret_url,
-                                     data=json.dumps(secret_dictionary),
-                                     headers=self._get_conjur_headers(),
-                                     timeout=DEFAULT_HTTP_TIMEOUT)
-            if response.status_code != 201:
-                self.logger.error(f"Error storing secret: {response.text}")
+            response = requests.post(
+                set_secret_url,
+                data=json.dumps(secret_dictionary),
+                headers=self._get_conjur_headers(),
+                timeout=HTTP_TIMEOUT_SECS,
+            )
+            if response.status_code != HTTP_CREATED:
+                self.logger.error("Error storing secret: %s", response.text)
                 raise SecretProviderException(
                     f"Error storing secret: {response.text}")
         except Exception as e:
             message = f"Error storing secret: {e.args[0]}"
             self.logger.error(message)
-            raise SecretProviderException(message)
+            raise SecretProviderException(message) from e
 
     def store(self, key: str, secret: str) -> None:
         """
@@ -242,6 +425,7 @@ class ConjurSecretsProvider(BaseSecretsProvider):
 
         if dictionary:
             return dictionary.get(key)
+        return {}
 
     def delete(self, key: str) -> None:
         """
