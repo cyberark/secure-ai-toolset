@@ -61,6 +61,7 @@ packaging==24.2
 pandas==2.2.3
 pbr==6.1.1
 pillow==11.1.0
+pip==24.0
 platformdirs==4.3.7
 pluggy==1.5.0
 protobuf==5.29.4
@@ -108,6 +109,7 @@ tzdata==2025.2
 urllib3==2.3.0
 uv==0.6.14
 uvicorn==0.34.0
+vulture==2.14
 wrapt==1.17.2
 yapf==0.43.0
 zipp==3.21.0

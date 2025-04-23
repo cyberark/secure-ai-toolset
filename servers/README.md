@@ -16,7 +16,7 @@ Navigate to the specific server directory and create a virtual environment:
 
 #### Install dependencies using pip
 ```bash
-virtualenv .venv
+python -m venv .venv
 source .venv/bin/activate 
 pip install -r requirements.txt 
 ```

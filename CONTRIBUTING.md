@@ -39,7 +39,7 @@ To start developing and testing using our development scripts, the following too
 3. Install the dependencies
 
 ```bash
-virtualenv .venv
+python -m venv .venv
 source .venv/bin/activate 
 pip install -r requirements.txt 
 ```
