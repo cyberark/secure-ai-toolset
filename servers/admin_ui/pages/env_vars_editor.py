@@ -3,8 +3,7 @@ import streamlit as st
 
 from agent_guard_core.credentials.aws_secrets_manager_provider import AWSSecretsProvider
 from agent_guard_core.credentials.secrets_provider import SecretProviderException
-from servers.admin_ui.common import (get_secret_provider, get_secret_provider_name, get_secret_provider_namespace,
-                                     print_header)
+from servers.common import get_secret_provider, get_secret_provider_name, get_secret_provider_namespace, print_header
 
 
 def save_edits(edited_secrets: pd.DataFrame):

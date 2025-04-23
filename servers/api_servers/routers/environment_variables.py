@@ -11,7 +11,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from agent_guard_core.credentials.environment_manager import EnvironmentVariablesManager
-from servers.admin_ui.common import get_secret_provider
+from servers.common import get_secret_provider
 
 environment_variables_router = APIRouter()
 

@@ -13,39 +13,40 @@ The `servers` directory includes the following:
 
 ### 1. Install Dependencies
 Navigate to the specific server directory and create a virtual environment:
+
+#### Install dependencies using pip
 ```bash
-poetry env activate
-poetry install --with servers
+python -m venv .venv
+source .venv/bin/activate 
+pip install -r requirements.txt 
 ```
 
-### 2. Run the Landing Page
-Assuming you are at the root directory of the project, start the landing page (Main UX) using Streamlit on port 8080:
+#### Install dependencies using uv
+
+uv installation documentation can be found [here](https://docs.astral.sh/uv/getting-started/installation/)
+
 ```bash
-streamlit run servers/admin_ui/landing.py --server.port 8080
+uv venv
+uv sync
 ```
 
-### 3. Run the API Server
-Start the API server using Uvicorn on port 8081:
+### 2. Run the Admin UI and API Server
+Open a new terminal.
+Run this command, assuming your virtual env is created and installed
 ```bash
-cd servers/api_servers
-python -m uvicorn main:app --host 0.0.0.0 --port 8081
+./run_servers
 ```
 
-#### Invoke the API to Get All Secrets
-```bash
-curl http://localhost:8081/secrets/
-```
-
-**Notes:**
-- The secret provider is defined in the server configuration via the [UI](http://localhost:8080) (configuration page).
-- The OpenAPI documentation is available [here](http://localhost:8081/docs).
-- This method abstracts the secret providers.
-
-#### Get All Environment Variables
-Retrieve all environment variables:
+#### Invoke the API to get environment variables
 ```bash
 curl http://localhost:8081/environment_variables/
 ```
+
+**Notes:**
+- The secret provider is configured via this page [UI](http://localhost:8080) (configuration page).
+- The OpenAPI documentation is available [here](http://localhost:8081/docs).
+- The server configuration is available [here](http://localhost:8081/config).
+- This method abstracts the secret providers
 
 #### Add an Environment Variable
 Add a new environment variable:

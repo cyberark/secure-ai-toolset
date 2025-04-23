@@ -2,8 +2,8 @@ from typing import Dict, Optional
 
 from pydantic import BaseModel, model_validator
 
-from servers.admin_ui.common import (CONJUR_APPLIANCE_URL_KEY, CONJUR_AUTHN_API_KEY_KEY, CONJUR_AUTHN_LOGIN_KEY,
-                                     SECRET_NAMESPACE_KEY, SECRET_PROVIDER_KEY)
+from servers.common import (CONJUR_APPLIANCE_URL_KEY, CONJUR_AUTHN_API_KEY_KEY, CONJUR_AUTHN_LOGIN_KEY,
+                            SECRET_NAMESPACE_KEY, SECRET_PROVIDER_KEY)
 
 
 class ServerConfig(BaseModel):

@@ -3,9 +3,10 @@ from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse
-from routers.config import config_router
-from routers.default import default_router
-from routers.environment_variables import environment_variables_router
+
+from servers.api_servers.routers.config import config_router
+from servers.api_servers.routers.default import default_router
+from servers.api_servers.routers.environment_variables import environment_variables_router
 
 app = FastAPI(
     title="AgentGuard",
@@ -24,14 +25,14 @@ app = FastAPI(
     },
 )
 
-favicon_path = str(
+FAVICON_PATH = str(
     os.path.join(
         Path(__file__).parent.parent.parent, 'resources', 'favicon.ico'))
 
 
 @app.get('/favicon.ico', include_in_schema=False)
 async def favicon():
-    return FileResponse(favicon_path)
+    return FileResponse(FAVICON_PATH)
 
 
 @app.exception_handler(404)

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from servers.admin_ui.common import get_secret_provider
+from servers.common import get_secret_provider
 
 config_router = APIRouter()
 

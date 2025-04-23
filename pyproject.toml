@@ -38,6 +38,7 @@ dev = [
     "bandit",
     "twine",
     "pylint",
+    "vulture",
 ]
 servers = [
     "uvicorn", "streamlit", "fastapi", "pandas"
