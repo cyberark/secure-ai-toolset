@@ -99,15 +99,9 @@ class ConjurSecretsProvider(BaseSecretsProvider):
             bool: True if the authentication succeeded, False if it failed.
         """
 
-        if self._ext_authn_cred_provider is not None:
-            self.logger.debug(
-                "ConjurSecretsProvider:_authenticate_aws_iam(): Calling external credential provider function..."
-            )
-            credentials = self._ext_authn_cred_provider()
-        else:
-            session = boto3.Session()
-            credentials = session.get_credentials()
-            credentials = credentials.get_frozen_credentials()
+        session = boto3.Session()
+        credentials = session.get_credentials()
+        credentials = credentials.get_frozen_credentials()
         if credentials is None:
             self.logger.error(
                 "ConjurSecretsProvider:_authenticate_aws_iam(): Error getting AWS IAM credentials."
