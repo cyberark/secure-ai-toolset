@@ -12,6 +12,7 @@ import requests
 from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
 from dotenv import load_dotenv
+from http import HTTPStatus
 
 from agent_guard_core.credentials.secrets_provider import BaseSecretsProvider, SecretProviderException
 
@@ -26,10 +27,6 @@ DEFAULT_SECRET_ID = "agentic_env_vars"
 DEFAULT_CONJUR_ACCOUNT = "conjur"
 
 HTTP_TIMEOUT_SECS = 2.0
-HTTP_SUCCESS = 200
-HTTP_CREATED = 201
-HTTP_NOTFOUND_OR_EMPTY = 404
-
 
 class ConjurSecretsProvider(BaseSecretsProvider):
     """
@@ -127,7 +124,7 @@ class ConjurSecretsProvider(BaseSecretsProvider):
             headers=headers,
             timeout=HTTP_TIMEOUT_SECS,
         )
-        if response.status_code == HTTP_SUCCESS:
+        if response.status_code == HTTPStatus.OK:
             self._access_token = response.text
             return True
         return False
@@ -169,7 +166,7 @@ class ConjurSecretsProvider(BaseSecretsProvider):
             headers=headers,
             timeout=HTTP_TIMEOUT_SECS,
         )
-        if response.status_code == HTTP_SUCCESS:
+        if response.status_code == HTTPStatus.OK:
             self._access_token = response.text
             return True
         return False
@@ -222,7 +219,7 @@ class ConjurSecretsProvider(BaseSecretsProvider):
             headers=headers,
             timeout=HTTP_TIMEOUT_SECS,
         )
-        if response.status_code == HTTP_SUCCESS:
+        if response.status_code == HTTPStatus.OK:
             self._access_token = response.text
             return True
 
@@ -289,11 +286,11 @@ class ConjurSecretsProvider(BaseSecretsProvider):
                 headers=self._get_conjur_headers(),
                 timeout=HTTP_TIMEOUT_SECS,
             )
-            if response.status_code == HTTP_NOTFOUND_OR_EMPTY:
+            if response.status_code == HTTPStatus.NOT_FOUND:
                 self.logger.error("Secret %s: not found or has empty value.",
                                   secret_id)
                 return None
-            if response.status_code != HTTP_SUCCESS:
+            if response.status_code != HTTPStatus.OK:
                 self.logger.error("get_secret(): secret retrieval error: %s",
                                   response.text)
                 raise SecretProviderException(response.text)
@@ -319,11 +316,11 @@ class ConjurSecretsProvider(BaseSecretsProvider):
                 headers=self._get_conjur_headers(),
                 timeout=HTTP_TIMEOUT_SECS,
             )
-            if response.status_code == HTTP_NOTFOUND_OR_EMPTY:
+            if response.status_code == HTTPStatus.NOT_FOUND:
                 self.logger.error("Secret %s: not found or has empty value.",
                                   self._secret_name)
                 return {}
-            if response.status_code != HTTP_SUCCESS:
+            if response.status_code != HTTPStatus.OK:
                 self.logger.error("get: secret retrieval error: %s",
                                   response.text)
                 raise SecretProviderException(response.text)
@@ -357,7 +354,7 @@ class ConjurSecretsProvider(BaseSecretsProvider):
                 headers=self._get_conjur_headers(),
                 timeout=HTTP_TIMEOUT_SECS,
             )
-            if response.status_code != HTTP_CREATED:
+            if response.status_code != HTTPStatus.CREATED:
                 self.logger.error("Error creating secret: %s", response.text)
                 raise SecretProviderException(
                     f"Error storing secret: {response.text}")
@@ -369,7 +366,7 @@ class ConjurSecretsProvider(BaseSecretsProvider):
                 headers=self._get_conjur_headers(),
                 timeout=HTTP_TIMEOUT_SECS,
             )
-            if response.status_code != HTTP_CREATED:
+            if response.status_code != HTTPStatus.CREATED:
                 self.logger.error("Error storing secret: %s", response.text)
                 raise SecretProviderException(
                     f"Error storing secret: {response.text}")
