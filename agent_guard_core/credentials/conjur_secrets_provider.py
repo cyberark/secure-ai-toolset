@@ -1,4 +1,4 @@
-""" Defines utility class ConjurSecretsProvider for authenticating to Conjur & retrieving secrets """
+"""Defines utility class ConjurSecretsProvider for authenticating to Conjur & retrieving secrets"""
 
 import base64
 import json
@@ -14,7 +14,10 @@ from botocore.awsrequest import AWSRequest
 from dotenv import load_dotenv
 from http import HTTPStatus
 
-from agent_guard_core.credentials.secrets_provider import BaseSecretsProvider, SecretProviderException
+from agent_guard_core.credentials.secrets_provider import (
+    BaseSecretsProvider,
+    SecretProviderException,
+)
 
 # Tokens should only be reused for 5 minutes (max lifetime is 8 minutes)
 DEFAULT_TOKEN_EXPIRATION = 8
@@ -28,6 +31,7 @@ DEFAULT_CONJUR_ACCOUNT = "conjur"
 
 HTTP_TIMEOUT_SECS = 2.0
 
+
 class ConjurSecretsProvider(BaseSecretsProvider):
     """
     namespace: Conjur policy base branch
@@ -36,12 +40,22 @@ class ConjurSecretsProvider(BaseSecretsProvider):
     Passing function references allows for user-defined functions
     for providing authn creds. Useful defaults are provided by the class.
     """
+    # class variable
+    _agentSecretMap = None
+    @classmethod
+    def setAgentSecretMap(cls, _map):
+        cls._agentSecretMap = _map
+        return cls()
 
-    def __init__(self,
-                 namespace=DEFAULT_NAMESPACE,
-                 ext_authn_cred_provider=None):
+    def __init__(
+        self, agentName=None, namespace=DEFAULT_NAMESPACE, ext_authn_cred_provider=None
+    ):
         super().__init__()
         load_dotenv()
+
+        # Entry for agentName is expected to be in agentSecretMap
+        # if agent requires any secrets from Conjur
+        self._agentName = agentName
 
         # reference to external authn credential provider function
         self._ext_authn_cred_provider = ext_authn_cred_provider
@@ -80,7 +94,7 @@ class ConjurSecretsProvider(BaseSecretsProvider):
 
         # Define private vars initialized elsewhere
         self._access_token = None
-        self._access_token_expiration = datetime.now()
+        self._access_token_expiration = datetime.now() + timedelta(minutes=DEFAULT_API_TOKEN_DURATION)
         self._region = None
 
     # ---- AWS authentication ----
@@ -126,6 +140,7 @@ class ConjurSecretsProvider(BaseSecretsProvider):
         )
         if response.status_code == HTTPStatus.OK:
             self._access_token = response.text
+            self._access_token_expiration = datetime.now() + timedelta(minutes=DEFAULT_API_TOKEN_DURATION)
             return True
         return False
 
@@ -168,6 +183,7 @@ class ConjurSecretsProvider(BaseSecretsProvider):
         )
         if response.status_code == HTTPStatus.OK:
             self._access_token = response.text
+            self._access_token_expiration = datetime.now() + timedelta(minutes=DEFAULT_API_TOKEN_DURATION)
             return True
         return False
 
@@ -201,9 +217,11 @@ class ConjurSecretsProvider(BaseSecretsProvider):
                 )
         if local_jwt is None:
             self.logger.error(
-                "ConjurSecretsProvider:_authenticate_jwt(): No JWT provided.")
+                "ConjurSecretsProvider:_authenticate_jwt(): No JWT provided."
+            )
             raise SecretProviderException(
-                "ConjurSecretsProvider:_authenticate_jwt(): No JWT provided.")
+                "ConjurSecretsProvider:_authenticate_jwt(): No JWT provided."
+            )
 
         # Fetch an access token from Conjur
         conjur_authenticate_uri = (
@@ -221,6 +239,7 @@ class ConjurSecretsProvider(BaseSecretsProvider):
         )
         if response.status_code == HTTPStatus.OK:
             self._access_token = response.text
+            self._access_token_expiration = datetime.now() + timedelta(minutes=DEFAULT_API_TOKEN_DURATION)
             return True
 
         self.logger.error(
@@ -244,31 +263,44 @@ class ConjurSecretsProvider(BaseSecretsProvider):
             # The token is in JSON format. Each field in the token is base64 encoded.
             # So we decode the payload filed and then extract the expiration date from it
             decoded_token_payload = base64.b64decode(
-                json.loads(self._access_token)["payload"].encode("ascii"))
+                json.loads(self._access_token)["payload"].encode("ascii")
+            )
             token_expiration = json.loads(decoded_token_payload)["exp"]
             self._access_token_expiration = datetime.fromtimestamp(
-                token_expiration) - timedelta(minutes=API_TOKEN_SAFETY_BUFFER)
+                token_expiration
+            ) - timedelta(minutes=API_TOKEN_SAFETY_BUFFER)
         except:
             # If we can't extract the expiration from the token because we work with an older version
             # of Conjur, then we use the default expiration
             self._access_token_expiration = datetime.now() + timedelta(
-                minutes=DEFAULT_API_TOKEN_DURATION)
+                minutes=DEFAULT_API_TOKEN_DURATION
+            )
 
     def connect(self) -> bool:
-        if not self._access_token or datetime.now(
-        ) > self._access_token_expiration:
+        """
+        Attempts authentication originally specified by CONJUR_AUTHENTICATOR_ID
+        env var.
+        :return True if self._access_token is valid, False otherwise
+        """
+        connectSuccess = False
+        if not self._access_token or datetime.now() > self._access_token_expiration:
             if self._authenticator_id.startswith("authn-jwt"):
-                return self._authenticate_jwt()
-            if self._authenticator_id.startswith("authn-iam"):
-                return self._authenticate_aws_iam()
-            if not self._authenticator_id or self._authenticator_id.startswith(
-                    "authn-api"):
-                return self._authenticate_api_key()
-            self.logger.error(
-                "connect(): Unable to determine authentication method from authenticator ID: %s",
-                self._authenticator_id,
-            )
-        return False
+                connectSuccess = self._authenticate_jwt()
+            elif self._authenticator_id.startswith("authn-iam"):
+                connectSuccess = self._authenticate_aws_iam()
+            elif not self._authenticator_id or self._authenticator_id.startswith(
+                "authn-api"
+            ):
+                connectSuccess = self._authenticate_api_key()
+            else:
+                self.logger.error(
+                    "connect(): Unable to determine authentication method from authenticator ID: %s",
+                    self._authenticator_id,
+                )
+        else:
+            connectSuccess = True
+
+        return connectSuccess
 
     def get_secret(self, secret_id: str) -> Optional[str]:
         """
@@ -287,12 +319,12 @@ class ConjurSecretsProvider(BaseSecretsProvider):
                 timeout=HTTP_TIMEOUT_SECS,
             )
             if response.status_code == HTTPStatus.NOT_FOUND:
-                self.logger.error("Secret %s: not found or has empty value.",
-                                  secret_id)
+                self.logger.error("Secret %s: not found or has empty value.", secret_id)
                 return None
             if response.status_code != HTTPStatus.OK:
-                self.logger.error("get_secret(): secret retrieval error: %s",
-                                  response.text)
+                self.logger.error(
+                    "get_secret(): secret retrieval error: %s", response.text
+                )
                 raise SecretProviderException(response.text)
             return response.text
         except Exception as e:
@@ -300,6 +332,28 @@ class ConjurSecretsProvider(BaseSecretsProvider):
             raise SecretProviderException(str(e)) from e
 
     def get_secret_dictionary(self) -> Dict[str, str]:
+        """
+        Searches agentSecretMap for agent name, if found, iterates over
+        secret map to create dictionary of k/v pairs, where key is specified
+        in the map and value is the value of the secret in Conjur.
+
+        :return Dictionary of k/v pairs
+        """
+        agentMap = None
+        key = "agentName"
+        for dictionary in ConjurSecretsProvider._agentSecretMap:
+            if key in dictionary and dictionary[key] == self._agentName:
+               agentMap = dictionary
+        if agentMap is None:
+            errMsg = "Agent %s not found in ConjurSecretsDictionar:_agentSecretMap"
+            self.logger.error(errMsg, self._agentName)
+            raise SecretProviderException(errMsg, self._agentName)
+        secretDict = {}
+        for secPair in agentMap["secretMap"]:
+            secretDict[secPair["secretName"]] = self.get_secret(secPair["secretId"])
+        return secretDict
+
+    def xxxget_secret_dictionary(self) -> Dict[str, str]:
         """
         Retrieves the secret dictionary from Conjur.
 
@@ -317,12 +371,12 @@ class ConjurSecretsProvider(BaseSecretsProvider):
                 timeout=HTTP_TIMEOUT_SECS,
             )
             if response.status_code == HTTPStatus.NOT_FOUND:
-                self.logger.error("Secret %s: not found or has empty value.",
-                                  self._secret_name)
+                self.logger.error(
+                    "Secret %s: not found or has empty value.", self._secret_name
+                )
                 return {}
             if response.status_code != HTTPStatus.OK:
-                self.logger.error("get: secret retrieval error: %s",
-                                  response.text)
+                self.logger.error("get: secret retrieval error: %s", response.text)
                 raise SecretProviderException(response.text)
             return json.loads(response.text)
         except Exception as e:
@@ -356,8 +410,7 @@ class ConjurSecretsProvider(BaseSecretsProvider):
             )
             if response.status_code != HTTPStatus.CREATED:
                 self.logger.error("Error creating secret: %s", response.text)
-                raise SecretProviderException(
-                    f"Error storing secret: {response.text}")
+                raise SecretProviderException(f"Error storing secret: {response.text}")
 
             set_secret_url = f"{self._url}/secrets/conjur/variable/{urllib.parse.quote(f'{self._branch}/{self._secret_name}')}"
             response = requests.post(
@@ -368,8 +421,7 @@ class ConjurSecretsProvider(BaseSecretsProvider):
             )
             if response.status_code != HTTPStatus.CREATED:
                 self.logger.error("Error storing secret: %s", response.text)
-                raise SecretProviderException(
-                    f"Error storing secret: {response.text}")
+                raise SecretProviderException(f"Error storing secret: {response.text}")
         except Exception as e:
             message = f"Error storing secret: {e.args[0]}"
             self.logger.error(message)
