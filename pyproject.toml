@@ -18,12 +18,16 @@ requires-python = ">=3.9"
 dependencies = [
     "python-dotenv",
     "requests",
+    "click",
 ]
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
+
+[project.scripts]
+"guard" = "agent_guard_core.cli:main"
 
 [project.optional-dependencies]
 dev = [

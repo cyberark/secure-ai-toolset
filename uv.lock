@@ -13,6 +13,7 @@ name = "agent-guard-core"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "click" },
     { name = "python-dotenv" },
     { name = "requests" },
 ]
@@ -58,6 +59,7 @@ requires-dist = [
     { name = "autogen-ext", extras = ["openai"], marker = "extra == 'autogen'" },
     { name = "bandit", marker = "extra == 'dev'" },
     { name = "boto3", marker = "extra == 'aws'" },
+    { name = "click" },
     { name = "fastapi", marker = "extra == 'servers'" },
     { name = "h2", marker = "extra == 'openai'", specifier = ">=4.2.0" },
     { name = "httpx", marker = "extra == 'openai'", specifier = ">=0.28.1" },
