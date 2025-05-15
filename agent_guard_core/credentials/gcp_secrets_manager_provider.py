@@ -14,6 +14,9 @@ SUPPORTED_REPLICATION_TYPES = ["automatic", "user_managed"]
 
 
 class GCPSecretsProvider(BaseSecretsProvider):
+    """
+    Manages storing and retrieving secrets from Google Cloud Secret Manager.
+    """
 
     def __init__(self,
                  project_id: str = DEFAULT_PROJECT_ID,
@@ -21,6 +24,16 @@ class GCPSecretsProvider(BaseSecretsProvider):
                  secret_id_version: str = DEFAULT_SECRET_VERSION,
                  region: Optional[str] = None,
                  replication_type: str = DEFAULT_REPLICATION_TYPE):
+        """
+        Initializes the GCP Secret Manager client with the specified configuration.
+
+        :param project_id: GCP project ID where the secret manager is located. Defaults to 'default'.
+        :param secret_id: The secret ID to use. Defaults to 'agentic_env_vars'.
+        :param secret_id_version: The version of the secret to use. Defaults to 'latest'.
+        :param region: Optional region for the secret. Defaults to None.
+        :param replication_type: Replication type for the secret. Defaults to 'automatic'.
+        :raises SecretProviderException: If the replication type is not supported.
+        """
         super().__init__()
         self._project_id = project_id
         self._secret_id = secret_id
@@ -36,6 +49,12 @@ class GCPSecretsProvider(BaseSecretsProvider):
         self._replication_type = replication_type
 
     def connect(self) -> bool:
+        """
+        Establishes a connection to the GCP Secret Manager service.
+
+        :return: True if connection is successful, raises SecretProviderException otherwise.
+        :raises SecretProviderException: If there is an error initializing the client.
+        """
         if self._client:
             return True
         try:
@@ -59,6 +78,12 @@ class GCPSecretsProvider(BaseSecretsProvider):
         return f"projects/{self._project_id}"
 
     def get_secret_dictionary(self) -> Dict[str, str]:
+        """
+        Retrieves the secret dictionary from GCP Secret Manager.
+
+        :return: A dictionary containing the secrets.
+        :raises SecretProviderException: If there is an error retrieving the secrets.
+        """
         self.connect()
         try:
             version_path = self._get_version_path()
@@ -74,10 +99,15 @@ class GCPSecretsProvider(BaseSecretsProvider):
             raise SecretProviderException(
                 f"Error retrieving secret: {e}") from e
 
-    def store_secret_dictionary(self, secret_dictionary: Dict[str,
-                                                              str]) -> None:
-        if not secret_dictionary:
-            raise SecretProviderException("Empty secret dictionary provided")
+    def store_secret_dictionary(self, secret_dictionary: Dict[str, str]) -> None:
+        """
+        Stores the secret dictionary in GCP Secret Manager.
+
+        :param secret_dictionary: The dictionary containing secrets to store.
+        :raises SecretProviderException: If the dictionary is None or if there is an error storing the secrets.
+        """
+        if secret_dictionary is None:
+            raise SecretProviderException("Dictionary not provided")
 
         self.connect()
         secret_text = json.dumps(secret_dictionary)
@@ -120,6 +150,13 @@ class GCPSecretsProvider(BaseSecretsProvider):
             raise SecretProviderException(f"Error storing secret:{e}") from e
 
     def store(self, key: str, secret: str) -> None:
+        """
+        Stores a secret in GCP Secret Manager. Creates or updates the secret.
+
+        :param key: The name of the secret.
+        :param secret: The secret value to store.
+        :raises SecretProviderException: If key or secret is missing, or if there is an error storing the secret.
+        """
         if not key or not secret:
             raise SecretProviderException("store: key or secret is missing")
 
@@ -128,6 +165,12 @@ class GCPSecretsProvider(BaseSecretsProvider):
         self.store_secret_dictionary(secret_dict)
 
     def get(self, key: str) -> Optional[str]:
+        """
+        Retrieves a secret from GCP Secret Manager by key.
+
+        :param key: The name of the secret to retrieve.
+        :return: The secret value if retrieval is successful, None otherwise.
+        """
         if not key:
             self.logger.warning("get: key is missing")
             return None
@@ -136,6 +179,12 @@ class GCPSecretsProvider(BaseSecretsProvider):
         return secret_dict.get(key)
 
     def delete(self, key: str) -> None:
+        """
+        Deletes a secret from GCP Secret Manager by key.
+
+        :param key: The name of the secret to delete.
+        :raises SecretProviderException: If key is missing or if there is an error deleting the secret.
+        """
         if not key:
             raise SecretProviderException("delete: key is missing")
 

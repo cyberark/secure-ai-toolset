@@ -6,7 +6,7 @@ from agent_guard_core.credentials.secrets_provider import SecretProviderExceptio
 
 @pytest.fixture()
 def provider(scope="module"):
-    return GCPSecretsProvider()
+    return GCPSecretsProvider(project_id="mela-50d4f",secret_id="oryantest")
 
 
 @pytest.mark.gcp
@@ -125,3 +125,18 @@ def test_store_secret_dictionary(provider):
     for key, value in test_secrets.items():
         fetched_value = provider.get(key)
         assert fetched_value == value
+
+
+@pytest.mark.gcp
+def test_store_empty_secret_dictionary(provider):
+    # Store an empty dictionary
+    provider.store_secret_dictionary({})
+    # Verify that no exception is raised and the dictionary is accepted
+
+
+@pytest.mark.gcp
+def test_store_none_secret_dictionary(provider):
+    # Attempt to store None as a dictionary
+    with pytest.raises(SecretProviderException) as e:
+        provider.store_secret_dictionary(None)
+    assert "Dictionary not provided" in str(e.value)
