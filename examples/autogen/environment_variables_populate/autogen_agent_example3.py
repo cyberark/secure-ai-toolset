@@ -2,20 +2,20 @@ import asyncio
 import os
 from typing import List
 
-from autogen_core import SingleThreadedAgentRuntime
+from autogen_core import AgentId, SingleThreadedAgentRuntime
 from autogen_core.tool_agent import ToolAgent
 from autogen_core.tools import FunctionTool, Tool
 from autogen_ext.models.openai import AzureOpenAIChatCompletionClient
 
 from agent_guard_core.credentials.environment_manager import EnvironmentVariablesManager
 from agent_guard_core.credentials.gcp_secrets_manager_provider import GCPSecretsProvider
-from examples.autogen.environment_variables_populate.autogen_common import ToolUseAgent, get_stock_price
+from examples.autogen.environment_variables_populate.autogen_common import Message, ToolUseAgent, get_stock_price
 
 
 @EnvironmentVariablesManager.set_env_vars(
     GCPSecretsProvider(
-        project_id="sample-project-id",
-        secret_id="sample-secret-id",
+        project_id="<gcp-project-id>",
+        secret_id="<secret_id>",
     ))
 async def main() -> None:
     """
@@ -29,15 +29,6 @@ async def main() -> None:
     2. Service account with Secret Manager access
     3. GOOGLE_APPLICATION_CREDENTIALS environment variable set to service account key file
     4. Required secrets stored in GCP Secret Manager
-
-    The example shows two types of secrets:
-    1. Cross-regional secrets (automatically replicated across regions)
-       - Path format: projects/{project_id}/secrets/{secret_id}
-       - Example: projects/857072587832/secrets/cross_region_secrets
-
-    2. Regional secrets (stored in specific regions)
-       - Path format: projects/{project_id}/locations/{region}/secrets/{secret_id}
-       - Example: projects/857072587832/locations/us-central1/secrets/regional_secrets
     """
     # Create a runtime.
     runtime = SingleThreadedAgentRuntime()
@@ -67,31 +58,22 @@ async def main() -> None:
         # Start processing messages.
         runtime.start()
 
-        # Example 1: Cross-regional secrets (automatically replicated)
-        cross_region_provider = GCPSecretsProvider(
-            project_id="857072587832",
-            secret_id="cross_region_secrets",
-            replication_type="automatic")
-        cross_region_provider.store("AZURE_OPENAI_ENDPOINT",
-                                    "your-azure-endpoint")
-        cross_region_provider.store("AZURE_OPENAI_API_KEY",
-                                    "your-azure-api-key")
-
-        # Example 2: Regional secrets (user-managed replication)
-        regional_provider = GCPSecretsProvider(
-            project_id="857072587832",
-            secret_id="regional_secrets",
-            region="us-central1",
-            replication_type="user_managed",
-            replication_locations=["us-central1", "us-west1"])
-        regional_provider.store("DATABASE_URL", "your-database-url")
-        regional_provider.store("API_KEY", "your-api-key")
+        # Send a direct message to the tool agent.
+        prompt = f"What is the stock price of NVDA on 2024/06/01? "
+        tool_use_agent_id = AgentId(type="tool_use_agent", key="2")
+        response = await runtime.send_message(Message(prompt),
+                                              tool_use_agent_id)
+        print(response.content)
 
     except Exception as e:
-        print(f"Error occurred: {str(e)}")
+        print(f'An error occurred: {e.args[0]}')
     finally:
-        runtime.stop()
+        try:
+            # Stop processing messages.
+            await runtime.stop()
+        except Exception as e:
+            print(f'An error occurred during cleanup: {e.args[0]}')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     asyncio.run(main())

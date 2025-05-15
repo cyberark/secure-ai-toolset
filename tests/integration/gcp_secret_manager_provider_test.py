@@ -125,7 +125,3 @@ def test_store_secret_dictionary(provider):
     for key, value in test_secrets.items():
         fetched_value = provider.get(key)
         assert fetched_value == value
-
-    # Clean up
-    for key in test_secrets.keys():
-        provider.delete(key)
