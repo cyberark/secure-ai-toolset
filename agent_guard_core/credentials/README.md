@@ -37,6 +37,16 @@ Sample using direct function call:
     env_manager.depopulate_env_vars()
 ```
 
+Sample using a `GCPSecretsProvider`:
+```python
+  @EnvironmentVariablesManager.set_env_vars(GCPSecretsProvider(project_id="test-project"))
+  def my_agentic_function():
+    ...
+    my agentic code
+    ...
+```
+
+
 - **Secure Secret Management**: Retrieve and store secrets securely using supported providers with a code example below:
 
 ```python
@@ -57,6 +67,7 @@ provider.delete("my_secret_key")
 - **Supported Providers**
     - **CyberArk Conjur**: Integrate with CyberArk's Conjur for enterprise-grade secret management.
     - **AWS Secrets Manager**: Securely manage secrets in AWS.
+    - **Google Cloud Secret Manager**: Securely manage secrets in GCP.
     - **Local .env Files**: Use .env files for development and testing purposes.
 
 - **Extensible**: Implement custom secret providers by extending the `SecretsProvider` interface.
