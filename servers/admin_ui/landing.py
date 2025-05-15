@@ -15,6 +15,7 @@ st.write("""
 Agent Guard is your AI-driven security solution, offering the following capabilities:
 - **Secret Provider**: Acts as a proxy to the following secret providers:
     - AWS Secrets Manager
+    - Google Cloud Secret Manager
     - CyberArk Conjur secret provider
     - Local file secret provider (for testing purposes and non sensitive data only) 
 - **Environment keys editor**: A user-friendly interface for managing environment keys. 

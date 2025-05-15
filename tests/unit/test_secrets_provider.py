@@ -5,10 +5,12 @@ import pytest
 
 from agent_guard_core.credentials.aws_secrets_manager_provider import AWSSecretsProvider
 from agent_guard_core.credentials.file_secrets_provider import FileSecretsProvider
+from agent_guard_core.credentials.gcp_secrets_manager_provider import GCPSecretsProvider
 from agent_guard_core.credentials.secrets_provider import SecretProviderException
 
 
-@pytest.fixture(params=[AWSSecretsProvider, FileSecretsProvider])
+@pytest.fixture(
+    params=[GCPSecretsProvider, AWSSecretsProvider, FileSecretsProvider])
 def provider(request):
     return MagicMock(spec=request.param)
 

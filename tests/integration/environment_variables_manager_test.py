@@ -6,11 +6,13 @@ import pytest
 from agent_guard_core.credentials.aws_secrets_manager_provider import AWSSecretsProvider
 from agent_guard_core.credentials.environment_manager import EnvironmentVariablesManager
 from agent_guard_core.credentials.file_secrets_provider import FileSecretsProvider
+from agent_guard_core.credentials.gcp_secrets_manager_provider import GCPSecretsProvider
 
 
 @pytest.fixture(params=[
     AWSSecretsProvider(region_name="us-east-1", namespace=""),
     AWSSecretsProvider(region_name="us-east-1", namespace="test_asm_1"),
+    GCPSecretsProvider(project_id="test-project-1"),
     FileSecretsProvider(namespace=""),
     FileSecretsProvider(namespace="ns_test1"),
 ])
