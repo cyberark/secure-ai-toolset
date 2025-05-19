@@ -6,7 +6,7 @@ from agent_guard_core.credentials.secrets_provider import SecretProviderExceptio
 
 @pytest.fixture()
 def provider(scope="module"):
-    return GCPSecretsProvider(project_id="mela-50d4f",secret_id="oryantest")
+    return GCPSecretsProvider(project_id="<project ID>")
 
 
 @pytest.mark.gcp
