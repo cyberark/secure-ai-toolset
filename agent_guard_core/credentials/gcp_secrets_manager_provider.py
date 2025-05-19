@@ -21,7 +21,6 @@ class GCPSecretsProvider(BaseSecretsProvider):
     def __init__(self,
                  project_id: str = DEFAULT_PROJECT_ID,
                  secret_id: str = DEFAULT_SECRET_ID,
-                 secret_id_version: str = DEFAULT_SECRET_VERSION,
                  region: Optional[str] = None,
                  replication_type: str = DEFAULT_REPLICATION_TYPE):
         """
@@ -29,7 +28,6 @@ class GCPSecretsProvider(BaseSecretsProvider):
 
         :param project_id: GCP project ID where the secret manager is located. Defaults to 'default'.
         :param secret_id: The secret ID to use. Defaults to 'agentic_env_vars'.
-        :param secret_id_version: The version of the secret to use. Defaults to 'latest'.
         :param region: Optional region for the secret. Defaults to None.
         :param replication_type: Replication type for the secret. Defaults to 'automatic'.
         :raises SecretProviderException: If the replication type is not supported.
@@ -37,7 +35,6 @@ class GCPSecretsProvider(BaseSecretsProvider):
         super().__init__()
         self._project_id = project_id
         self._secret_id = secret_id
-        self._secret_id_version = secret_id_version
         self._region = region
         self._client = None
 
@@ -72,7 +69,7 @@ class GCPSecretsProvider(BaseSecretsProvider):
         return f"projects/{self._project_id}/secrets/{self._secret_id}"
 
     def _get_version_path(self) -> str:
-        return f"{self._get_secret_path()}/versions/{self._secret_id_version}"
+        return f"{self._get_secret_path()}/versions/{DEFAULT_SECRET_VERSION}"
 
     def _get_secret_parent(self) -> str:
         return f"projects/{self._project_id}"
@@ -99,7 +96,8 @@ class GCPSecretsProvider(BaseSecretsProvider):
             raise SecretProviderException(
                 f"Error retrieving secret: {e}") from e
 
-    def store_secret_dictionary(self, secret_dictionary: Dict[str, str]) -> None:
+    def store_secret_dictionary(self, secret_dictionary: Dict[str,
+                                                              str]) -> None:
         """
         Stores the secret dictionary in GCP Secret Manager.
 

@@ -37,16 +37,6 @@ Sample using direct function call:
     env_manager.depopulate_env_vars()
 ```
 
-Sample using a `GCPSecretsProvider`:
-```python
-  @EnvironmentVariablesManager.set_env_vars(GCPSecretsProvider(project_id="test-project"))
-  def my_agentic_function():
-    ...
-    my agentic code
-    ...
-```
-
-
 - **Secure Secret Management**: Retrieve and store secrets securely using supported providers with a code example below:
 
 ```python
