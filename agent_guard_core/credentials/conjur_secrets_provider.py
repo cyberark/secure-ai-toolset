@@ -5,6 +5,7 @@ import json
 import os
 import urllib.parse
 from datetime import datetime, timedelta
+from http import HTTPStatus
 from typing import Dict, Optional
 
 import boto3
@@ -12,7 +13,6 @@ import requests
 from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
 from dotenv import load_dotenv
-from http import HTTPStatus
 
 from agent_guard_core.credentials.secrets_provider import BaseSecretsProvider, SecretProviderException
 
@@ -27,6 +27,7 @@ DEFAULT_SECRET_ID = "agentic_env_vars"
 DEFAULT_CONJUR_ACCOUNT = "conjur"
 
 HTTP_TIMEOUT_SECS = 2.0
+
 
 class ConjurSecretsProvider(BaseSecretsProvider):
     """
