@@ -57,6 +57,7 @@ provider.delete("my_secret_key")
 - **Supported Providers**
     - **CyberArk Conjur**: Integrate with CyberArk's Conjur for enterprise-grade secret management.
     - **AWS Secrets Manager**: Securely manage secrets in AWS.
+    - **Google Cloud Secret Manager**: Securely manage secrets in GCP.
     - **Local .env Files**: Use .env files for development and testing purposes.
 
 - **Extensible**: Implement custom secret providers by extending the `SecretsProvider` interface.

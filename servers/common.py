@@ -9,6 +9,7 @@ from agent_guard_core.credentials.aws_secrets_manager_provider import AWSSecrets
 from agent_guard_core.credentials.conjur_secrets_provider import ConjurSecretsProvider
 from agent_guard_core.credentials.environment_manager import EnvironmentVariablesManager
 from agent_guard_core.credentials.file_secrets_provider import FileSecretsProvider
+from agent_guard_core.credentials.gcp_secrets_manager_provider import GCPSecretsProvider
 
 # Define globals for cache
 secret_provider_name = None
@@ -26,6 +27,7 @@ class SecretProviderOptions(Enum):
     AWS_SECRETS_MANAGER_PROVIDER = "AWS Secrets Manager"
     FILE_SECRET_PROVIDER = "local.env file"
     CONJUR_SECRET_PROVIDER = "CyberArk Conjur Cloud"
+    GCP_SECRETS_MANAGER_PROVIDER = "Google Cloud Secret Manager"
 
 
 def get_config_file_path():
@@ -57,6 +59,9 @@ def get_secret_provider():
         SecretProviderOptions.CONJUR_SECRET_PROVIDER.name:
         (ConjurSecretsProvider,
          SecretProviderOptions.CONJUR_SECRET_PROVIDER.value),
+        SecretProviderOptions.GCP_SECRETS_MANAGER_PROVIDER.name:
+        (GCPSecretsProvider,
+         SecretProviderOptions.GCP_SECRETS_MANAGER_PROVIDER.value),
     }
 
     provider_info = provider_mapping.get(secret_provider_id)
