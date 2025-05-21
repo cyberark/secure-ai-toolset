@@ -25,7 +25,7 @@ class ConfigurationOptions(BasicEnum):
     """
     Enum for configuration keys used by Agent Guard.
     """
-    SECRET_PROVIDER = "The secret provider that Agent Guard supports"
+    SECRET_PROVIDER = "The secret provider that Agent Guard is configured to use"
     CONJUR_AUTHN_LOGIN = "The ID of the workload that authenticates to Conjur"
     CONJUR_APPLIANCE_URL = "The endpoint URL of Conjur"
     CONJUR_AUTHN_API_KEY = "The API Key to authenticate in the cloud"

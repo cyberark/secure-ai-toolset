@@ -1,36 +1,36 @@
+import getpass
+
 import click
 
 from agent_guard_core.config.config_manager import ConfigManager, ConfigurationOptions, SecretProviderOptions
 
-# Retrieve the list of supported secret providers and the default provider.
 
-
-@click.group(
-    help=
+@click.group(help=(
     "Agent Guard CLI: Secure your AI agents with environment credentials from multiple secret providers.\n"
-    "Use 'configure' to manage configuration options.")
+    "Use 'configure' to manage configuration options."))
 def cli():
-    """
-    Entry point for the Agent Guard CLI.
-    """
+    """Entry point for the Agent Guard CLI."""
 
 
-@click.group()
+@click.group(name="config")
 def configure():
-    """
-    Commands to manage Agent Guard configuration.
-    """
+    """Commands to manage Agent Guard configuration."""
 
 
 provider_list = SecretProviderOptions.get_keys()
+
+default_provider = ConfigManager().get_config_value(
+    ConfigurationOptions.SECRET_PROVIDER.name
+) or SecretProviderOptions.get_default()
 
 
 @configure.command()
 @click.option(
     '--provider',
     '-p',
-    default=SecretProviderOptions.get_default(),
+    default=default_provider,
     prompt=True,
+    required=False,
     type=click.Choice(provider_list),
     help=('The secret provider to store and retrieve secrets.\n'
           f'Choose from: {provider_list}'),
@@ -39,37 +39,57 @@ provider_list = SecretProviderOptions.get_keys()
               '-cl',
               required=False,
               help="Conjur authentication login (workload ID).")
-@click.option('--conjur-authn-api-key',
-              '-ck',
-              required=False,
-              prompt=True,
-              help="API Key to authenticate to Conjur Cloud.")
 @click.option('--conjur-appliance-url',
               '-cu',
               required=False,
               help="Endpoint URL of Conjur Cloud.")
-def set(provider, conjur_authn_login, conjur_authn_api_key,
-        conjur_appliance_url):
+@click.option('--conjur-api-key',
+              '-ca',
+              is_flag=True,
+              help="Prompt for Conjur API Key.")
+def set(provider, conjur_authn_login, conjur_appliance_url, conjur_api_key):
     """
-    Set the secret provider and related Conjur options in the Agent Guard configuration.
+    Set the secret provider and related options in the Agent Guard configuration.
 
-    You can specify the provider and, if using Conjur, provide additional authentication details.
+    You can specify the provider and, if using a provider with sensitive parameters,
+    those will always be prompted for securely.
     """
     config_manager = ConfigManager()
+
+    existing_provider = config_manager.get_config_value(
+        ConfigurationOptions.SECRET_PROVIDER)
+    if not (provider or existing_provider):
+        provider = click.prompt("Select secret provider",
+                                type=click.Choice(provider_list),
+                                show_choices=True)
+    else:
+        print(f"Provider: {provider}")
+
     config_manager.set_config_value(
         key=ConfigurationOptions.SECRET_PROVIDER.name, value=provider)
+
     if conjur_authn_login:
         config_manager.set_config_value(
             key=ConfigurationOptions.CONJUR_AUTHN_LOGIN.name,
             value=conjur_authn_login)
-    if conjur_authn_api_key:
-        config_manager.set_config_value(
-            key=ConfigurationOptions.CONJUR_AUTHN_API_KEY.name,
-            value=conjur_authn_api_key)
+
     if conjur_appliance_url:
         config_manager.set_config_value(
             key=ConfigurationOptions.CONJUR_APPLIANCE_URL.name,
             value=conjur_appliance_url)
+
+    # Only prompt for API key if requested and provider is conjur
+    if conjur_api_key:
+        if provider.lower(
+        ) == SecretProviderOptions.CONJUR_SECRET_PROVIDER.name.lower():
+            sensitive_value = getpass.getpass(
+                "Enter value for Conjur Authn Api Key: ")
+            config_manager.set_config_value(key="CONJUR_AUTHN_API_KEY",
+                                            value=sensitive_value)
+        else:
+            click.echo(
+                "Warning: --conjur-api-key flag is only applicable when provider is 'conjur'. No value was set."
+            )
 
 
 @configure.command('list')
