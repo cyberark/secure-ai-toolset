@@ -34,8 +34,7 @@ def test_configure_set_and_get_secret_provider(runner, temp_config_home):
 
         # Get the value using the CLI
         result = runner.invoke(cli, [
-            'config', 'get', '--key',
-            ConfigurationOptions.SECRET_PROVIDER.name
+            'config', 'get', '--key', ConfigurationOptions.SECRET_PROVIDER.name
         ])
         assert result.exit_code == 0
         output = result.output.strip()
@@ -55,9 +54,9 @@ def test_configure_set_and_get_conjur_provider(runner, temp_config_home):
     assert result.exit_code == 0
 
     # Get provider value
-    result = runner.invoke(cli, [
-        'config', 'get', '--key', ConfigurationOptions.SECRET_PROVIDER.name
-    ])
+    result = runner.invoke(
+        cli,
+        ['config', 'get', '--key', ConfigurationOptions.SECRET_PROVIDER.name])
     assert result.exit_code == 0
     output = result.output.strip()
     key, value = output.split("=")
@@ -76,7 +75,6 @@ def test_configure_set_and_get_conjur_provider(runner, temp_config_home):
 
 def test_configure_get_nonexistent_key(runner, temp_config_home):
     # Try to get a key that does not exist
-    result = runner.invoke(cli,
-                           ['config', 'get', '--key', 'NON_EXISTENT_KEY'])
+    result = runner.invoke(cli, ['config', 'get', '--key', 'NON_EXISTENT_KEY'])
     assert result.exit_code == 2
     assert "'--key': 'NON_EXISTENT_KEY' is not one of" in result.output
