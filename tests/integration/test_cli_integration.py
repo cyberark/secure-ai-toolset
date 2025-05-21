@@ -1,7 +1,11 @@
+import tempfile
+from pathlib import Path
+
 import pytest
 from click.testing import CliRunner
 
 from agent_guard_core.cli import cli
+from agent_guard_core.config.config_manager import ConfigurationOptions, SecretProviderOptions
 
 
 @pytest.fixture
@@ -9,41 +13,70 @@ def runner():
     return CliRunner()
 
 
-def test_configure_set_and_list(monkeypatch, tmp_path, runner):
-    # Patch ConfigManager to use a dummy config dictionary in memory
-    from agent_guard_core import cli as cli_module
+@pytest.fixture
+def temp_config_home(monkeypatch):
+    # Create a temporary directory and patch Path.home() to use it
+    with tempfile.TemporaryDirectory() as temp_dir:
+        monkeypatch.setattr("pathlib.Path.home", lambda: Path(temp_dir))
+        yield Path(temp_dir)
 
-    class DummyConfigManager:
 
-        def __init__(self):
-            self._config = {}
+def test_configure_set_and_get_secret_provider(runner, temp_config_home):
+    # Iterate over all provider types and set/get each one
+    for provider in SecretProviderOptions.get_keys():
+        # Set a value using the CLI
+        result = runner.invoke(
+            cli,
+            ['configure', 'set', '--provider', provider],
+            input="\n"  # for any prompt
+        )
+        assert result.exit_code == 0
 
-        def set_config_value(self, key, value):
-            self._config[key] = value
+        # Get the value using the CLI
+        result = runner.invoke(cli, [
+            'configure', 'get', '--key',
+            ConfigurationOptions.SECRET_PROVIDER.name
+        ])
+        assert result.exit_code == 0
+        output = result.output.strip()
+        key, value = output.split("=")
+        assert key == ConfigurationOptions.SECRET_PROVIDER.name
+        assert value == provider
 
-        def get_config(self):
-            return self._config
 
-    monkeypatch.setattr(cli_module, "ConfigManager", DummyConfigManager)
-
-    # Set a value
-    result = runner.invoke(
-        cli, ['configure', 'set', '--provider', 'FILE_SECRET_PROVIDER'])
+def test_configure_set_and_get_conjur_provider(runner, temp_config_home):
+    # Set values using the CLI
+    result = runner.invoke(cli, [
+        'configure', 'set', '--provider',
+        SecretProviderOptions.CONJUR_SECRET_PROVIDER.name,
+        '--conjur_authn_login', 'user1'
+    ],
+                           input="\n")
     assert result.exit_code == 0
 
-    # Set another value
+    # Get provider value
     result = runner.invoke(cli, [
-        'configure', 'set', '--provider', 'CONJUR_SECRET_PROVIDER',
-        '--conjur_authn_login', 'user1'
+        'configure', 'get', '--key', ConfigurationOptions.SECRET_PROVIDER.name
     ])
     assert result.exit_code == 0
+    output = result.output.strip()
+    key, value = output.split("=")
+    assert key == ConfigurationOptions.SECRET_PROVIDER.name
+    assert value == SecretProviderOptions.CONJUR_SECRET_PROVIDER.name
 
-    # List values
-    dummy_manager = DummyConfigManager()
-    dummy_manager.set_config_value("SECRET_PROVIDER", "CONJUR_SECRET_PROVIDER")
-    dummy_manager.set_config_value("CONJUR_AUTHN_LOGIN", "user1")
-    monkeypatch.setattr(cli_module, "ConfigManager", lambda: dummy_manager)
-    result = runner.invoke(cli, ['configure', 'list'])
+    # Get conjur_authn_login value
+    result = runner.invoke(cli,
+                           ['configure', 'get', '--key', 'CONJUR_AUTHN_LOGIN'])
     assert result.exit_code == 0
-    assert "SECRET_PROVIDER=CONJUR_SECRET_PROVIDER" in result.output
-    assert "CONJUR_AUTHN_LOGIN=user1" in result.output
+    output = result.output.strip()
+    key, value = output.split("=")
+    assert key == "CONJUR_AUTHN_LOGIN"
+    assert value == "user1"
+
+
+def test_configure_get_nonexistent_key(runner, temp_config_home):
+    # Try to get a key that does not exist
+    result = runner.invoke(cli,
+                           ['configure', 'get', '--key', 'NON_EXISTENT_KEY'])
+    assert result.exit_code == 2
+    assert "'--key': 'NON_EXISTENT_KEY' is not one of" in result.output

@@ -4,37 +4,40 @@ from pathlib import Path
 from agent_guard_core.credentials.file_secrets_provider import FileSecretsProvider
 
 
-class ConfigurationOptions(Enum):
-    """
-    Enum for configuration keys used by Agent Guard.
-    """
-    SECRET_PROVIDER = "The secret provider that Agent Guard supports"
-    CONJUR_AUTHN_LOGIN = "The ID of the workload that authenticates to Conjur"
-    CONJUR_APPLIANCE_URL = "The endpoint URL of Conjur Cloud"
-    CONJUR_AUTHN_API_KEY = "The API Key to authenticate in the cloud"
-
-
-class SecretProviderOptions(Enum):
-    """
-    Enum for supported secret providers.
-    """
-    AWS_SECRETS_MANAGER_PROVIDER = "AWS Secrets Manager"
-    FILE_SECRET_PROVIDER = "local.env file"
-    CONJUR_SECRET_PROVIDER = "CyberArk Conjur Cloud"
+class BasicEnum(Enum):
 
     @classmethod
-    def get_secret_provider_keys(cls):
+    def get_keys(cls):
         """
         Return a list of all secret provider keys (enum names).
         """
         return [member.name for member in cls]
 
     @classmethod
-    def get_default_secret_provider(cls):
+    def get_default(cls):
         """
-        Return the default secret provider key.
+        Return the default enum value. by default its the first item
         """
-        return cls.FILE_SECRET_PROVIDER.name
+        return cls.get_keys()[0]
+
+
+class ConfigurationOptions(BasicEnum):
+    """
+    Enum for configuration keys used by Agent Guard.
+    """
+    SECRET_PROVIDER = "The secret provider that Agent Guard supports"
+    CONJUR_AUTHN_LOGIN = "The ID of the workload that authenticates to Conjur"
+    CONJUR_APPLIANCE_URL = "The endpoint URL of Conjur"
+    CONJUR_AUTHN_API_KEY = "The API Key to authenticate in the cloud"
+
+
+class SecretProviderOptions(BasicEnum):
+    """
+    Enum for supported secret providers.
+    """
+    AWS_SECRETS_MANAGER_PROVIDER = "AWS Secrets Manager"
+    FILE_SECRET_PROVIDER = "local.env file"
+    CONJUR_SECRET_PROVIDER = "CyberArk Conjur Cloud"
 
 
 class ConfigManager:
