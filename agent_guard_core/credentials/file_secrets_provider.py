@@ -16,7 +16,8 @@ class FileSecretsProvider(BaseSecretsProvider):
         """
         Initialize the FileSecretsProvider with a namespace.
 
-        :param namespace: The namespace to use for storing secrets. It can include slashes to represent a directory structure.
+        :param namespace: The namespace to use for storing secrets.
+         It can include slashes to represent a directory structure.
         """
         super().__init__()
         if not namespace:

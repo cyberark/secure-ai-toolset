@@ -113,3 +113,5 @@ vulture==2.14
 wrapt==1.17.2
 yapf==0.43.0
 zipp==3.21.0
+google-cloud-secret-manager==2.23.3
+google-api-core==2.24.2
