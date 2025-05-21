@@ -6,8 +6,6 @@ astroid==3.3.10
     # via pylint
 autoflake==2.3.1
     # via agent-guard-core (pyproject.toml)
-backports-tarfile==1.2.0
-    # via jaraco-context
 bandit==1.8.3
     # via agent-guard-core (pyproject.toml)
 certifi==2025.4.26
@@ -36,8 +34,6 @@ id==1.5.0
     # via twine
 idna==3.10
     # via requests
-importlib-metadata==8.7.0
-    # via keyring
 importlib-resources==6.5.2
     # via python-semantic-release
 iniconfig==2.1.0
@@ -160,5 +156,3 @@ wrapt==1.17.2
     # via deprecated
 yapf==0.43.0
     # via agent-guard-core (pyproject.toml)
-zipp==3.21.0
-    # via importlib-metadata

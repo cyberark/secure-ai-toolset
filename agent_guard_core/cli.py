@@ -133,11 +133,3 @@ def get_param(key):
 
 
 cli.add_command(config)
-
-
-def main():
-    cli()
-
-
-if __name__ == '__main__':
-    main()
