@@ -24,8 +24,9 @@ echo $python_files
 
 # Ask for confirmation before proceeding
 echo ""
-echo "⚠️  This script will modify your files. Continue? (y/n)"
+echo "⚠️  This script will modify your files. Continue? (Y/n)"
 read -r confirm
+confirm=${confirm:-Y}
 if [[ $confirm != "y" && $confirm != "Y" ]]; then
     echo "Operation cancelled."
     exit 0
@@ -74,5 +75,14 @@ pylint $python_files
 echo "✅ Pylint check complete. Review the output above."
 
 echo ""
+echo "📦 Compiling requirements-dev.txt for development dependencies..."
+uv pip compile pyproject.toml -o requirements-dev.txt --extra dev
+
+echo ""
+echo "📦 Compiling requirements.txt for all optional dependencies (servers, examples, aws, gcp)..."
+uv pip compile pyproject.toml -o requirements.txt --extra servers --extra examples --extra aws --extra gcp
+
+echo ""
 echo "🎉 Code cleaning and security scanning complete!"
+
 

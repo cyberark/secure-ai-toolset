@@ -19,6 +19,7 @@ Navigate to the specific server directory and create a virtual environment:
 python -m venv .venv
 source .venv/bin/activate 
 pip install -r requirements.txt 
+pip install -r requirements-dev.txt  # optional dev dependencies
 ```
 
 #### Install dependencies using uv
