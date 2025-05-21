@@ -27,14 +27,14 @@ def test_configure_set_and_get_secret_provider(runner, temp_config_home):
         # Set a value using the CLI
         result = runner.invoke(
             cli,
-            ['configure', 'set', '--provider', provider],
+            ['config', 'set', '--provider', provider],
             input="\n"  # for any prompt
         )
         assert result.exit_code == 0
 
         # Get the value using the CLI
         result = runner.invoke(cli, [
-            'configure', 'get', '--key',
+            'config', 'get', '--key',
             ConfigurationOptions.SECRET_PROVIDER.name
         ])
         assert result.exit_code == 0
@@ -47,7 +47,7 @@ def test_configure_set_and_get_secret_provider(runner, temp_config_home):
 def test_configure_set_and_get_conjur_provider(runner, temp_config_home):
     # Set values using the CLI
     result = runner.invoke(cli, [
-        'configure', 'set', '--provider',
+        'config', 'set', '--provider',
         SecretProviderOptions.CONJUR_SECRET_PROVIDER.name,
         '--conjur_authn_login', 'user1'
     ],
@@ -56,7 +56,7 @@ def test_configure_set_and_get_conjur_provider(runner, temp_config_home):
 
     # Get provider value
     result = runner.invoke(cli, [
-        'configure', 'get', '--key', ConfigurationOptions.SECRET_PROVIDER.name
+        'config', 'get', '--key', ConfigurationOptions.SECRET_PROVIDER.name
     ])
     assert result.exit_code == 0
     output = result.output.strip()
@@ -66,7 +66,7 @@ def test_configure_set_and_get_conjur_provider(runner, temp_config_home):
 
     # Get conjur_authn_login value
     result = runner.invoke(cli,
-                           ['configure', 'get', '--key', 'CONJUR_AUTHN_LOGIN'])
+                           ['config', 'get', '--key', 'CONJUR_AUTHN_LOGIN'])
     assert result.exit_code == 0
     output = result.output.strip()
     key, value = output.split("=")
@@ -77,6 +77,6 @@ def test_configure_set_and_get_conjur_provider(runner, temp_config_home):
 def test_configure_get_nonexistent_key(runner, temp_config_home):
     # Try to get a key that does not exist
     result = runner.invoke(cli,
-                           ['configure', 'get', '--key', 'NON_EXISTENT_KEY'])
+                           ['config', 'get', '--key', 'NON_EXISTENT_KEY'])
     assert result.exit_code == 2
     assert "'--key': 'NON_EXISTENT_KEY' is not one of" in result.output

@@ -13,7 +13,7 @@ def cli():
 
 
 @click.group(name="config")
-def configure():
+def config():
     """Commands to manage Agent Guard configuration."""
 
 
@@ -24,7 +24,7 @@ default_provider = ConfigManager().get_config_value(
 ) or SecretProviderOptions.get_default()
 
 
-@configure.command()
+@config.command()
 @click.option(
     '--provider',
     '-p',
@@ -92,7 +92,7 @@ def set(provider, conjur_authn_login, conjur_appliance_url, conjur_api_key):
             )
 
 
-@configure.command('list')
+@config.command('list')
 def list_params():
     """
     List all configuration parameters and their values for Agent Guard.
@@ -109,7 +109,7 @@ def list_params():
         click.echo("  No configuration found.")
 
 
-@configure.command('get')
+@config.command('get')
 @click.option(
     '--key',
     required=False,
@@ -132,7 +132,7 @@ def get_param(key):
         click.echo(f"No value found for key: {key}")
 
 
-cli.add_command(configure)
+cli.add_command(config)
 
 
 def main():

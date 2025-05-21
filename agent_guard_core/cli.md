@@ -5,7 +5,7 @@ The Agent Guard CLI provides commands to configure and manage secret providers a
 ## Usage
 
 ```sh
-agent-guard [COMMAND] [OPTIONS]
+agc [COMMAND] [OPTIONS]
 ```
 
 ## Commands
@@ -35,7 +35,7 @@ Set the secret provider and related Conjur options.
 
 **Example:**
 ```sh
-agent-guard configure set --provider CONJUR_SECRET_PROVIDER --conjur_authn_login my-app --conjur_authn_api_key my-key --conjur_appliance_url https://conjur.example.com
+agc config set --provider CONJUR_SECRET_PROVIDER --conjur_authn_login my-app --conjur_authn_api_key my-key --conjur_appliance_url https://conjur.example.com
 ```
 
 #### list
@@ -44,7 +44,7 @@ List all configuration parameters and their values.
 
 **Example:**
 ```sh
-agent-guard configure list
+agc config list
 ```
 
 ## Help
@@ -52,7 +52,7 @@ agent-guard configure list
 For help on any command, use the `--help` flag:
 
 ```sh
-agent-guard configure set --help
+agc config set --help
 ```
 
 ---
