@@ -24,18 +24,18 @@ Set the secret provider and related Conjur options.
   Choices: `AWS_SECRETS_MANAGER_PROVIDER`, `FILE_SECRET_PROVIDER`, `CONJUR_SECRET_PROVIDER`  
   Default: `FILE_SECRET_PROVIDER`
 
-- `--conjur_authn_login [LOGIN]`  
+- `--conjur-authn-login [LOGIN]`  
   (Optional) Conjur authentication login (workload ID).
 
-- `--conjur_authn_api_key [API_KEY]`  
+- `--conjur-authn-api-key [API_KEY]`  
   (Optional) API Key to authenticate to Conjur Cloud.
 
-- `--conjur_appliance_url [URL]`  
+- `--conjur-appliance-url [URL]`  
   (Optional) Endpoint URL of Conjur Cloud.
 
 **Example:**
 ```sh
-agc config set --provider CONJUR_SECRET_PROVIDER --conjur_authn_login my-app --conjur_authn_api_key my-key --conjur_appliance_url https://conjur.example.com
+agc config set --provider CONJUR_SECRET_PROVIDER --conjur-authn-login my-app --conjur-authn-api-key my-key --conjur-appliance-url https://conjur.example.com
 ```
 
 #### list
