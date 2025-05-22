@@ -42,6 +42,7 @@ To start developing and testing using our development scripts, the following too
 python -m venv .venv
 source .venv/bin/activate 
 pip install -r requirements.txt 
+pip install -r requirements-dev.txt  # optional dev dependencies
 ```
 4. Run the unit tests
 
