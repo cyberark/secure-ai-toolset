@@ -18,6 +18,9 @@ requires-python = ">=3.9"
 dependencies = [
     "python-dotenv",
     "requests",
+    "click",
+    "boto3",
+    "google-cloud-secret-manager"
 ]
 
 [build-system]
@@ -45,8 +48,5 @@ dev = [
 servers = [
     "uvicorn", "streamlit", "fastapi", "pandas"
 ]
+
 examples = [ "autogen-core", "autogen-ext", "h2>=4.2.0", "httpx>=0.28.1" ]
-
-aws = ["boto3"]
-
-gcp = ["google-cloud-secret-manager"]

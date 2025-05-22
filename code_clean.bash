@@ -79,8 +79,8 @@ echo "📦 Compiling requirements-dev.txt for development dependencies..."
 uv pip compile pyproject.toml -o requirements-dev.txt --extra dev
 
 echo ""
-echo "📦 Compiling requirements.txt for all optional dependencies (servers, examples, aws, gcp)..."
-uv pip compile pyproject.toml -o requirements.txt --extra servers --extra examples --extra aws --extra gcp
+echo "📦 Compiling requirements.txt for all optional dependencies (servers, examples)..."
+uv pip compile pyproject.toml -o requirements.txt --extra servers --extra examples
 
 echo ""
 echo "🎉 Code cleaning and security scanning complete!"
