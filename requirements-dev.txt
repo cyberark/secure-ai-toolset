@@ -8,12 +8,21 @@ autoflake==2.3.1
     # via agent-guard-core (pyproject.toml)
 bandit==1.8.3
     # via agent-guard-core (pyproject.toml)
+boto3==1.38.21
+    # via agent-guard-core (pyproject.toml)
+botocore==1.38.21
+    # via
+    #   boto3
+    #   s3transfer
+cachetools==5.5.2
+    # via google-auth
 certifi==2025.4.26
     # via requests
 charset-normalizer==3.4.2
     # via requests
 click==8.2.1
     # via
+    #   agent-guard-core (pyproject.toml)
     #   click-option-group
     #   python-semantic-release
 click-option-group==0.5.7
@@ -30,6 +39,29 @@ gitdb==4.0.12
     # via gitpython
 gitpython==3.1.44
     # via python-semantic-release
+google-api-core==2.24.2
+    # via google-cloud-secret-manager
+google-auth==2.40.2
+    # via
+    #   google-api-core
+    #   google-cloud-secret-manager
+google-cloud-secret-manager==2.23.3
+    # via agent-guard-core (pyproject.toml)
+googleapis-common-protos==1.70.0
+    # via
+    #   google-api-core
+    #   grpc-google-iam-v1
+    #   grpcio-status
+grpc-google-iam-v1==0.14.2
+    # via google-cloud-secret-manager
+grpcio==1.71.0
+    # via
+    #   google-api-core
+    #   googleapis-common-protos
+    #   grpc-google-iam-v1
+    #   grpcio-status
+grpcio-status==1.71.0
+    # via google-api-core
 id==1.5.0
     # via twine
 idna==3.10
@@ -50,6 +82,10 @@ jaraco-functools==4.1.0
     # via keyring
 jinja2==3.1.6
     # via python-semantic-release
+jmespath==1.0.1
+    # via
+    #   boto3
+    #   botocore
 keyring==25.6.0
     # via twine
 markdown-it-py==3.0.0
@@ -78,6 +114,24 @@ platformdirs==4.3.8
     #   yapf
 pluggy==1.6.0
     # via pytest
+proto-plus==1.26.1
+    # via
+    #   google-api-core
+    #   google-cloud-secret-manager
+protobuf==5.29.4
+    # via
+    #   google-api-core
+    #   google-cloud-secret-manager
+    #   googleapis-common-protos
+    #   grpc-google-iam-v1
+    #   grpcio-status
+    #   proto-plus
+pyasn1==0.6.1
+    # via
+    #   pyasn1-modules
+    #   rsa
+pyasn1-modules==0.4.2
+    # via google-auth
 pydantic==2.11.4
     # via python-semantic-release
 pydantic-core==2.33.2
@@ -92,6 +146,8 @@ pylint==3.3.7
     # via agent-guard-core (pyproject.toml)
 pytest==8.3.5
     # via agent-guard-core (pyproject.toml)
+python-dateutil==2.9.0.post0
+    # via botocore
 python-dotenv==1.1.0
     # via agent-guard-core (pyproject.toml)
 python-gitlab==5.6.0
@@ -105,6 +161,7 @@ readme-renderer==44.0
 requests==2.32.3
     # via
     #   agent-guard-core (pyproject.toml)
+    #   google-api-core
     #   id
     #   python-gitlab
     #   python-semantic-release
@@ -121,10 +178,16 @@ rich==14.0.0
     #   bandit
     #   python-semantic-release
     #   twine
+rsa==4.9.1
+    # via google-auth
+s3transfer==0.12.0
+    # via boto3
 setuptools==80.8.0
     # via pbr
 shellingham==1.5.4
     # via python-semantic-release
+six==1.17.0
+    # via python-dateutil
 smmap==5.0.2
     # via gitdb
 stevedore==5.4.1
@@ -146,6 +209,7 @@ typing-inspection==0.4.0
     # via pydantic
 urllib3==2.4.0
     # via
+    #   botocore
     #   requests
     #   twine
 uv==0.7.6
