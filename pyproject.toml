@@ -7,7 +7,8 @@ license = "Apache-2.0"
 authors = [
     { name = "CyberArk", email = "cyberark@cyberark.com" },
     { name = "Gil Adda", email = "gil.adda@cyberark.com" },
-    { name = "Rafi Schwartz", email = "rafi.schwartz@cyberark.com" }
+    { name = "Rafi Schwartz", email = "rafi.schwartz@cyberark.com" },
+    { name = "Tomer Shtilman", email = "tomer.shtilman@cyberark.com" }
 ]
 packages = [
     { include = "agent_guard_core" },
