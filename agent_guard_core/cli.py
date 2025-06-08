@@ -1,8 +1,36 @@
+import asyncio
 import getpass
+import sys
 
 import click
+from mcp import stdio_client, ClientSession, stdio_server, StdioServerParameters
+from mcp_proxy.config_loader import load_named_server_configs_from_file
 
 from agent_guard_core.config.config_manager import ConfigManager, ConfigurationOptions, SecretProviderOptions
+
+
+import logging
+
+from agent_guard_core.proxy.audited_proxy import create_agent_guard_proxy_server
+from agent_guard_core.proxy.logging import get_audit_logger
+
+
+def get_cli_logger():
+    global logger, file_handler, formatter
+    logger = logging.getLogger("agent_guard_core.cli")
+    logger.setLevel(logging.INFO)
+    file_handler = logging.FileHandler("agent_guard_core.log")
+    file_handler.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(asctime)s %(levelname)s %(name)s: %(message)s')
+    file_handler.setFormatter(formatter)
+    if not logger.hasHandlers():
+        logger.addHandler(file_handler)
+        logger.addHandler(logging.StreamHandler())
+
+
+get_cli_logger()
+
+get_audit_logger()
 
 
 @click.group(help=(
@@ -10,6 +38,46 @@ from agent_guard_core.config.config_manager import ConfigManager, ConfigurationO
     "Use 'configure' to manage configuration options."))
 def cli():
     """Entry point for the Agent Guard CLI."""
+
+
+@click.group(name="run")
+#
+def run():
+    """Commands to run the Agent Guard proxy."""
+
+@run.command(name="stdio-proxy")
+@click.option(
+    '--mcp-config-file',
+    '-cf',
+    required=True,
+    help="Path to the MCP server configuration file.",
+)
+def stdio_proxy(mcp_config_file):
+
+    asyncio.run(_stdio_proxy_async(mcp_config_file))
+
+async def _stdio_proxy_async(mcp_config_file):
+    print(f"Starting stdio server from config  {mcp_config_file} ")
+    base_env: dict[str, str] = {}
+    stdio_params = load_named_server_configs_from_file(mcp_config_file, base_env)
+
+    params=None
+
+    for name, params in stdio_params.items():
+            logger.info(
+                "Setting up named server '%s': %s %s",
+                name,
+                params.command,
+                " ".join(params.args),
+            )
+    async with stdio_client(params,errlog=sys.stdout) as streams, ClientSession(*streams) as session:
+        app = await create_agent_guard_proxy_server(session, get_audit_logger())
+        async with stdio_server() as (read_stream, write_stream):
+            await app.run(
+                read_stream,
+                write_stream,
+                app.create_initialization_options(),
+            )
 
 
 @click.group(name="config")
@@ -23,6 +91,67 @@ default_provider = ConfigManager().get_config_value(
     ConfigurationOptions.SECRET_PROVIDER.name
 ) or SecretProviderOptions.get_default()
 
+
+
+# @click.group(name="run")
+# def run():
+#     print ("run mcp server")
+# 
+# @run.command()
+#
+# def set(target_mcp_server_config_file):
+#     """
+#     Set the MCP server configuration file for the Agent Guard CLI.
+# 
+#     This command allows you to specify the MCP server configuration file
+#     that will be used by the Agent Guard CLI.
+#     """
+#     config_manager = ConfigManager()
+#     if not target_mcp_server_config_file:
+#         target_mcp_server_config_file = click.prompt(
+#             "Enter path to MCP server configuration file",
+#             type=click.Path(exists=True, dir_okay=False, readable=True),
+#             show_choices=True,
+#         )
+# 
+#     config_manager.set_config_value(
+#         key=ConfigurationOptions.TARGET_MCP_SERVER_CONFIG_FILE.name,
+#         value=target_mcp_server_config_file
+#     )
+#     click.echo(f"Set MCP server configuration file: {target_mcp_server_config_file}")
+# 
+# click.group(name="run")
+# def run():
+#     print ("run mcp server")
+# 
+# @run.command()
+# @click.option(
+#     '--mcp-config-file',
+#     '-m',
+#     required=False,
+#     help="Path to the MCP server configuration file.",
+# )
+# def set(target_mcp_server_config_file):
+#     """
+#     Set the MCP server configuration file for the Agent Guard CLI.
+# 
+#     This command allows you to specify the MCP server configuration file
+#     that will be used by the Agent Guard CLI.
+#     """
+#     config_manager = ConfigManager()
+#     if not target_mcp_server_config_file:
+#         target_mcp_server_config_file = click.prompt(
+#             "Enter path to MCP server configuration file",
+#             type=click.Path(exists=True, dir_okay=False, readable=True),
+#             show_choices=True,
+#         )
+# 
+#     config_manager.set_config_value(
+#         key=ConfigurationOptions.TARGET_MCP_SERVER_CONFIG_FILE.name,
+#         value=target_mcp_server_config_file
+#     )
+#     click.echo(f"Set MCP server configuration file: {target_mcp_server_config_file}")
+# 
 
 @config.command()
 @click.option(
@@ -47,6 +176,12 @@ default_provider = ConfigManager().get_config_value(
               '-ca',
               is_flag=True,
               help="Prompt for Conjur API Key.")
+
+
+@click.option('--target-mcp-server-config-file',
+              '-tc',
+              required=False,
+              help="Mcp server endpoint")
 def set(provider, conjur_authn_login, conjur_appliance_url, conjur_api_key):
     """
     Set the secret provider and related options in the Agent Guard configuration.
@@ -67,6 +202,7 @@ def set(provider, conjur_authn_login, conjur_appliance_url, conjur_api_key):
 
     config_manager.set_config_value(
         key=ConfigurationOptions.SECRET_PROVIDER.name, value=provider)
+
 
     if conjur_authn_login:
         config_manager.set_config_value(
@@ -91,6 +227,26 @@ def set(provider, conjur_authn_login, conjur_appliance_url, conjur_api_key):
                 "Warning: --conjur-api-key flag is only applicable when provider is 'conjur'. No value was set."
             )
 
+
+# async def proxy_server():
+#
+#
+#     mcp_config_file=ConfigManager().get_config_value(
+#         ConfigurationOptions.TARGET_MCP_SERVER_CONFIG_FILE.name
+#     )
+#
+#     logger = logging.getLogger("agent_guard_core.cli")
+#     async with stdio_client(stdio_params) as streams, ClientSession(*streams) as session:
+#         app = await create_proxy_server(session)
+#         async with stdio_server() as (read_stream, write_stream):
+#             await app.run(
+#                 read_stream,
+#                 write_stream,
+#                 app.create_initialization_options(),
+#             )
+#
+#
+#
 
 @config.command('list')
 def list_params():
@@ -133,3 +289,7 @@ def get_param(key):
 
 
 cli.add_command(config)
+cli.add_command(run)
+
+if __name__ == '__main__':
+    cli(["run","stdio-proxy","--mcp-config-file","config_example.json"], standalone_mode=False)
