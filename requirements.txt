@@ -100,6 +100,8 @@ idna==3.10
     #   requests
 importlib-metadata==8.6.1
     # via opentelemetry-api
+iniconfig==2.1.0
+    # via pytest
 jinja2==3.1.6
     # via
     #   altair
@@ -117,6 +119,10 @@ jsonschema-specifications==2025.4.1
 markupsafe==3.0.2
     # via jinja2
 mcp==1.9.2
+    # via
+    #   agent-guard-core (pyproject.toml)
+    #   mcp-proxy
+mcp-proxy==0.8.0
     # via agent-guard-core (pyproject.toml)
 narwhals==1.40.0
     # via altair
@@ -130,6 +136,7 @@ opentelemetry-api==1.33.1
 packaging==24.2
     # via
     #   altair
+    #   pytest
     #   streamlit
 pandas==2.2.3
     # via
@@ -139,6 +146,8 @@ pillow==11.2.1
     # via
     #   autogen-core
     #   streamlit
+pluggy==1.6.0
+    # via pytest
 proto-plus==1.26.1
     # via
     #   google-api-core
@@ -173,6 +182,14 @@ pydantic-settings==2.9.1
     # via mcp
 pydeck==0.9.1
     # via streamlit
+pygments==2.19.1
+    # via pytest
+pytest==8.4.0
+    # via
+    #   agent-guard-core (pyproject.toml)
+    #   pytest-asyncio
+pytest-asyncio==1.0.0
+    # via agent-guard-core (pyproject.toml)
 python-dateutil==2.9.0.post0
     # via
     #   botocore
@@ -247,6 +264,7 @@ uvicorn==0.34.2
     # via
     #   agent-guard-core (pyproject.toml)
     #   mcp
+    #   mcp-proxy
 wrapt==1.17.2
     # via deprecated
 zipp==3.21.0
