@@ -3,7 +3,7 @@ import logging
 import logging.handlers
 
 
-def get_audit_logger()-> logging.Logger:
+def get_audit_logger() -> logging.Logger:
     global formatter
     audit_logger = logging.getLogger("agent_guard_core.audit")
     audit_logger.setLevel(logging.DEBUG)
@@ -18,6 +18,7 @@ def get_audit_logger()-> logging.Logger:
 
     return audit_logger
 
+
 def audit_log_handler(audit_logger, handler_name):
     def decorator(func):
         @functools.wraps(func)
@@ -26,5 +27,7 @@ def audit_log_handler(audit_logger, handler_name):
             result = await func(req, *args, **kwargs)
             audit_logger.info(f"Response from {handler_name}: {result!r}")
             return result
+
         return wrapper
+
     return decorator
