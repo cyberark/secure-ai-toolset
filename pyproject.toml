@@ -25,6 +25,7 @@ dependencies = [
     "mcp>=1.9.1",
     "mcp-proxy>=0.8.0",
     "pytest>=8.3.5",
+    "pytest-asyncio>=1.0.0",
 ]
 
 [build-system]
