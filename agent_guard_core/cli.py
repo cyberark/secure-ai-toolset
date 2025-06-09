@@ -1,6 +1,7 @@
 import asyncio
 import getpass
 import logging
+import os
 import sys
 
 import click
@@ -9,14 +10,13 @@ from mcp_proxy.config_loader import load_named_server_configs_from_file
 
 from agent_guard_core.config.config_manager import ConfigManager, ConfigurationOptions, SecretProviderOptions
 from agent_guard_core.proxy.audited_proxy import create_agent_guard_proxy_server
-from agent_guard_core.proxy.logging import get_audit_logger
 
 
 def get_cli_logger():
     global logger, file_handler, formatter
     logger = logging.getLogger("agent_guard_core.cli")
     logger.setLevel(logging.INFO)
-    file_handler = logging.FileHandler("agent_guard_core.log")
+    file_handler = logging.FileHandler("agent_guard_core.log" if os.access(".", os.W_OK) else "/tmp/agent_guard_core.log")
     file_handler.setLevel(logging.INFO)
     formatter = logging.Formatter('%(asctime)s %(levelname)s %(name)s: %(message)s')
     file_handler.setFormatter(formatter)
@@ -26,6 +26,21 @@ def get_cli_logger():
 
 
 get_cli_logger()
+
+
+def get_audit_logger() -> logging.Logger:
+    global formatter
+    audit_logger = logging.getLogger("agent_guard_core.audit")
+    audit_logger.setLevel(logging.DEBUG)
+    audit_file_handler = logging.FileHandler("agent_guard_core_proxy.log" if os.access(".", os.W_OK) else "/tmp/agent_guard_core_proxy.log")
+    audit_file_handler.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s %(levelname)s %(name)s: %(message)s')
+    audit_file_handler.setFormatter(formatter)
+    if not audit_logger.hasHandlers():
+        audit_logger.addHandler(audit_file_handler)
+
+    return audit_logger
+
 
 get_audit_logger()
 

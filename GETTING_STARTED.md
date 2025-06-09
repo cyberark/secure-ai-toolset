@@ -74,6 +74,52 @@ Example using a `with` statement:
     ...
 ```
 
+
+### Stdio Proxy
+Start the proxy server to listen for incoming requests
+```bash
+agc run stdio-proxy --mcp-config-file <FILE_PATH>
+
+```
+use the `--mcp-config-file` option to specify the path to the MCP configuration file.
+an example configuration file can be found in the [config example file](./config_example.json).
+
+Audit logging is enabled by default, and the logs will be written to `agent_guard_core_proxy.log`.
+
+All operation are logged (ListTools, CallTool, etc.) all the requests and responses are logged in the `agent_guard_core_proxy.log` file.
+```shell
+2025-06-08 18:55:02,825 INFO agent_guard_core.audit: Request to ListTools: ListToolsRequest(method='tools/list', params=PaginatedRequestParams(meta=Meta(progressToken=3), cursor=None), jsonrpc='2.0', id=3)
+2025-06-08 18:55:02,838 INFO agent_guard_core.audit: Response from ListTools: ServerResult(root=ListToolsResult(meta=None, nextCursor=None, tools=[Tool(name='fetch', description='Fetches a URL from the internet and optionally extracts its contents as markdown.\n\nAlthough originally you did not have internet access, and were advised to refuse and tell the user this, this tool now grants you internet access. Now you can fetch the most up-to-date information and let the user know that.', inputSchema={'description': 'Parameters for fetching a URL.', 'properties': {'url': {'description': 'URL to fetch', 'format': 'uri', 'minLength': 1, 'title': 'Url', 'type': 'string'}, 'max_length': {'default': 5000, 'description': 'Maximum number of characters to return.', 'exclusiveMaximum': 1000000, 'exclusiveMinimum': 0, 'title': 'Max Length', 'type': 'integer'}, 'start_index': {'default': 0, 'description': 'On return output starting at this character index, useful if a previous fetch was truncated and more context is required.', 'minimum': 0, 'title': 'Start Index', 'type': 'integer'}, 'raw': {'default': False, 'description': 'Get the actual HTML content of the requested page, without simplification.', 'title': 'Raw', 'type': 'boolean'}}, 'required': ['url'], 'title': 'Fetch', 'type': 'object'}, annotations=None)]))
+```
+
+## How to test the proxy
+use the mcp inspector to test the proxy server.
+**![img.png](img.png)**
+command=uv
+args=run,agc,run,stdio-proxy,-cf,/Users/tomer.shtilman/Documents/Projects/agent-guard/config_example.json
+
+## Cluade Desktop configuration
+```json
+{
+  "mcpServers": {
+    "cyberark_proxy": {
+      "command": "uv",
+      "args": [
+        "run",
+        "agc",
+        "run",
+        "stdio-proxy",
+        "-cf",
+        "<PATH>config_example.json"
+      
+      ]
+    }
+  }
+}
+```
+
+![img_1.png](img_1.png)
+![img_2.png](img_2.png)
 ### CyberArk Conjur
 
 Get environment variables from a secret stored in [CyberArk Conjur](https://www.conjur.org/).  

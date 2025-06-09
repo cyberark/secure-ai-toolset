@@ -10,7 +10,7 @@ from mcp import server, types, ListResourcesResult
 from mcp.client.session import ClientSession
 from mcp.types import ListResourceTemplatesResult, ReadResourceResult, ListToolsResult, CompleteResult
 
-from agent_guard_core.proxy.logging import audit_log_handler
+from agent_guard_core.proxy.logging import audit_log_operation
 
 
 async def create_agent_guard_proxy_server(remote_app: ClientSession, logger: logging.Logger) -> server.Server[
@@ -26,14 +26,14 @@ async def create_agent_guard_proxy_server(remote_app: ClientSession, logger: log
     if capabilities.prompts:
         logger.debug("Capabilities: adding Prompts...")
 
-        @audit_log_handler(logger, "ListPrompts")
+        @audit_log_operation(logger, "ListPrompts")
         async def _list_prompts(_: t.Any) -> types.ServerResult:  # noqa: ANN401
             result = await remote_app.list_prompts()
             return types.ServerResult(result)
 
         app.request_handlers[types.ListPromptsRequest] = _list_prompts
 
-        @audit_log_handler(logger, "GetPrompt")
+        @audit_log_operation(logger, "GetPrompt")
         async def _get_prompt(req: types.GetPromptRequest) -> types.ServerResult:
             result = await remote_app.get_prompt(req.params.name, req.params.arguments)
             return types.ServerResult(result)
@@ -43,21 +43,21 @@ async def create_agent_guard_proxy_server(remote_app: ClientSession, logger: log
     if capabilities.resources:
         logger.debug("Capabilities: adding Resources...")
 
-        @audit_log_handler(logger, "ListResources")
+        @audit_log_operation(logger, "ListResources")
         async def _list_resources(_: t.Any) -> types.ServerResult:  # noqa: ANN401
             result: ListResourcesResult = await remote_app.list_resources()
             return types.ServerResult(result)
 
         app.request_handlers[types.ListResourcesRequest] = _list_resources
 
-        @audit_log_handler(logger, "ListResourceTemplates")
+        @audit_log_operation(logger, "ListResourceTemplates")
         async def _list_resource_templates(_: t.Any) -> types.ServerResult:  # noqa: ANN401
             result: ListResourceTemplatesResult = await remote_app.list_resource_templates()
             return types.ServerResult(result)
 
         app.request_handlers[types.ListResourceTemplatesRequest] = _list_resource_templates
 
-        @audit_log_handler(logger, "ReadResource")
+        @audit_log_operation(logger, "ReadResource")
         async def _read_resource(req: types.ReadResourceRequest) -> types.ServerResult:
             result: ReadResourceResult = await remote_app.read_resource(req.params.uri)
             return types.ServerResult(result)
@@ -76,14 +76,14 @@ async def create_agent_guard_proxy_server(remote_app: ClientSession, logger: log
     if capabilities.resources:
         logger.debug("Capabilities: adding Resources...")
 
-        @audit_log_handler(logger, "SubscribeResource")
+        @audit_log_operation(logger, "SubscribeResource")
         async def _subscribe_resource(req: types.SubscribeRequest) -> types.ServerResult:
             await remote_app.subscribe_resource(req.params.uri)
             return types.ServerResult(types.EmptyResult())
 
         app.request_handlers[types.SubscribeRequest] = _subscribe_resource
 
-        @audit_log_handler(logger, "UbsubscribeResource")
+        @audit_log_operation(logger, "UbsubscribeResource")
         async def _unsubscribe_resource(req: types.UnsubscribeRequest) -> types.ServerResult:
             await remote_app.unsubscribe_resource(req.params.uri)
             return types.ServerResult(types.EmptyResult())
@@ -93,14 +93,14 @@ async def create_agent_guard_proxy_server(remote_app: ClientSession, logger: log
     if capabilities.tools:
         logger.debug("Capabilities: adding Tools...")
 
-        @audit_log_handler(logger, "ListTools")
+        @audit_log_operation(logger, "ListTools")
         async def _list_tools(_: t.Any) -> types.ServerResult:  # noqa: ANN401
             tools: ListToolsResult = await remote_app.list_tools()
             return types.ServerResult(tools)
 
         app.request_handlers[types.ListToolsRequest] = _list_tools
 
-        @audit_log_handler(logger, "CallTool")
+        @audit_log_operation(logger, "CallTool")
         async def _call_tool(req: types.CallToolRequest) -> types.ServerResult:
             logger.debug("Calling tool...{req.params.name}")
             try:
