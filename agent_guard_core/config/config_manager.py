@@ -4,6 +4,7 @@ from pathlib import Path
 from agent_guard_core.credentials.file_secrets_provider import FileSecretsProvider
 
 
+
 class BasicEnum(Enum):
 
     @classmethod
@@ -29,6 +30,7 @@ class ConfigurationOptions(BasicEnum):
     CONJUR_AUTHN_LOGIN = "The ID of the workload that authenticates to Conjur"
     CONJUR_APPLIANCE_URL = "The endpoint URL of Conjur"
     CONJUR_AUTHN_API_KEY = "The API Key to authenticate in the cloud"
+    TARGET_MCP_SERVER_CONFIG_FILE = "The MCP server endpoint that Agent Guard connects to"
 
 
 class SecretProviderOptions(BasicEnum):
