@@ -10,10 +10,11 @@ from mcp import server, types, ListResourcesResult
 from mcp.client.session import ClientSession
 from mcp.types import ListResourceTemplatesResult, ReadResourceResult, ListToolsResult, CompleteResult
 
-from agent_guard_core.proxy.logging import audit_log_operation
+from agent_guard_core.proxy.proxy_utils import audit_log_operation, get_audit_logger
 
 
-async def create_agent_guard_proxy_server(remote_app: ClientSession, logger: logging.Logger) -> server.Server[
+async def create_agent_guard_proxy_server(remote_app: ClientSession,logger=get_audit_logger(logging.INFO)) -> server.Server[
+
     object]:  # noqa: C901, PLR0915
     """Create a server instance from a remote app."""
     logger.debug("Sending initialization request to remote MCP server...")
