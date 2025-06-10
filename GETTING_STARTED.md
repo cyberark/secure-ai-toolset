@@ -107,7 +107,8 @@ npx @modelcontextprotocol/inspector --config /<PATH>/claude_desktop_config.json 
                 "run",
                 "stdio-proxy",
                 "-cf",
-                "<PATH>/config_example.json"
+                "<PATH>/config_example.json",
+                "--debug"
             ]
         }
     }
