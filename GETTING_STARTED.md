@@ -95,26 +95,22 @@ All operation are logged (ListTools, CallTool, etc.) all the requests and respon
 ## How to test the proxy
 use the mcp inspector to test the proxy server.
 **![img.png](img.png)**
-command=uv
-args=run,agc,run,stdio-proxy,-cf,/Users/tomer.shtilman/Documents/Projects/agent-guard/config_example.json
+npx @modelcontextprotocol/inspector --config /<PATH>/claude_desktop_config.json --server agc_proxy
 
 ## Cluade Desktop configuration
 ```json
 {
-  "mcpServers": {
-    "cyberark_proxy": {
-      "command": "uv",
-      "args": [
-        "run",
-        "agc",
-        "run",
-        "stdio-proxy",
-        "-cf",
-        "<PATH>config_example.json"
-      
-      ]
+    "mcpServers": {
+        "agc_proxy": {
+            "command": "agc",
+            "args": [
+                "run",
+                "stdio-proxy",
+                "-cf",
+                "<PATH>/config_example.json"
+            ]
+        }
     }
-  }
 }
 ```
 
