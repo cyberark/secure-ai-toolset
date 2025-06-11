@@ -29,6 +29,7 @@ def cli():
 @click.group(name="config")
 def config():
     """Commands to manage Agent Guard configuration."""
+    pass
 
 @click.group(name="secrets")
 def secrets():
@@ -127,6 +128,132 @@ def conjur_options(func):
     return wrapper
 
 
+def aws_options(func):
+    @click.option('--aws-region', '-ar', required=False, help='AWS region')
+    @click.option('--aws-access-key-id', '-ak', required=False, help='AWS access key ID')
+    @click.option('--aws-secret-access-key', '-as', required=False, help='AWS secret access key')
+    @functools.wraps(func)
+    def wrapper(*args,
+                aws_region: Optional[str] = None,
+                aws_access_key_id: Optional[str] = None,
+                aws_secret_access_key: Optional[str] = None,
+                **kwargs):
+        provider = kwargs.get('provider')
+        if provider == SecretProviderOptions.AWS_SECRETS_MANAGER_PROVIDER.name:
+            # Get values from env if not passed
+            aws_region = aws_region or os.environ.get('AWS_REGION')
+            aws_access_key_id = aws_access_key_id or os.environ.get('AWS_ACCESS_KEY_ID')
+            aws_secret_access_key = aws_secret_access_key or os.environ.get('AWS_SECRET_ACCESS_KEY')
+
+            if aws_region:
+                os.environ['AWS_REGION'] = aws_region
+            if aws_access_key_id:
+                os.environ['AWS_ACCESS_KEY_ID'] = aws_access_key_id
+            if aws_secret_access_key:
+                os.environ['AWS_SECRET_ACCESS_KEY'] = aws_secret_access_key
+
+        return func(*args, **kwargs)
+    return wrapper
+
+
+def config_provider_option(func):
+    @click.option('--provider', type=click.Choice(SecretProviderOptions.get_keys()), help='Secret provider type')
+    @functools.wraps(func)
+    def wrapper(*args, provider=None, **kwargs):
+        return func(*args, provider=provider, **kwargs)
+    return wrapper
+
+
+def config_conjur_options(func):
+    @click.option('--conjur-authn-login', help='Conjur authentication login (workload ID)')
+    @click.option('--conjur-appliance-url', help='Endpoint URL of Conjur Cloud')
+    @click.option('--conjur-authenticator-id', help='Authenticator ID')
+    @click.option('--conjur-account', help='Account ID')
+    @click.option('--conjur-api-key', help='Conjur API key')
+    @functools.wraps(func)
+    def wrapper(*args,
+                conjur_authn_login: Optional[str] = None,
+                conjur_appliance_url: Optional[str] = None,
+                conjur_authenticator_id: Optional[str] = None,
+                conjur_account: Optional[str] = None,
+                conjur_api_key: Optional[str] = None,
+                **kwargs):
+        config_manager = ConfigManager()
+        
+        if conjur_authn_login:
+            config_manager.set_config_value('CONJUR_AUTHN_LOGIN', conjur_authn_login)
+            
+        if conjur_appliance_url:
+            config_manager.set_config_value('CONJUR_APPLIANCE_URL', conjur_appliance_url)
+            
+        if conjur_authenticator_id:
+            config_manager.set_config_value('CONJUR_AUTHENTICATOR_ID', conjur_authenticator_id)
+            
+        if conjur_account:
+            config_manager.set_config_value('CONJUR_ACCOUNT', conjur_account)
+            
+        if conjur_api_key:
+            config_manager.set_config_value('CONJUR_API_KEY', conjur_api_key)
+            
+        return func(*args, **kwargs)
+    return wrapper
+
+
+def config_aws_options(func):
+    @click.option('--aws-region', help='AWS region')
+    @click.option('--aws-access-key-id', help='AWS access key ID')
+    @click.option('--aws-secret-access-key', help='AWS secret access key', hide_input=True)
+    @functools.wraps(func)
+    def wrapper(*args,
+                aws_region: Optional[str] = None,
+                aws_access_key_id: Optional[str] = None,
+                aws_secret_access_key: Optional[str] = None,
+                **kwargs):
+        config_manager = ConfigManager()
+        
+        if aws_region:
+            config_manager.set_config_value('AWS_REGION', aws_region)
+            
+        if aws_access_key_id:
+            config_manager.set_config_value('AWS_ACCESS_KEY_ID', aws_access_key_id)
+            
+        if aws_secret_access_key:
+            config_manager.set_config_value('AWS_SECRET_ACCESS_KEY', aws_secret_access_key)
+            
+        return func(*args, **kwargs)
+    return wrapper
+
+
+def config_gcp_options(func):
+    @click.option('--gcp-project-id', help='GCP project ID')
+    @click.option('--gcp-secret-id', help='GCP secret ID')
+    @click.option('--gcp-region', help='GCP region')
+    @click.option('--gcp-replication-type', help='GCP replication type: automatic or user-managed')
+    @functools.wraps(func)
+    def wrapper(*args,
+                gcp_project_id: Optional[str] = None,
+                gcp_secret_id: Optional[str] = None,
+                gcp_region: Optional[str] = None,
+                gcp_replication_type: Optional[str] = None,
+                **kwargs):
+        config_manager = ConfigManager()
+        
+        if gcp_project_id:
+            config_manager.set_config_value('GCP_PROJECT_ID', gcp_project_id)
+            
+        if gcp_secret_id:
+            config_manager.set_config_value('GCP_SECRET_ID', gcp_secret_id)
+            
+        if gcp_region:
+            config_manager.set_config_value('GCP_REGION', gcp_region)
+            
+        if gcp_replication_type:
+            config_manager.set_config_value('GCP_REPLICATION_TYPE', gcp_replication_type)
+            
+        return func(*args, **kwargs)
+    return wrapper
+
+
 @secrets.command()
 @provider_option
 @secret_name_option
@@ -179,45 +306,41 @@ def get(provider, secret_key, namespace):
     print(secret, end='')
 
 
-@config.command('list')
-def list_params():
-    """
-    List all configuration parameters and their values for Agent Guard.
-
-    Displays the current configuration as key-value pairs.
-    """
+@config.command(name="set")
+@config_provider_option
+@config_conjur_options
+@config_aws_options
+@config_gcp_options
+def config_set(provider, **kwargs):
+    """Set configuration values"""
     config_manager = ConfigManager()
-    config = config_manager.get_config()
-    click.echo("Agent Guard Configuration:")
-    if config:
-        for k, v in config.items():
-            click.echo(f"  {k}={v}")
-    else:
-        click.echo("  No configuration found.")
+    if provider:
+        config_manager.set_config_value(ConfigurationOptions.SECRET_PROVIDER.name, provider)
+    
+    click.echo("Configuration updated successfully")
 
-
-@config.command('get')
-@click.option(
-    '--key',
-    required=False,
-    prompt=True,
-    default=ConfigurationOptions.get_default(),
-    type=click.Choice(ConfigurationOptions.get_keys()),
-    help=
-    "The configuration parameter key to retrieve (e.g., SECRET_PROVIDER, CONJUR_AUTHN_LOGIN, etc.)."
-)
-def get_param(key):
-    """
-    Get the value of a specific configuration parameter by key.
-    """
+@config.command(name="get")
+@click.option('--key', type=click.Choice(
+    [item.name for item in ConfigurationOptions] + ['CONJUR_AUTHN_LOGIN']), 
+    required=True, help='Configuration key to retrieve')
+def config_get(key):
+    """Get a configuration value"""
     config_manager = ConfigManager()
-    config = config_manager.get_config()
-    value = config.get(key)
-    if value is not None:
+    value = config_manager.get_config_value(key)
+    if value:
         click.echo(f"{key}={value}")
     else:
-        click.echo(f"No value found for key: {key}")
+        click.echo(f"No value set for {key}")
 
+@config.command('list')
+def config_list():
+    """List all configuration values"""
+    config_manager = ConfigManager()
+    config_dict = config_manager.get_config()
+    click.echo("Agent Guard Configuration:")
+    for key, value in config_dict.items():
+        click.echo(f"{key}={value}")
 
+# Register the config group with the main CLI
 cli.add_command(config)
 cli.add_command(secrets)
