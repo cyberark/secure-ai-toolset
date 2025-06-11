@@ -38,6 +38,7 @@ class SecretProviderOptions(BasicEnum):
     AWS_SECRETS_MANAGER_PROVIDER = "AWS Secrets Manager"
     FILE_SECRET_PROVIDER = "local.env file"
     CONJUR_SECRET_PROVIDER = "CyberArk Conjur Cloud"
+    GCP_SECRET_PROVIDER = "Google Cloud Secret Manager"
 
 
 class ConfigManager:
