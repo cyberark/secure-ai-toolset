@@ -4,8 +4,8 @@ from typing import Any, Optional
 
 import click
 
-from agent_guard_core.config.config_manager import ConfigManager, ConfigurationOptions, SecretProviderOptions
-from agent_guard_core.credentials.enum import AwsEnvVars, ConjurEnvVars, GcpEnvVars
+from agent_guard_core.config.config_manager import ConfigManager, ConfigurationOptions
+from agent_guard_core.credentials.enum import AwsEnvVars, ConjurEnvVars, CredentialsProvider, GcpEnvVars
 from agent_guard_core.credentials.gcp_secrets_manager_provider import (DEFAULT_PROJECT_ID, DEFAULT_REPLICATION_TYPE,
                                                                        DEFAULT_SECRET_ID)
 from agent_guard_core.credentials.secrets_provider import BaseSecretsProvider, secrets_provider_fm
@@ -26,11 +26,11 @@ def config():
 def secrets():
     """Commands to manage secrets in Agent Guard."""
 
-provider_list = SecretProviderOptions.get_keys()
-
 default_provider = ConfigManager().get_config_value(
-    ConfigurationOptions.SECRET_PROVIDER.name
-) or SecretProviderOptions.get_default()
+    ConfigurationOptions.SECRET_PROVIDER.value
+) or CredentialsProvider.AWS_SECRETS_MANAGER
+
+provider_list = [provider.value for provider in CredentialsProvider]
 
 def provider_option(f):
     return click.option('--provider', '-p', 
@@ -63,7 +63,7 @@ def gcp_options(func):
                 gcp_replication_type: Optional[str] = None,
                 **kwargs):
         provider = kwargs.get('provider')
-        if provider == SecretProviderOptions.GCP_SECRET_PROVIDER.name:
+        if provider == CredentialsProvider.GCP_SECRETS_MANAGER:
             os.environ[GcpEnvVars.GCP_PROJECT_ID] = gcp_project_id or os.environ.get(GcpEnvVars.GCP_PROJECT_ID, DEFAULT_PROJECT_ID)
             os.environ[GcpEnvVars.GCP_SECRET_ID] = gcp_secret_id or os.environ.get(GcpEnvVars.GCP_SECRET_ID, DEFAULT_SECRET_ID)
             os.environ[GcpEnvVars.GCP_REGION] = gcp_region or os.environ.get(GcpEnvVars.GCP_REGION, str())
@@ -91,7 +91,7 @@ def conjur_options(func):
                 conjur_account: Optional[str] = None,
                 conjur_api_key: Optional[bool] = None, **kwargs):
         provider = kwargs.get('provider')
-        if provider == SecretProviderOptions.CONJUR_SECRET_PROVIDER.name:            
+        if provider == CredentialsProvider.CONJUR:            
             os.environ[ConjurEnvVars.CONJUR_AUTHN_LOGIN] = os.environ.get(ConjurEnvVars.CONJUR_AUTHN_LOGIN, conjur_authn_login)
             os.environ[ConjurEnvVars.CONJUR_APPLIANCE_URL] = os.environ.get(ConjurEnvVars.CONJUR_APPLIANCE_URL, conjur_appliance_url)
             os.environ[ConjurEnvVars.CONJUR_AUTHENTICATOR_ID] = os.environ.get(ConjurEnvVars.CONJUR_AUTHENTICATOR_ID, conjur_authenticator_id)
@@ -123,7 +123,7 @@ def aws_options(func):
                 aws_secret_access_key: Optional[str] = None,
                 **kwargs):
         provider = kwargs.get('provider')
-        if provider == SecretProviderOptions.AWS_SECRETS_MANAGER_PROVIDER.name:
+        if provider == CredentialsProvider.AWS_SECRETS_MANAGER:
             # Get values from env if not passed
             aws_region = aws_region or os.environ.get(AwsEnvVars.AWS_REGION)
             aws_access_key_id = aws_access_key_id or os.environ.get(AwsEnvVars.AWS_ACCESS_KEY_ID)
@@ -141,7 +141,7 @@ def aws_options(func):
 
 
 def config_provider_option(func):
-    @click.option('--provider', type=click.Choice(SecretProviderOptions.get_keys()), help='Secret provider type')
+    @click.option('--provider', type=click.Choice(provider_list), help='Secret provider type')
     @functools.wraps(func)
     def wrapper(*args, provider=None, **kwargs):
         return func(*args, provider=provider, **kwargs)

@@ -30,17 +30,6 @@ class ConfigurationOptions(BasicEnum):
     CONJUR_APPLIANCE_URL = "The endpoint URL of Conjur"
     CONJUR_AUTHN_API_KEY = "The API Key to authenticate in the cloud"
 
-
-class SecretProviderOptions(BasicEnum):
-    """
-    Enum for supported secret providers.
-    """
-    AWS_SECRETS_MANAGER_PROVIDER = "AWS Secrets Manager"
-    FILE_SECRET_PROVIDER = "local.env file"
-    CONJUR_SECRET_PROVIDER = "CyberArk Conjur Cloud"
-    GCP_SECRET_PROVIDER = "Google Cloud Secret Manager"
-
-
 class ConfigManager:
     """
     Manages Agent Guard configuration using a file-based secrets provider.

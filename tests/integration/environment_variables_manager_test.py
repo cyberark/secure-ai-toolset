@@ -100,7 +100,7 @@ def test_add_value_with_space_inside():
         file.write(file_content)
 
     env_manager = EnvironmentVariablesManager(
-        FileSecretsProvider(namespace=''))
+        FileSecretsProvider())
     assert env_manager
     env_vars_list = env_manager.list_env_vars()
     assert env_vars_list is not None
@@ -115,7 +115,7 @@ def test_add_value_with_space_inside():
 
     # check env vars are empty after deleting the file
     env_manager = EnvironmentVariablesManager(
-        FileSecretsProvider(namespace=''))
+        FileSecretsProvider())
     env_vars_list = env_manager.list_env_vars()
     assert env_vars_list == {}
 
