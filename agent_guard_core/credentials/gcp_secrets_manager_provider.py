@@ -4,6 +4,9 @@ from typing import Dict, Optional
 from google.api_core.exceptions import AlreadyExists, NotFound
 from google.cloud import secretmanager
 
+from agent_guard_core.credentials.enum import CredentialsProvider
+from agent_guard_core.credentials.secrets_provider import secrets_provider_fm
+
 from .secrets_provider import BaseSecretsProvider, SecretProviderException
 
 DEFAULT_PROJECT_ID = "default"
@@ -13,6 +16,7 @@ DEFAULT_REPLICATION_TYPE = "automatic"
 SUPPORTED_REPLICATION_TYPES = ["automatic", "user_managed"]
 
 
+@secrets_provider_fm.flavor(CredentialsProvider.GCP_SECRETS_MANAGER)
 class GCPSecretsProvider(BaseSecretsProvider):
     """
     Manages storing and retrieving secrets from Google Cloud Secret Manager.

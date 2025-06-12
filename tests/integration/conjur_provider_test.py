@@ -7,18 +7,32 @@ from agent_guard_core.credentials.conjur_secrets_provider import ConjurSecretsPr
 from agent_guard_core.credentials.secrets_provider import SecretProviderException
 
 
-@pytest.fixture()
-def provider(scope="module"):
+@pytest.fixture(scope="module")
+def provider():
+    """
+    Creates real Conjur secrets provider instance for integration testing.
+    Tests will be skipped if Conjur credentials aren't available.
+    """
     # Backup the existing .env and copy .env.conjur to .env
     env_path = Path(".env")
     backup_path = Path(".env.backup")
     conjur_env_path = Path(".env.conjur")
+
+    if not conjur_env_path.exists():
+        pytest.skip(".env.conjur file not found, skipping Conjur tests")
 
     if env_path.exists():
         shutil.copy(env_path, backup_path)
     shutil.copy(conjur_env_path, env_path)
 
     provider_instance = ConjurSecretsProvider(namespace='data/test-toolset')
+    
+    # Test the connection works before continuing
+    try:
+        if not provider_instance.connect():
+            pytest.skip("Could not connect to Conjur")
+    except Exception as e:
+        pytest.skip(f"Error connecting to Conjur: {str(e)}")
 
     yield provider_instance
 

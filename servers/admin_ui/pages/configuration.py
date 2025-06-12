@@ -2,11 +2,11 @@
 
 import streamlit as st
 
+from agent_guard_core.credentials.enum import CredentialsProvider
 from agent_guard_core.credentials.file_secrets_provider import FileSecretsProvider
 from servers.admin_ui.models.server_config import ServerConfig
 from servers.common import (CONJUR_APPLIANCE_URL_KEY, CONJUR_AUTHN_API_KEY_KEY, CONJUR_AUTHN_LOGIN_KEY,
-                            SECRET_NAMESPACE_KEY, SECRET_PROVIDER_KEY, SecretProviderOptions, get_config_file_path,
-                            print_header)
+                            SECRET_NAMESPACE_KEY, SECRET_PROVIDER_KEY, get_config_file_path, print_header)
 
 
 def save_configuration(provider: FileSecretsProvider, config: ServerConfig):
@@ -41,8 +41,7 @@ except Exception as e:
     st.stop()
 
 # Load configuration from server_config
-configured_secret_provider_value = SecretProviderOptions[
-    config.SECRET_PROVIDER].value
+configured_secret_provider_value = config.SECRET_PROVIDER
 
 
 # Callback function to handle changes in the secret provider select box
@@ -55,8 +54,8 @@ def on_secret_provider_change():
 secret_provider_value = st.selectbox(
     "**Secret Provider**",  # Label for the selectbox
     [option.value
-     for option in SecretProviderOptions],  # Options for the dropdown
-    index=[option.value for option in SecretProviderOptions
+     for option in CredentialsProvider],  # Options for the dropdown
+    index=[option.value for option in CredentialsProvider
            ].index(configured_secret_provider_value
                    ),  # Pre-select the currently configured provider
     on_change=on_secret_provider_change)
@@ -69,16 +68,16 @@ if st.session_state.get("trigger_rerun"):
 # Map the selected provider value to its corresponding key
 selected_secret_provider_key = {
     option.value: key
-    for key, option in SecretProviderOptions.__members__.items()
+    for key, option in CredentialsProvider.__members__.items()
 }.get(secret_provider_value)
 config.SECRET_PROVIDER = selected_secret_provider_key
 
 # Get the namespace
-label = "**File Path(Namespace)**" if selected_secret_provider_key == SecretProviderOptions.FILE_SECRET_PROVIDER.name else "**Namespace**"
+label = "**File Path(Namespace)**" if selected_secret_provider_key == CredentialsProvider.FILE_DOTENV else "**Namespace**"
 config.SECRET_NAMESPACE = st.text_input(label, config.SECRET_NAMESPACE)
 
 # Display provider-specific inputs
-if selected_secret_provider_key == SecretProviderOptions.CONJUR_SECRET_PROVIDER.name:
+if selected_secret_provider_key == CredentialsProvider.CONJUR:
     # Retrieve existing Conjur configuration values
     conjur_authn_login = config.CONJUR_AUTHN_LOGIN
     conjur_authn_api_key = config.CONJUR_AUTHN_API_KEY

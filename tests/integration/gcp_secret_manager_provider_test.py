@@ -1,12 +1,35 @@
+import os
 import pytest
 
 from agent_guard_core.credentials.gcp_secrets_manager_provider import GCPSecretsProvider
 from agent_guard_core.credentials.secrets_provider import SecretProviderException
 
 
-@pytest.fixture()
-def provider(scope="module"):
-    return GCPSecretsProvider(project_id="<project ID>")
+@pytest.fixture(scope="module")
+def provider():
+    """
+    Creates real GCP secrets provider instance for integration testing.
+    Tests will be skipped if GCP credentials aren't available.
+    """
+    # Check for GCP credentials
+    if not os.environ.get('GOOGLE_APPLICATION_CREDENTIALS'):
+        pytest.skip("GCP credentials not available in environment (GOOGLE_APPLICATION_CREDENTIALS), skipping GCP tests")
+    
+    # Get project ID from environment or use default
+    project_id = os.environ.get('GCP_PROJECT_ID')
+    if not project_id:
+        pytest.skip("GCP_PROJECT_ID not set in environment, skipping GCP tests")
+    
+    provider = GCPSecretsProvider(project_id=project_id)
+    
+    # Test the connection works before continuing
+    try:
+        if not provider.connect():
+            pytest.skip("Could not connect to GCP Secret Manager")
+    except Exception as e:
+        pytest.skip(f"Error connecting to GCP Secret Manager: {str(e)}")
+    
+    yield provider
 
 
 @pytest.mark.gcp

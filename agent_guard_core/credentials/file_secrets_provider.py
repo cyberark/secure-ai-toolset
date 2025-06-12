@@ -3,16 +3,19 @@ from typing import Dict, Optional
 
 from dotenv import dotenv_values
 
-from agent_guard_core.credentials.secrets_provider import BaseSecretsProvider, SecretProviderException
+from agent_guard_core.credentials.enum import CredentialsProvider
+from agent_guard_core.credentials.secrets_provider import (BaseSecretsProvider, SecretProviderException,
+                                                           secrets_provider_fm)
 
 
+@secrets_provider_fm.flavor(CredentialsProvider.FILE_DOTENV)
 class FileSecretsProvider(BaseSecretsProvider):
     """
     FileSecretsProvider is a class that implements the BaseSecretsProvider interface.
     It provides methods to store, retrieve, and delete secrets in a file-based storage.
     """
 
-    def __init__(self, namespace: str = ""):
+    def __init__(self, namespace: str = ".env"):
         """
         Initialize the FileSecretsProvider with a namespace.
 

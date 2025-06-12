@@ -14,7 +14,9 @@ from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
 from dotenv import load_dotenv
 
-from agent_guard_core.credentials.secrets_provider import BaseSecretsProvider, SecretProviderException
+from agent_guard_core.credentials.enum import ConjurEnvVars, CredentialsProvider
+from agent_guard_core.credentials.secrets_provider import (BaseSecretsProvider, SecretProviderException,
+                                                           secrets_provider_fm)
 
 # Tokens should only be reused for 5 minutes (max lifetime is 8 minutes)
 DEFAULT_TOKEN_EXPIRATION = 8
@@ -29,6 +31,7 @@ DEFAULT_CONJUR_ACCOUNT = "conjur"
 HTTP_TIMEOUT_SECS = 2.0
 
 
+@secrets_provider_fm.flavor(CredentialsProvider.CONJUR)
 class ConjurSecretsProvider(BaseSecretsProvider):
     """
     namespace: Conjur policy base branch
@@ -49,21 +52,21 @@ class ConjurSecretsProvider(BaseSecretsProvider):
 
         init_error = False
         # common authn values for all authn endpoints
-        self._url = os.getenv("CONJUR_APPLIANCE_URL", None)
+        self._url = os.getenv(ConjurEnvVars.CONJUR_APPLIANCE_URL, None)
         if self._url is None:
             self.logger.error(
                 "ConjurSecretsProvider:__init__(): Required env var CONJUR_APPLIANCE_URL is missing."
             )
             init_error = True
 
-        self._authenticator_id = os.getenv("CONJUR_AUTHENTICATOR_ID", None)
+        self._authenticator_id = os.getenv(ConjurEnvVars.CONJUR_AUTHENTICATOR_ID, None)
         if self._authenticator_id is None:
             self.logger.error(
                 "ConjurSecretsProvider:__init__(): Required env var CONJUR_AUTHENTICATOR_ID is missing."
             )
             init_error = True
 
-        self._workload_id = os.getenv("CONJUR_AUTHN_LOGIN", None)
+        self._workload_id = os.getenv(ConjurEnvVars.CONJUR_AUTHN_LOGIN, None)
         if self._workload_id is None:
             self.logger.error(
                 "ConjurSecretsProvider:__init__(): Required env var CONJUR_AUTHN_LOGIN is missing."
@@ -75,7 +78,7 @@ class ConjurSecretsProvider(BaseSecretsProvider):
                 "ConjurSecretsProvider: One or more required environment variables are missing."
             )
 
-        self._account = os.getenv("CONJUR_ACCOUNT", DEFAULT_CONJUR_ACCOUNT)
+        self._account = os.getenv(ConjurEnvVars.CONJUR_ACCOUNT, DEFAULT_CONJUR_ACCOUNT)
         self._branch = namespace
         self._secret_name = DEFAULT_SECRET_ID
 
@@ -109,7 +112,7 @@ class ConjurSecretsProvider(BaseSecretsProvider):
             )
 
         # Sign the request using the STS temporary credentials
-        self._region = os.getenv("CONJUR_AUTHN_IAM_REGION", DEFAULT_REGION)
+        self._region = os.getenv(ConjurEnvVars.CONJUR_AUTHN_IAM_REGION, DEFAULT_REGION)
         sigv4 = SigV4Auth(credentials, "sts", self._region)
         sts_uri = f"https://sts.{self._region}.amazonaws.com/?Action=GetCallerIdentity&Version=2011-06-15"
         request = AWSRequest(method="GET", url=sts_uri)
@@ -145,7 +148,7 @@ class ConjurSecretsProvider(BaseSecretsProvider):
             )
             api_key = self._ext_authn_cred_provider()
         else:
-            api_key = os.getenv("CONJUR_AUTHN_API_KEY", None)
+            api_key = os.getenv(ConjurEnvVars.CONJUR_AUTHN_API_KEY, None)
             if api_key is None:
                 self.logger.error(
                     "ConjurSecretsProvider:_authenticate_api_key(): Required env var CONJUR_AUTHN_API_KEY is missing."
@@ -195,7 +198,7 @@ class ConjurSecretsProvider(BaseSecretsProvider):
             )
             local_jwt = self._ext_authn_cred_provider()
         else:
-            local_jwt = os.getenv("CONJUR_AUTHN_JWT", None)
+            local_jwt = os.getenv(ConjurEnvVars.CONJUR_AUTHN_JWT, None)
             if local_jwt is None:
                 self.logger.error(
                     "ConjurSecretsProvider:_authenticate_jwt(): Required env var CONJUR_AUTHN_JWT is missing."
