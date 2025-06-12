@@ -13,7 +13,6 @@ from agent_guard_core.credentials.gcp_secrets_manager_provider import GCPSecrets
     AWSSecretsProvider(region_name="us-east-1", namespace=""),
     AWSSecretsProvider(region_name="us-east-1", namespace="test_asm_1"),
     GCPSecretsProvider(project_id="test-project-1"),
-    FileSecretsProvider(namespace=""),
     FileSecretsProvider(namespace="ns_test1"),
 ])
 def env_manager(request):

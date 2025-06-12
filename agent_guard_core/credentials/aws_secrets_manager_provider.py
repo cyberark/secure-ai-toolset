@@ -3,6 +3,9 @@ from typing import Dict, Optional
 
 import boto3
 
+from agent_guard_core.credentials.enum import CredentialsProvider
+from agent_guard_core.credentials.secrets_provider import secrets_provider_fm
+
 from .secrets_provider import BaseSecretsProvider, SecretProviderException
 
 SERVICE_NAME = "secretsmanager"
@@ -11,6 +14,7 @@ DEFAULT_NAMESPACE = "default"
 DEFAULT_SECRET_ID = "agentic_env_vars"
 
 
+@secrets_provider_fm.flavor(CredentialsProvider.AWS_SECRETS_MANAGER)
 class AWSSecretsProvider(BaseSecretsProvider):
     """
     Manages storing and retrieving secrets from AWS Secrets Manager.

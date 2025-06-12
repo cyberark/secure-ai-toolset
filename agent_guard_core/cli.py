@@ -5,19 +5,11 @@ from typing import Any, Optional
 import click
 
 from agent_guard_core.config.config_manager import ConfigManager, ConfigurationOptions, SecretProviderOptions
-from agent_guard_core.credentials.aws_secrets_manager_provider import AWSSecretsProvider
-from agent_guard_core.credentials.conjur_secrets_provider import ConjurSecretsProvider
-from agent_guard_core.credentials.file_secrets_provider import FileSecretsProvider
+from agent_guard_core.credentials.enum import AwsEnvVars, ConjurEnvVars, GcpEnvVars
 from agent_guard_core.credentials.gcp_secrets_manager_provider import (DEFAULT_PROJECT_ID, DEFAULT_REPLICATION_TYPE,
-                                                                       DEFAULT_SECRET_ID, GCPSecretsProvider)
-from agent_guard_core.credentials.secrets_provider import BaseSecretsProvider
+                                                                       DEFAULT_SECRET_ID)
+from agent_guard_core.credentials.secrets_provider import BaseSecretsProvider, secrets_provider_fm
 
-PROVIDER_MAP: dict[str, BaseSecretsProvider] = {
-    SecretProviderOptions.AWS_SECRETS_MANAGER_PROVIDER.name: AWSSecretsProvider,
-    SecretProviderOptions.FILE_SECRET_PROVIDER.name: FileSecretsProvider,
-    SecretProviderOptions.CONJUR_SECRET_PROVIDER.name: ConjurSecretsProvider,
-    SecretProviderOptions.GCP_SECRET_PROVIDER.name: GCPSecretsProvider,
-}
 
 @click.group(help=(
     "Agent Guard CLI: Secure your AI agents with environment credentials from multiple secret providers.\n"
@@ -29,7 +21,6 @@ def cli():
 @click.group(name="config")
 def config():
     """Commands to manage Agent Guard configuration."""
-    pass
 
 @click.group(name="secrets")
 def secrets():
@@ -73,20 +64,15 @@ def gcp_options(func):
                 **kwargs):
         provider = kwargs.get('provider')
         if provider == SecretProviderOptions.GCP_SECRET_PROVIDER.name:
-            # Get values from env if not passed
-            gcp_project_id = gcp_project_id or os.environ.get('GCP_PROJECT_ID', DEFAULT_PROJECT_ID)
-            gcp_secret_id = gcp_secret_id or os.environ.get('GCP_SECRET_ID', DEFAULT_SECRET_ID)
-            gcp_region = gcp_region or os.environ.get('GCP_REGION')
-            gcp_replication_type = gcp_replication_type or os.environ.get('GCP_REPLICATION_TYPE', DEFAULT_REPLICATION_TYPE)
+            os.environ[GcpEnvVars.GCP_PROJECT_ID] = gcp_project_id or os.environ.get(GcpEnvVars.GCP_PROJECT_ID, DEFAULT_PROJECT_ID)
+            os.environ[GcpEnvVars.GCP_SECRET_ID] = gcp_secret_id or os.environ.get(GcpEnvVars.GCP_SECRET_ID, DEFAULT_SECRET_ID)
+            os.environ[GcpEnvVars.GCP_REGION] = gcp_region or os.environ.get(GcpEnvVars.GCP_REGION, str())
+            os.environ[GcpEnvVars.GCP_REPLICATION_TYPE] = gcp_replication_type or os.environ.get(GcpEnvVars.GCP_REPLICATION_TYPE, DEFAULT_REPLICATION_TYPE)
 
             # Region required if replication is user-managed
-            if gcp_replication_type == "user-managed" and not gcp_region:
+            if os.environ[GcpEnvVars.GCP_REPLICATION_TYPE] == "user-managed" and not os.environ[GcpEnvVars.GCP_REGION]:
                 raise click.UsageError("GCP region is required for user-managed replication.")
 
-            os.environ['GCP_PROJECT_ID'] = gcp_project_id
-            os.environ['GCP_SECRET_ID'] = gcp_secret_id
-            os.environ['GCP_REGION'] = gcp_region or ''
-            os.environ['GCP_REPLICATION_TYPE'] = gcp_replication_type
         return func(*args, **kwargs)
 
     return wrapper
@@ -105,24 +91,22 @@ def conjur_options(func):
                 conjur_account: Optional[str] = None,
                 conjur_api_key: Optional[bool] = None, **kwargs):
         provider = kwargs.get('provider')
-        if provider == SecretProviderOptions.CONJUR_SECRET_PROVIDER.name:
-            conjur_authn_login = os.environ.get('CONJUR_AUTHN_LOGIN', conjur_authn_login)
-            conjur_appliance_url = os.environ.get('CONJUR_APPLIANCE_URL', conjur_appliance_url)
-            conjur_authenticator_id = os.environ.get('CONJUR_AUTHENTICATOR_ID', conjur_authenticator_id)
-            conjur_account = os.environ.get('CONJUR_ACCOUNT', conjur_account)
-            conjur_api_key = os.environ.get('CONJUR_API_KEY', conjur_api_key)
+        if provider == SecretProviderOptions.CONJUR_SECRET_PROVIDER.name:            
+            os.environ[ConjurEnvVars.CONJUR_AUTHN_LOGIN] = os.environ.get(ConjurEnvVars.CONJUR_AUTHN_LOGIN, conjur_authn_login)
+            os.environ[ConjurEnvVars.CONJUR_APPLIANCE_URL] = os.environ.get(ConjurEnvVars.CONJUR_APPLIANCE_URL, conjur_appliance_url)
+            os.environ[ConjurEnvVars.CONJUR_AUTHENTICATOR_ID] = os.environ.get(ConjurEnvVars.CONJUR_AUTHENTICATOR_ID, conjur_authenticator_id)
+            os.environ[ConjurEnvVars.CONJUR_ACCOUNT] = os.environ.get(ConjurEnvVars.CONJUR_ACCOUNT, conjur_account)
+            os.environ[ConjurEnvVars.CONJUR_API_KEY] = os.environ.get(ConjurEnvVars.CONJUR_API_KEY, conjur_api_key)
 
-            if any(param is None for param in [conjur_authn_login, conjur_appliance_url, 
-                                               conjur_authenticator_id, conjur_api_key]):
+            mandatory_env_vars = [ConjurEnvVars.CONJUR_AUTHN_LOGIN, 
+                                  ConjurEnvVars.CONJUR_APPLIANCE_URL, 
+                                  ConjurEnvVars.CONJUR_AUTHENTICATOR_ID, 
+                                  ConjurEnvVars.CONJUR_API_KEY]
+            
+            if any(os.environ.get(env_var) is None for env_var in mandatory_env_vars):
                 raise click.UsageError(
                     "conjur-auth-login, conjur-appliance-url, "
                     "conjur-authenticator-id, and conjur-api-key are required for Conjur provider.")
-            
-            os.environ['CONJUR_AUTHN_LOGIN'] = conjur_authn_login
-            os.environ['CONJUR_APPLIANCE_URL'] = conjur_appliance_url
-            os.environ['CONJUR_AUTHENTICATOR_ID'] = conjur_authenticator_id
-            os.environ['CONJUR_ACCOUNT'] = conjur_account
-            os.environ['CONJUR_API_KEY'] = conjur_api_key
 
         return func(*args, **kwargs)
     return wrapper
@@ -141,16 +125,16 @@ def aws_options(func):
         provider = kwargs.get('provider')
         if provider == SecretProviderOptions.AWS_SECRETS_MANAGER_PROVIDER.name:
             # Get values from env if not passed
-            aws_region = aws_region or os.environ.get('AWS_REGION')
-            aws_access_key_id = aws_access_key_id or os.environ.get('AWS_ACCESS_KEY_ID')
-            aws_secret_access_key = aws_secret_access_key or os.environ.get('AWS_SECRET_ACCESS_KEY')
+            aws_region = aws_region or os.environ.get(AwsEnvVars.AWS_REGION)
+            aws_access_key_id = aws_access_key_id or os.environ.get(AwsEnvVars.AWS_ACCESS_KEY_ID)
+            aws_secret_access_key = aws_secret_access_key or os.environ.get(AwsEnvVars.AWS_SECRET_ACCESS_KEY)
 
             if aws_region:
-                os.environ['AWS_REGION'] = aws_region
+                os.environ[AwsEnvVars.AWS_REGION] = aws_region
             if aws_access_key_id:
-                os.environ['AWS_ACCESS_KEY_ID'] = aws_access_key_id
+                os.environ[AwsEnvVars.AWS_ACCESS_KEY_ID] = aws_access_key_id
             if aws_secret_access_key:
-                os.environ['AWS_SECRET_ACCESS_KEY'] = aws_secret_access_key
+                os.environ[AwsEnvVars.AWS_SECRET_ACCESS_KEY] = aws_secret_access_key
 
         return func(*args, **kwargs)
     return wrapper
@@ -181,19 +165,19 @@ def config_conjur_options(func):
         config_manager = ConfigManager()
         
         if conjur_authn_login:
-            config_manager.set_config_value('CONJUR_AUTHN_LOGIN', conjur_authn_login)
+            config_manager.set_config_value(ConjurEnvVars.CONJUR_AUTHN_LOGIN, conjur_authn_login)
             
         if conjur_appliance_url:
-            config_manager.set_config_value('CONJUR_APPLIANCE_URL', conjur_appliance_url)
+            config_manager.set_config_value(ConjurEnvVars.CONJUR_APPLIANCE_URL, conjur_appliance_url)
             
         if conjur_authenticator_id:
-            config_manager.set_config_value('CONJUR_AUTHENTICATOR_ID', conjur_authenticator_id)
+            config_manager.set_config_value(ConjurEnvVars.CONJUR_AUTHENTICATOR_ID, conjur_authenticator_id)
             
         if conjur_account:
-            config_manager.set_config_value('CONJUR_ACCOUNT', conjur_account)
+            config_manager.set_config_value(ConjurEnvVars.CONJUR_ACCOUNT, conjur_account)
             
         if conjur_api_key:
-            config_manager.set_config_value('CONJUR_API_KEY', conjur_api_key)
+            config_manager.set_config_value(ConjurEnvVars.CONJUR_API_KEY, conjur_api_key)
             
         return func(*args, **kwargs)
     return wrapper
@@ -212,13 +196,13 @@ def config_aws_options(func):
         config_manager = ConfigManager()
         
         if aws_region:
-            config_manager.set_config_value('AWS_REGION', aws_region)
+            config_manager.set_config_value(AwsEnvVars.AWS_REGION, aws_region)
             
         if aws_access_key_id:
-            config_manager.set_config_value('AWS_ACCESS_KEY_ID', aws_access_key_id)
+            config_manager.set_config_value(AwsEnvVars.AWS_ACCESS_KEY_ID, aws_access_key_id)
             
         if aws_secret_access_key:
-            config_manager.set_config_value('AWS_SECRET_ACCESS_KEY', aws_secret_access_key)
+            config_manager.set_config_value(AwsEnvVars.AWS_SECRET_ACCESS_KEY, aws_secret_access_key)
             
         return func(*args, **kwargs)
     return wrapper
@@ -239,16 +223,16 @@ def config_gcp_options(func):
         config_manager = ConfigManager()
         
         if gcp_project_id:
-            config_manager.set_config_value('GCP_PROJECT_ID', gcp_project_id)
+            config_manager.set_config_value(GcpEnvVars.GCP_PROJECT_ID, gcp_project_id)
             
         if gcp_secret_id:
-            config_manager.set_config_value('GCP_SECRET_ID', gcp_secret_id)
+            config_manager.set_config_value(GcpEnvVars.GCP_SECRET_ID, gcp_secret_id)
             
         if gcp_region:
-            config_manager.set_config_value('GCP_REGION', gcp_region)
+            config_manager.set_config_value(GcpEnvVars.GCP_REGION, gcp_region)
             
         if gcp_replication_type:
-            config_manager.set_config_value('GCP_REPLICATION_TYPE', gcp_replication_type)
+            config_manager.set_config_value(GcpEnvVars.GCP_REPLICATION_TYPE, gcp_replication_type)
             
         return func(*args, **kwargs)
     return wrapper
@@ -272,7 +256,7 @@ def set(provider, secret_key, secret_value, namespace):
     if namespace:
         extra['namespace'] = namespace
 
-    provider: BaseSecretsProvider = PROVIDER_MAP.get(provider)(**extra)
+    provider: BaseSecretsProvider = secrets_provider_fm.get(provider)(**extra)
     if not provider.connect():
         raise click.ClickException(f"Failed to connect to provider: {provider}")
     
@@ -295,7 +279,7 @@ def get(provider, secret_key, namespace):
     if namespace:
         extra['namespace'] = namespace
 
-    provider: BaseSecretsProvider = PROVIDER_MAP.get(provider)(**extra)
+    provider: BaseSecretsProvider = secrets_provider_fm.get(provider)(**extra)
     if not provider.connect():
         raise click.ClickException(f"Failed to connect to provider: {provider}")
     
