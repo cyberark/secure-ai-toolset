@@ -1,21 +1,91 @@
 import functools
 import os
 from typing import Any, Optional
+import asyncio
+import getpass
+import logging
+import os
+import sys
 
 import click
+from mcp import stdio_client, ClientSession, stdio_server
+from mcp_proxy.config_loader import load_named_server_configs_from_file
 
-from agent_guard_core.config.config_manager import ConfigManager, ConfigurationOptions
 from agent_guard_core.credentials.enum import AwsEnvVars, ConjurEnvVars, CredentialsProvider, GcpEnvVars
 from agent_guard_core.credentials.gcp_secrets_manager_provider import (DEFAULT_PROJECT_ID, DEFAULT_REPLICATION_TYPE,
                                                                        DEFAULT_SECRET_ID)
 from agent_guard_core.credentials.secrets_provider import BaseSecretsProvider, secrets_provider_fm
+from agent_guard_core.config.config_manager import ConfigManager, ConfigurationOptions, SecretProviderOptions
+from agent_guard_core.proxy.audited_proxy import create_agent_guard_proxy_server
+from agent_guard_core.proxy.proxy_utils import get_audit_logger
 
+
+def get_cli_logger():
+    global logger, file_handler, formatter
+    logger = logging.getLogger("agent_guard_core.cli")
+    logger.setLevel(logging.INFO)
+    file_handler = logging.FileHandler("agent_guard_core.log" if os.access(".", os.W_OK) else "/tmp/agent_guard_core.log")
+    file_handler.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(asctime)s %(levelname)s %(name)s: %(message)s')
+    file_handler.setFormatter(formatter)
+    if not logger.hasHandlers():
+        logger.addHandler(file_handler)
+        logger.addHandler(logging.StreamHandler())
+
+
+get_cli_logger()
 
 @click.group(help=(
     "Agent Guard CLI: Secure your AI agents with environment credentials from multiple secret providers.\n"
     "Use 'configure' to manage configuration options."))
 def cli():
     """Entry point for the Agent Guard CLI."""
+
+@click.group(name="run")
+def run():
+    """Commands to run the Agent Guard proxy."""
+
+@run.command(name="stdio-proxy")
+@click.option(
+    '--mcp-config-file',
+    '-cf',
+    required=True,
+    help="Path to the MCP server configuration file.",
+)
+@click.option(
+    '--debug',
+    '-d','is_debug',
+    is_flag=True,
+    required=False,
+    default=False,
+    help="debug mode",
+
+)
+def stdio_proxy(mcp_config_file,is_debug):
+    asyncio.run(_stdio_proxy_async(mcp_config_file, is_debug))
+
+async def _stdio_proxy_async(mcp_config_file,is_debug: bool = False):
+    logger.info(f"Starting stdio server from config  {mcp_config_file} ")
+    base_env: dict[str, str] = {}
+    stdio_params = load_named_server_configs_from_file(mcp_config_file, base_env)
+
+    params = None
+
+    for name, params in stdio_params.items():
+        logger.info(
+            "Setting up mcp server '%s': %s %s",
+            name,
+            params.command,
+            " ".join(params.args),
+        )
+    async with stdio_client(params, errlog=sys.stderr) as streams, ClientSession(*streams) as session:
+        app = await create_agent_guard_proxy_server(remote_app=session,logger=get_audit_logger(logging.DEBUG if is_debug else logging.INFO))
+        async with stdio_server() as (read_stream, write_stream):
+            await app.run(
+                read_stream,
+                write_stream,
+                app.create_initialization_options(),
+            )
 
 
 @click.group(name="config")
@@ -328,3 +398,7 @@ def config_list():
 # Register the config group with the main CLI
 cli.add_command(config)
 cli.add_command(secrets)
+cli.add_command(run)
+
+# if __name__ == '__main__':
+#     cli(["run", "stdio-proxy", "--mcp-config-file", "config_example.json", "--debug"], standalone_mode=False)
