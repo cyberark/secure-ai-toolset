@@ -1,3 +1,7 @@
+import os
+import tempfile
+import shutil
+from pathlib import Path
 import pytest
 
 from agent_guard_core.credentials.file_secrets_provider import FileSecretsProvider
@@ -5,19 +9,45 @@ from agent_guard_core.credentials.secrets_provider import BaseSecretsProvider, S
 
 
 @pytest.fixture(scope="module")
-def secret_provider() -> BaseSecretsProvider:
-    return FileSecretsProvider(namespace="test_secrets")
+def temp_dir():
+    """Create a temporary directory for secret files during tests"""
+    # Create a temporary directory
+    test_dir = tempfile.mkdtemp()
+    
+    # Save the current working directory
+    original_dir = os.getcwd()
+    
+    # Change to the temporary directory
+    os.chdir(test_dir)
+    
+    yield test_dir
+    
+    # Clean up: Change back to original directory and remove temp directory
+    os.chdir(original_dir)
+    shutil.rmtree(test_dir)
 
 
 @pytest.fixture(scope="module")
-def secret_provider_with_directory() -> BaseSecretsProvider:
-    return FileSecretsProvider(namespace="data/test_secrets")
+def secret_provider(temp_dir) -> BaseSecretsProvider:
+    return FileSecretsProvider(namespace=os.path.join(temp_dir, "teststest_secrets"))
 
 
 @pytest.fixture(scope="module")
-def secret_provider_with_multiple_directories() -> BaseSecretsProvider:
-    return FileSecretsProvider(
-        namespace="data/multiple/directories/test_secrets")
+def secret_provider_with_directory(temp_dir) -> BaseSecretsProvider:
+    # Create data directory if it doesn't exist
+    data_dir = os.path.join(temp_dir, "data")
+    os.makedirs(data_dir, exist_ok=True)
+    
+    return FileSecretsProvider(namespace=os.path.join(data_dir, "test_secrets"))
+
+
+@pytest.fixture(scope="module")
+def secret_provider_with_multiple_directories(temp_dir) -> BaseSecretsProvider:
+    # Create nested directory structure
+    nested_dir = os.path.join(temp_dir, "data", "multiple", "directories")
+    os.makedirs(nested_dir, exist_ok=True)
+    
+    return FileSecretsProvider(namespace=os.path.join(nested_dir, "test_secrets"))
 
 
 def test_connect(secret_provider):

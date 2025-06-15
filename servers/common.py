@@ -5,11 +5,11 @@ from pathlib import Path
 
 import streamlit as st
 
-from agent_guard_core.credentials.aws_secrets_manager_provider import AWSSecretsProvider
 from agent_guard_core.credentials.conjur_secrets_provider import ConjurSecretsProvider
 from agent_guard_core.credentials.environment_manager import EnvironmentVariablesManager
 from agent_guard_core.credentials.file_secrets_provider import FileSecretsProvider
 from agent_guard_core.credentials.gcp_secrets_manager_provider import GCPSecretsProvider
+from agent_guard_core.credentials.secrets_provider import secrets_provider_fm
 
 # Define globals for cache
 secret_provider_name = None
@@ -21,13 +21,6 @@ CONJUR_AUTHN_API_KEY_KEY = "CONJUR_AUTHN_API_KEY"
 CONJUR_APPLIANCE_URL_KEY = "CONJUR_APPLIANCE_URL"
 SECRET_PROVIDER_KEY = "SECRET_PROVIDER"
 SECRET_NAMESPACE_KEY = "SECRET_NAMESPACE"
-
-
-class SecretProviderOptions(Enum):
-    AWS_SECRETS_MANAGER_PROVIDER = "AWS Secrets Manager"
-    FILE_SECRET_PROVIDER = "local.env file"
-    CONJUR_SECRET_PROVIDER = "CyberArk Conjur Cloud"
-    GCP_SECRETS_MANAGER_PROVIDER = "Google Cloud Secret Manager"
 
 
 def get_config_file_path():
@@ -49,29 +42,8 @@ def get_secret_provider():
     namespace = configuration.get(SECRET_NAMESPACE_KEY)
     secret_provider_namespace = namespace if namespace else ""
 
-    provider_mapping = {
-        SecretProviderOptions.FILE_SECRET_PROVIDER.name:
-        (FileSecretsProvider,
-         SecretProviderOptions.FILE_SECRET_PROVIDER.value),
-        SecretProviderOptions.AWS_SECRETS_MANAGER_PROVIDER.name:
-        (AWSSecretsProvider,
-         SecretProviderOptions.AWS_SECRETS_MANAGER_PROVIDER.value),
-        SecretProviderOptions.CONJUR_SECRET_PROVIDER.name:
-        (ConjurSecretsProvider,
-         SecretProviderOptions.CONJUR_SECRET_PROVIDER.value),
-        SecretProviderOptions.GCP_SECRETS_MANAGER_PROVIDER.name:
-        (GCPSecretsProvider,
-         SecretProviderOptions.GCP_SECRETS_MANAGER_PROVIDER.value),
-    }
-
-    provider_info = provider_mapping.get(secret_provider_id)
-    if not provider_info:
-        raise Exception("Secret provider undefined")
-
-    provider_class, _ = provider_info
-
     with EnvironmentVariablesManager(get_config_provider()):
-        secret_provider = provider_class(namespace=secret_provider_namespace)
+        secret_provider = secrets_provider_fm.get(secret_provider_id)(namespace=secret_provider_namespace)
 
     return secret_provider
 

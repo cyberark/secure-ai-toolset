@@ -1,7 +1,9 @@
 # this is a abstract class for secrets provider
 import abc
 import logging
-from typing import Dict, Optional
+from typing import Dict, Optional, Type
+
+from agent_guard_core.utils.flavor_manager import FlavorManager
 
 
 class SecretProviderException(Exception):
@@ -38,3 +40,5 @@ class BaseSecretsProvider(abc.ABC):
     @abc.abstractmethod
     def store_secret_dictionary(self, secret_dictionary: Dict):
         pass
+
+secrets_provider_fm: FlavorManager[str, Type[BaseSecretsProvider]] = FlavorManager()

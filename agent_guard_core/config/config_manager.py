@@ -32,16 +32,6 @@ class ConfigurationOptions(BasicEnum):
     CONJUR_AUTHN_API_KEY = "The API Key to authenticate in the cloud"
     TARGET_MCP_SERVER_CONFIG_FILE = "The MCP server endpoint that Agent Guard connects to"
 
-
-class SecretProviderOptions(BasicEnum):
-    """
-    Enum for supported secret providers.
-    """
-    AWS_SECRETS_MANAGER_PROVIDER = "AWS Secrets Manager"
-    FILE_SECRET_PROVIDER = "local.env file"
-    CONJUR_SECRET_PROVIDER = "CyberArk Conjur Cloud"
-
-
 class ConfigManager:
     """
     Manages Agent Guard configuration using a file-based secrets provider.

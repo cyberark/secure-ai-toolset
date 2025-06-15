@@ -13,7 +13,6 @@ from agent_guard_core.credentials.gcp_secrets_manager_provider import GCPSecrets
     AWSSecretsProvider(region_name="us-east-1", namespace=""),
     AWSSecretsProvider(region_name="us-east-1", namespace="test_asm_1"),
     GCPSecretsProvider(project_id="test-project-1"),
-    FileSecretsProvider(namespace=""),
     FileSecretsProvider(namespace="ns_test1"),
 ])
 def env_manager(request):
@@ -101,7 +100,7 @@ def test_add_value_with_space_inside():
         file.write(file_content)
 
     env_manager = EnvironmentVariablesManager(
-        FileSecretsProvider(namespace=''))
+        FileSecretsProvider())
     assert env_manager
     env_vars_list = env_manager.list_env_vars()
     assert env_vars_list is not None
@@ -116,7 +115,7 @@ def test_add_value_with_space_inside():
 
     # check env vars are empty after deleting the file
     env_manager = EnvironmentVariablesManager(
-        FileSecretsProvider(namespace=''))
+        FileSecretsProvider())
     env_vars_list = env_manager.list_env_vars()
     assert env_vars_list == {}
 
