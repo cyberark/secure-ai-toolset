@@ -61,11 +61,10 @@ def run():
 
 )
 def stdio_proxy(mcp_config_file,is_debug):
-    asyncio.run(_stdio_proxy_async(mcp_config_file))
-
+    asyncio.run(_stdio_proxy_async(mcp_config_file, is_debug))
 
 async def _stdio_proxy_async(mcp_config_file,is_debug: bool = False):
-    print(f"Starting stdio server from config  {mcp_config_file} ")
+    logger.info(f"Starting stdio server from config  {mcp_config_file} ")
     base_env: dict[str, str] = {}
     stdio_params = load_named_server_configs_from_file(mcp_config_file, base_env)
 
@@ -78,7 +77,7 @@ async def _stdio_proxy_async(mcp_config_file,is_debug: bool = False):
             params.command,
             " ".join(params.args),
         )
-    async with stdio_client(params, errlog=sys.stdout) as streams, ClientSession(*streams) as session:
+    async with stdio_client(params, errlog=sys.stderr) as streams, ClientSession(*streams) as session:
         app = await create_agent_guard_proxy_server(remote_app=session,logger=get_audit_logger(logging.DEBUG if is_debug else logging.INFO))
         async with stdio_server() as (read_stream, write_stream):
             await app.run(
@@ -213,4 +212,4 @@ cli.add_command(config)
 cli.add_command(run)
 
 # if __name__ == '__main__':
-#     cli(["run", "stdio-proxy", "--mcp-config-file", "config_example.json"], standalone_mode=False)
+#     cli(["run", "stdio-proxy", "--mcp-config-file", "config_example.json", "--debug"], standalone_mode=False)

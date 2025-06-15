@@ -1,6 +1,7 @@
 import functools
 import logging
 import os
+import sys
 
 
 def audit_log_operation(audit_logger, handler_name):
@@ -23,9 +24,13 @@ def get_audit_logger(log_level=logging.INFO) -> logging.Logger:
     audit_logger.setLevel(log_level)
     audit_file_handler = logging.FileHandler("agent_guard_core_proxy.log" if os.access(".", os.W_OK) else "/tmp/agent_guard_core_proxy.log")
     audit_file_handler.setLevel(log_level)
+    stderr_handler = logging.StreamHandler(sys.stderr)
+    stderr_handler.setLevel(log_level)
     formatter = logging.Formatter('%(asctime)s %(levelname)s %(name)s: %(message)s')
     audit_file_handler.setFormatter(formatter)
+    stderr_handler.setFormatter(formatter)
     if not audit_logger.hasHandlers():
         audit_logger.addHandler(audit_file_handler)
+        audit_logger.addHandler(stderr_handler)
 
     return audit_logger
