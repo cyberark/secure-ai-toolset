@@ -1,7 +1,9 @@
 import asyncio
 import functools
+import json
 import logging
 import os
+import shutil
 import sys
 from pathlib import Path
 from typing import Any, Optional
@@ -17,6 +19,7 @@ from agent_guard_core.credentials.gcp_secrets_manager_provider import (DEFAULT_P
 from agent_guard_core.credentials.secrets_provider import BaseSecretsProvider, secrets_provider_fm
 from agent_guard_core.proxy.audited_proxy import create_agent_guard_proxy_server
 from agent_guard_core.proxy.proxy_utils import get_audit_logger
+from agent_guard_core.utils.mcp_config_wizard import transform_mcp_servers
 
 
 def get_cli_logger():
@@ -36,12 +39,16 @@ get_cli_logger()
 
 @click.group(help=(
     "Agent Guard CLI: Secure your AI agents with environment credentials from multiple secret providers.\n"
-    "Use 'configure' to manage configuration options."))
+    "Use 'configure' to manage configuration options.")
+    )
 def cli():
     """Entry point for the Agent Guard CLI."""
 
+@click.group(help="Commands to manage Agent Guard proxy.")
+def proxy():
+    pass
 
-@click.command(name="start-proxy", help="Starts the Agent Guard MCP proxy")
+@proxy.command(name="start", help="Starts the Agent Guard MCP proxy")
 @click.option(
     '--mcp-config-file',
     '-cf',
@@ -57,7 +64,7 @@ def cli():
     help="debug mode",
 
 )
-def start_proxy(mcp_config_file,is_debug):
+def proxy_start(mcp_config_file,is_debug):
     try:
         asyncio.run(_stdio_proxy_async(mcp_config_file, is_debug))
     except KeyboardInterrupt:
@@ -119,6 +126,33 @@ async def _stdio_proxy_async(mcp_config_file: Optional[str] = None, is_debug: bo
         logger.error(f"Error starting Agent Guard proxy: {e}")
         sys.exit(1)
 
+@proxy.command(name="applyconfig", context_settings=dict(max_content_width=120))
+@click.option(
+    '--mcp-config-file',
+    '-cf',
+    required=False,
+    help="Path to the MCP configuration file, Default: /config/*.json, use -v <path to config dir>:/config",
+)
+def proxy_apply_config(mcp_config_file: Optional[str] = None):
+    """
+    Generate a Agent-Guard-Proxy-Enabled configuration from
+    an existing MCP configuration file (i.e Claude Desktop, Claude Code, etc.)
+    """
+    if mcp_config_file is None:
+        # Search for a json file under /config
+        config_dir = Path("/config")
+        if not config_dir.exists() or not config_dir.is_dir():
+            logger.error("No /config directory found or it is not a directory.")
+            sys.exit(1)
+
+        for config_file in config_dir.glob("*.json"):
+            try:
+                new_mcp_configuration = transform_mcp_servers(config_file)
+                logger.info(f"Converted MCP configuration at: {config_file}")
+                print(json.dumps(new_mcp_configuration, indent=2))
+            except Exception as ex:
+                logger.debug(f"Error reading MCP config file {config_file}: {ex}")
+                continue
 
 @click.group(name="config")
 def config():
@@ -430,7 +464,7 @@ def config_list():
 # Register the config group with the main CLI
 cli.add_command(config)
 cli.add_command(secrets)
-cli.add_command(start_proxy)
+cli.add_command(proxy)
 
 if __name__ == '__main__':
     try:
