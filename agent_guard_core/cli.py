@@ -131,11 +131,11 @@ async def _stdio_proxy_async(mcp_config_file: Optional[str] = None, is_debug: bo
     '--mcp-config-file',
     '-cf',
     required=False,
-    help="Path to the MCP configuration file, Default: /config/*.json, use -v <path to config dir>:/config",
+    help="Path to the MCP configuration file, Default: Auto-detect under /config/*.json (use docker -v to mount a local directory to /config)",
 )
 def proxy_apply_config(mcp_config_file: Optional[str] = None):
     """
-    Generate a Agent-Guard-Proxy-Enabled configuration from
+    Generates an Agent-Guard-Proxy-Enabled configuration from
     an existing MCP configuration file (i.e Claude Desktop, Claude Code, etc.)
     """
     if mcp_config_file is None:
