@@ -6,17 +6,18 @@ This server is created independent of any transport mechanism.
 import logging
 import typing as t
 
-from mcp import server, types, ListResourcesResult
+from mcp import ListResourcesResult, server, types
 from mcp.client.session import ClientSession
-from mcp.types import ListResourceTemplatesResult, ReadResourceResult, ListToolsResult, CompleteResult
+from mcp.types import CompleteResult, ListResourceTemplatesResult, ListToolsResult, ReadResourceResult
 
 from agent_guard_core.proxy.proxy_utils import audit_log_operation, get_audit_logger
 
 
-async def create_agent_guard_proxy_server(remote_app: ClientSession,logger=get_audit_logger(logging.INFO)) -> server.Server[
-
-    object]:  # noqa: C901, PLR0915
+async def create_agent_guard_proxy_server(remote_app: ClientSession, logger: t.Optional[logging.Logger] = None) -> server.Server[object]:  # noqa: C901, PLR0915
     """Create a server instance from a remote app."""
+    if logger is None:
+        logger = get_audit_logger()
+
     logger.debug("Sending initialization request to remote MCP server...")
     response = await remote_app.initialize()
     capabilities = response.capabilities

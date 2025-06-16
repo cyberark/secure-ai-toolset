@@ -1,21 +1,20 @@
-import functools
-import os
-from typing import Any, Optional
 import asyncio
-import getpass
+import functools
 import logging
 import os
 import sys
+from pathlib import Path
+from typing import Any, Optional
 
 import click
-from mcp import stdio_client, ClientSession, stdio_server
+from mcp import ClientSession, StdioServerParameters, stdio_client, stdio_server
 from mcp_proxy.config_loader import load_named_server_configs_from_file
 
+from agent_guard_core.config.config_manager import ConfigManager, ConfigurationOptions
 from agent_guard_core.credentials.enum import AwsEnvVars, ConjurEnvVars, CredentialsProvider, GcpEnvVars
 from agent_guard_core.credentials.gcp_secrets_manager_provider import (DEFAULT_PROJECT_ID, DEFAULT_REPLICATION_TYPE,
                                                                        DEFAULT_SECRET_ID)
 from agent_guard_core.credentials.secrets_provider import BaseSecretsProvider, secrets_provider_fm
-from agent_guard_core.config.config_manager import ConfigManager, ConfigurationOptions, SecretProviderOptions
 from agent_guard_core.proxy.audited_proxy import create_agent_guard_proxy_server
 from agent_guard_core.proxy.proxy_utils import get_audit_logger
 
@@ -41,16 +40,13 @@ get_cli_logger()
 def cli():
     """Entry point for the Agent Guard CLI."""
 
-@click.group(name="run")
-def run():
-    """Commands to run the Agent Guard proxy."""
 
-@run.command(name="stdio-proxy")
+@click.command(name="start-proxy", help="Starts the Agent Guard MCP proxy")
 @click.option(
     '--mcp-config-file',
     '-cf',
-    required=True,
-    help="Path to the MCP server configuration file.",
+    required=False,
+    help="Path to the MCP server configuration file, Default: /config/*.json",
 )
 @click.option(
     '--debug',
@@ -61,13 +57,42 @@ def run():
     help="debug mode",
 
 )
-def stdio_proxy(mcp_config_file,is_debug):
-    asyncio.run(_stdio_proxy_async(mcp_config_file, is_debug))
+def start_proxy(mcp_config_file,is_debug):
+    try:
+        asyncio.run(_stdio_proxy_async(mcp_config_file, is_debug))
+    except KeyboardInterrupt:
+        logger.info("shutting down...")
+        sys.exit(0)
 
-async def _stdio_proxy_async(mcp_config_file,is_debug: bool = False):
-    logger.info(f"Starting stdio server from config  {mcp_config_file} ")
+async def _stdio_proxy_async(mcp_config_file: Optional[str] = None, is_debug: bool = True):
+    logger.info(f"Starting up...")
+    stdio_params: Optional[dict[str, StdioServerParameters]] = None
+
     base_env: dict[str, str] = {}
-    stdio_params = load_named_server_configs_from_file(mcp_config_file, base_env)
+    if mcp_config_file is None:
+        # Search for a json file under /config
+        config_dir = Path("/config")
+        if not config_dir.exists() or not config_dir.is_dir():
+            logger.error("No /config directory found or it is not a directory.")
+            sys.exit(1)
+
+        for config_file in config_dir.glob("*.json"):
+            try:
+                stdio_params = load_named_server_configs_from_file(config_file, base_env)
+                logger.info(f"Using MCP configuration file: {config_file}")
+            except Exception as ex:
+                logger.debug(f"Error reading MCP config file {config_file}: {ex}")
+                continue
+    else:
+        try:
+            stdio_params = load_named_server_configs_from_file(mcp_config_file, base_env)
+        except Exception as ex:
+            logger.error(f"Error reading MCP config file {mcp_config_file}: {ex}")
+            sys.exit(1)
+
+    if stdio_params is None:
+        logger.error("No MCP configuration file found in /config directory.")
+        sys.exit(1)
 
     params = None
 
@@ -78,14 +103,21 @@ async def _stdio_proxy_async(mcp_config_file,is_debug: bool = False):
             params.command,
             " ".join(params.args),
         )
-    async with stdio_client(params, errlog=sys.stderr) as streams, ClientSession(*streams) as session:
-        app = await create_agent_guard_proxy_server(remote_app=session,logger=get_audit_logger(logging.DEBUG if is_debug else logging.INFO))
-        async with stdio_server() as (read_stream, write_stream):
-            await app.run(
-                read_stream,
-                write_stream,
-                app.create_initialization_options(),
-            )
+        
+    try:
+        async with stdio_client(params, errlog=sys.stderr) as streams, ClientSession(*streams) as session:
+            app = await create_agent_guard_proxy_server(remote_app=session, logger=get_audit_logger(logging.DEBUG if is_debug else logging.INFO))
+            async with stdio_server() as (read_stream, write_stream):
+                logger.info("Proxy server is running...")
+                await app.run(
+                    read_stream,
+                    write_stream,
+                    app.create_initialization_options()
+                )
+                logger.info("Proxy server has stopped.")
+    except Exception as e:
+        logger.error(f"Error starting Agent Guard proxy: {e}")
+        sys.exit(1)
 
 
 @click.group(name="config")
@@ -398,7 +430,12 @@ def config_list():
 # Register the config group with the main CLI
 cli.add_command(config)
 cli.add_command(secrets)
-cli.add_command(run)
+cli.add_command(start_proxy)
 
-# if __name__ == '__main__':
-#     cli(["run", "stdio-proxy", "--mcp-config-file", "config_example.json", "--debug"], standalone_mode=False)
+if __name__ == '__main__':
+    try:
+        cli(sys.argv[1:], standalone_mode=False)
+    except KeyboardInterrupt:
+        print("\nExiting Agent Guard CLI.")
+        sys.exit(0)
+    
