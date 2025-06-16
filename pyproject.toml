@@ -23,9 +23,7 @@ dependencies = [
     "boto3",
     "google-cloud-secret-manager",
     "mcp>=1.9.1",
-    "mcp-proxy>=0.8.0",
-    "pytest>=8.3.5",
-    "pytest-asyncio>=1.0.0",
+    "mcp-proxy>=0.8.0"
 ]
 
 [build-system]
@@ -38,7 +36,8 @@ agc = "agent_guard_core.cli:cli"
 [project.optional-dependencies]
 dev = [
     "uv",
-    "pytest",
+    "pytest>=8.3.5",
+    "pytest-asyncio>=1.0.0",
     "yapf",
     "isort",
     "autoflake",
