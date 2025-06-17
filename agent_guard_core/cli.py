@@ -44,75 +44,39 @@ get_cli_logger()
 def cli():
     """Entry point for the Agent Guard CLI."""
 
-@click.group(help="Commands to manage Agent Guard proxy.")
-def proxy():
+@click.group(help="Commands to manage Agent Guard MCP proxy.")
+def mcp_proxy():
     pass
 
-@proxy.command(name="start", help="Starts the Agent Guard MCP proxy")
-@click.option(
-    '--mcp-config-file',
-    '-cf',
-    required=False,
-    help="Path to the MCP server configuration file, Default: /config/*.json",
-)
+@mcp_proxy.command(name="start", help="Starts the Agent Guard MCP proxy")
 @click.option(
     '--debug',
     '-d','is_debug',
     is_flag=True,
     required=False,
     default=False,
-    help="debug mode",
-
+    help="debug mode"
 )
-def proxy_start(mcp_config_file,is_debug):
+@click.argument('argv', nargs=-1)
+def mcp_proxy_start(is_debug: Optional[bool] = False, argv: tuple[str] = ()):
     try:
-        asyncio.run(_stdio_proxy_async(mcp_config_file, is_debug))
+        asyncio.run(_stdio_mcp_proxy_async(argv, is_debug))
     except KeyboardInterrupt:
         logger.info("shutting down...")
         sys.exit(0)
 
-async def _stdio_proxy_async(mcp_config_file: Optional[str] = None, is_debug: bool = True):
+async def _stdio_mcp_proxy_async(argv: tuple[str] = (), is_debug: Optional[bool] = None):
     logger.info(f"Starting up...")
-    stdio_params: Optional[dict[str, StdioServerParameters]] = None
+    stdio_params: Optional[StdioServerParameters] = None
+    
+    if len(argv) == 0:
+        raise click.BadArgumentUsage("Please provide a valid CLI to start an MCP server (i.e uvx mcp-server-fetch)")
+    
+    stdio_params = StdioServerParameters(command=argv[0], args=argv[1:])
 
-    base_env: dict[str, str] = {}
-    if mcp_config_file is None:
-        # Search for a json file under /config
-        config_dir = Path("/config")
-        if not config_dir.exists() or not config_dir.is_dir():
-            logger.error("No /config directory found or it is not a directory.")
-            sys.exit(1)
-
-        for config_file in config_dir.glob("*.json"):
-            try:
-                stdio_params = load_named_server_configs_from_file(config_file, base_env)
-                logger.info(f"Using MCP configuration file: {config_file}")
-            except Exception as ex:
-                logger.debug(f"Error reading MCP config file {config_file}: {ex}")
-                continue
-    else:
-        try:
-            stdio_params = load_named_server_configs_from_file(mcp_config_file, base_env)
-        except Exception as ex:
-            logger.error(f"Error reading MCP config file {mcp_config_file}: {ex}")
-            sys.exit(1)
-
-    if stdio_params is None:
-        logger.error("No MCP configuration file found in /config directory.")
-        sys.exit(1)
-
-    params = None
-
-    for name, params in stdio_params.items():
-        logger.info(
-            "Setting up mcp server '%s': %s %s",
-            name,
-            params.command,
-            " ".join(params.args),
-        )
-        
     try:
-        async with stdio_client(params, errlog=sys.stderr) as streams, ClientSession(*streams) as session:
+        logger.debug(f"Starting MCP server with config: {stdio_params.model_dump()}")
+        async with stdio_client(stdio_params, errlog=sys.stderr) as streams, ClientSession(*streams) as session:
             app = await create_agent_guard_proxy_server(remote_app=session, logger=get_audit_logger(logging.DEBUG if is_debug else logging.INFO))
             async with stdio_server() as (read_stream, write_stream):
                 logger.info("Proxy server is running...")
@@ -126,7 +90,7 @@ async def _stdio_proxy_async(mcp_config_file: Optional[str] = None, is_debug: bo
         logger.error(f"Error starting Agent Guard proxy: {e}")
         sys.exit(1)
 
-@proxy.command(name="applyconfig", context_settings=dict(max_content_width=120))
+@mcp_proxy.command(name="applyconfig", context_settings=dict(max_content_width=120))
 @click.option(
     '--mcp-config-file',
     '-cf',
@@ -464,7 +428,7 @@ def config_list():
 # Register the config group with the main CLI
 cli.add_command(config)
 cli.add_command(secrets)
-cli.add_command(proxy)
+cli.add_command(mcp_proxy)
 
 if __name__ == '__main__':
     try:
