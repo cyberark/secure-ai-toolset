@@ -4,7 +4,7 @@ LOGFILE="/tmp/agent_guard_docker.log"
 echo "=== Starting Docker MCP proxy at $(date) ===" > $LOGFILE
 
 docker run --rm -i \
-  agent-guard run stdio-proxy \
+  agent-guard mcp-proxy \
   -cf /app/config_example.json \
   --debug 2>> $LOGFILE
 
