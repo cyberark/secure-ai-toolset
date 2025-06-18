@@ -55,11 +55,7 @@ def mcp_proxy_start(is_debug: Optional[bool] = False, cap: Optional[list[ProxyCa
     if cap is None:
         cap = []
 
-    try:
-        asyncio.run(_stdio_mcp_proxy_async(argv=argv, cap=cap, is_debug=is_debug))
-    except KeyboardInterrupt:
-        logger.debug("shutting down...")
-        sys.exit(0)
+    asyncio.run(_stdio_mcp_proxy_async(argv=argv, cap=cap, is_debug=is_debug))
 
 async def _stdio_mcp_proxy_async(cap: list[ProxyCapability], argv: tuple[str] = (), is_debug: Optional[bool] = None):
     logger.debug(f"Starting up...")
@@ -88,7 +84,9 @@ async def _stdio_mcp_proxy_async(cap: list[ProxyCapability], argv: tuple[str] = 
                 logger.debug("Proxy server has stopped.")
     except Exception as e:
         logger.error(f"Error starting Agent Guard proxy: {e}")
-        sys.exit(1)
+    except (asyncio.CancelledError, KeyboardInterrupt) as e:
+        logger.debug("Caught CancelledError due to KeyboardInterrupt, exiting gracefully.")
+        sys.exit(0)
 
 @mcp_proxy.command(name="apply-config", context_settings=dict(max_content_width=120))
 @click.option(
@@ -434,6 +432,6 @@ if __name__ == '__main__':
     try:
         cli(sys.argv[1:], standalone_mode=False)
     except KeyboardInterrupt:
+        logger.debug("KeyboardInterrupt caught at top level, exiting gracefully.")
         print("\nExiting Agent Guard CLI.")
         sys.exit(0)
-    
