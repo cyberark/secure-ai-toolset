@@ -21,6 +21,8 @@ from agent_guard_core.proxy.proxy_utils import get_audit_logger
 from agent_guard_core.utils.mcp_config_wizard import transform_mcp_servers
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.disable(logging.CRITICAL)
+
 logger = logging.getLogger(__name__)
 
 class ProxyCapability(str, Enum):
@@ -54,7 +56,10 @@ cap_options = click.Choice([e.value for e in ProxyCapability])
 def mcp_proxy_start(is_debug: Optional[bool] = False, cap: Optional[list[ProxyCapability]] = None, argv: tuple[str] = ()):
     if cap is None:
         cap = []
-
+    
+    if is_debug:
+        logging.disable(logging.NOTSET)
+        
     asyncio.run(_stdio_mcp_proxy_async(argv=argv, cap=cap, is_debug=is_debug))
 
 async def _stdio_mcp_proxy_async(cap: list[ProxyCapability], argv: tuple[str] = (), is_debug: Optional[bool] = None):

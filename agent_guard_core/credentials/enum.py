@@ -2,10 +2,10 @@ from enum import Enum
 
 
 class CredentialsProvider(str, Enum):
-    AWS_SECRETS_MANAGER = "aws-ssm"
+    AWS_SECRETS_MANAGER = "aws-secretsmanager"
     CONJUR = "conjur"
     FILE_DOTENV = "file-dotenv"
-    GCP_SECRETS_MANAGER = "gcp-sm"
+    GCP_SECRETS_MANAGER = "gcp-secretsmanager"
     
 class ConjurEnvVars(str, Enum):
     CONJUR_AUTHN_LOGIN = "CONJUR_AUTHN_LOGIN" 
