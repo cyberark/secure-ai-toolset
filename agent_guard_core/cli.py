@@ -3,14 +3,13 @@ import functools
 import json
 import logging
 import os
-import shutil
 import sys
+from enum import Enum
 from pathlib import Path
 from typing import Any, Optional
 
 import click
 from mcp import ClientSession, StdioServerParameters, stdio_client, stdio_server
-from mcp_proxy.config_loader import load_named_server_configs_from_file
 
 from agent_guard_core.config.config_manager import ConfigManager, ConfigurationOptions
 from agent_guard_core.credentials.enum import AwsEnvVars, ConjurEnvVars, CredentialsProvider, GcpEnvVars
@@ -21,21 +20,11 @@ from agent_guard_core.proxy.audited_proxy import create_agent_guard_proxy_server
 from agent_guard_core.proxy.proxy_utils import get_audit_logger
 from agent_guard_core.utils.mcp_config_wizard import transform_mcp_servers
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
-def get_cli_logger():
-    global logger, file_handler, formatter
-    logger = logging.getLogger("agent_guard_core.cli")
-    logger.setLevel(logging.INFO)
-    file_handler = logging.FileHandler("agent_guard_core.log" if os.access(".", os.W_OK) else "/tmp/agent_guard_core.log")
-    file_handler.setLevel(logging.INFO)
-    formatter = logging.Formatter('%(asctime)s %(levelname)s %(name)s: %(message)s')
-    file_handler.setFormatter(formatter)
-    if not logger.hasHandlers():
-        logger.addHandler(file_handler)
-        logger.addHandler(logging.StreamHandler())
-
-
-get_cli_logger()
+class ProxyCapability(str, Enum):
+    AUDIT = "audit"
 
 @click.group(help=(
     "Agent Guard CLI: Secure your AI agents with environment credentials from multiple secret providers.\n"
@@ -48,6 +37,8 @@ def cli():
 def mcp_proxy():
     pass
 
+cap_options = click.Choice([e.value for e in ProxyCapability])
+
 @mcp_proxy.command(name="start", help="Starts the Agent Guard MCP proxy")
 @click.option(
     '--debug',
@@ -57,40 +48,49 @@ def mcp_proxy():
     default=False,
     help="debug mode"
 )
+@click.option("--cap", "-c", type=cap_options, help="Enable specific capabilities for the MCP proxy. Use multiple -c"
+                                                                                         f"options to enable multiple capabilities. One of: {' '.join(cap_options.choices)}", multiple=True)
 @click.argument('argv', nargs=-1)
-def mcp_proxy_start(is_debug: Optional[bool] = False, argv: tuple[str] = ()):
+def mcp_proxy_start(is_debug: Optional[bool] = False, cap: Optional[list[ProxyCapability]] = None, argv: tuple[str] = ()):
+    if cap is None:
+        cap = []
+
     try:
-        asyncio.run(_stdio_mcp_proxy_async(argv, is_debug))
+        asyncio.run(_stdio_mcp_proxy_async(argv=argv, cap=cap, is_debug=is_debug))
     except KeyboardInterrupt:
-        logger.info("shutting down...")
+        logger.debug("shutting down...")
         sys.exit(0)
 
-async def _stdio_mcp_proxy_async(argv: tuple[str] = (), is_debug: Optional[bool] = None):
-    logger.info(f"Starting up...")
+async def _stdio_mcp_proxy_async(cap: list[ProxyCapability], argv: tuple[str] = (), is_debug: Optional[bool] = None):
+    logger.debug(f"Starting up...")
     stdio_params: Optional[StdioServerParameters] = None
     
     if len(argv) == 0:
         raise click.BadArgumentUsage("Please provide a valid CLI to start an MCP server (i.e uvx mcp-server-fetch)")
     
     stdio_params = StdioServerParameters(command=argv[0], args=argv[1:])
+    proxy_logger: Optional[logging.Logger] = None
 
+    if ProxyCapability.AUDIT in cap:
+        logger.debug("Enabling audit logging for the MCP proxy.")
+        proxy_logger = get_audit_logger(logging.DEBUG if is_debug else logging.INFO)
     try:
         logger.debug(f"Starting MCP server with config: {stdio_params.model_dump()}")
         async with stdio_client(stdio_params, errlog=sys.stderr) as streams, ClientSession(*streams) as session:
-            app = await create_agent_guard_proxy_server(remote_app=session, logger=get_audit_logger(logging.DEBUG if is_debug else logging.INFO))
+            app = await create_agent_guard_proxy_server(remote_app=session, logger=proxy_logger)
             async with stdio_server() as (read_stream, write_stream):
-                logger.info("Proxy server is running...")
+                logger.debug("Proxy server is running...")
                 await app.run(
                     read_stream,
                     write_stream,
                     app.create_initialization_options()
                 )
-                logger.info("Proxy server has stopped.")
+                logger.debug("Proxy server has stopped.")
     except Exception as e:
         logger.error(f"Error starting Agent Guard proxy: {e}")
         sys.exit(1)
 
-@mcp_proxy.command(name="applyconfig", context_settings=dict(max_content_width=120))
+@mcp_proxy.command(name="apply-config", context_settings=dict(max_content_width=120))
 @click.option(
     '--mcp-config-file',
     '-cf',
@@ -112,7 +112,7 @@ def proxy_apply_config(mcp_config_file: Optional[str] = None):
         for config_file in config_dir.glob("*.json"):
             try:
                 new_mcp_configuration = transform_mcp_servers(config_file)
-                logger.info(f"Converted MCP configuration at: {config_file}")
+                logger.debug(f"Converted MCP configuration at: {config_file}")
                 print(json.dumps(new_mcp_configuration, indent=2))
             except Exception as ex:
                 logger.debug(f"Error reading MCP config file {config_file}: {ex}")

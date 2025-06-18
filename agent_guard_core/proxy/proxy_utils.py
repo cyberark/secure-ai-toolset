@@ -2,7 +2,9 @@ import functools
 import logging
 import os
 import sys
+from pathlib import Path
 
+logger = logging.getLogger(__name__)
 
 def audit_log_operation(audit_logger, handler_name):
     def decorator(func):
@@ -19,18 +21,17 @@ def audit_log_operation(audit_logger, handler_name):
 
 
 def get_audit_logger(log_level=logging.INFO) -> logging.Logger:
-    global formatter
+    log_path = Path("/logs/agent_guard_core_proxy.log") if os.access("/logs", os.W_OK) else Path("agent_guard_core_proxy.log")
+    logger.debug(f"Using audit log path: {log_path}")
+
     audit_logger = logging.getLogger("agent_guard_core.audit")
     audit_logger.setLevel(log_level)
-    audit_file_handler = logging.FileHandler("agent_guard_core_proxy.log" if os.access(".", os.W_OK) else "/tmp/agent_guard_core_proxy.log")
+    audit_file_handler = logging.FileHandler(log_path)
     audit_file_handler.setLevel(log_level)
+    audit_file_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
     stderr_handler = logging.StreamHandler(sys.stderr)
     stderr_handler.setLevel(log_level)
-    formatter = logging.Formatter('%(asctime)s %(levelname)s %(name)s: %(message)s')
-    audit_file_handler.setFormatter(formatter)
-    stderr_handler.setFormatter(formatter)
-    if not audit_logger.hasHandlers():
-        audit_logger.addHandler(audit_file_handler)
-        audit_logger.addHandler(stderr_handler)
+    audit_logger.handlers.clear()
+    audit_logger.addHandler(audit_file_handler)
 
     return audit_logger
