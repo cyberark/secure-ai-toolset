@@ -1,9 +1,12 @@
 import json
-from typing import Any
+from typing import Any, List, Optional
 
 
-def transform_mcp_servers(file_name: str) -> dict[str, Any]:
+def transform_mcp_servers(file_name: str, capabilities: Optional[List[str]] = None) -> dict[str, Any]:
     """Load and transform an MCP servers JSON file."""
+    if capabilities is None:
+        capabilities = []
+    
     try:
         with open(file_name, 'r') as f:
             data = json.load(f)
@@ -18,9 +21,9 @@ def transform_mcp_servers(file_name: str) -> dict[str, Any]:
             raise ValueError(f"Server config for '{server_name}' must be a dictionary.")
 
         if 'url' in server_config:
-            transform_remote_server(server_config)
+            transform_remote_server(server_config, capabilities)
         elif server_config.get('command') is not None:
-            transform_stdio_server(server_config)
+            transform_stdio_server(server_config, capabilities)
         else:
             # Skip unsupported server types
             continue
@@ -28,7 +31,7 @@ def transform_mcp_servers(file_name: str) -> dict[str, Any]:
     return data
 
 
-def transform_stdio_server(server_config: dict[str, Any]) -> None:
+def transform_stdio_server(server_config: dict[str, Any], capabilities: List[str]) -> None:
     """Transform a local stdio server config to docker run format."""
     env_args = []
     env = server_config.get('env', {})
@@ -38,13 +41,22 @@ def transform_stdio_server(server_config: dict[str, Any]) -> None:
 
     command = server_config['command']
     args = server_config.get('args', [])
-    new_args = ["run", "-i"] + env_args + ["agc", "mcp-proxy", "start", command] + args
+    
+    # Start with the basic command
+    new_args = ["run", "-i"] + env_args + ["agc", "mcp-proxy", "start"]
+    
+    # Add capabilities if provided
+    for cap in capabilities:
+        new_args.extend(["-c", cap])
+    
+    # Add the original command and args
+    new_args.extend([command] + args)
 
     server_config["command"] = "docker"
     server_config["args"] = new_args
 
 
-def transform_remote_server(server_config: dict[str, Any]) -> None:
+def transform_remote_server(server_config: dict[str, Any], capabilities: List[str]) -> None:
     """Transform a remote URL-based MCP server config."""
     url = server_config.pop('url')
     headers = server_config.pop('headers', {})  # remove headers if exists
@@ -59,14 +71,18 @@ def transform_remote_server(server_config: dict[str, Any]) -> None:
     for key, value in headers.items():
         header_args.extend(["--header", f"{key}: {value}"])
 
-    new_args = ["run"] + env_args + ["agc", "mcp-proxy", "start", "uvx", "mcp-remote", url] + header_args
+    # Start with the basic command
+    new_args = ["run"] + env_args + ["agc", "mcp-proxy", "start"]
+    
+    # Add capabilities if provided
+    for cap in capabilities:
+        new_args.extend(["-c", cap])
+    
+    # Add the original command and args
+    new_args.extend(["uvx", "mcp-remote", url] + header_args)
 
     server_config["command"] = "docker"
     server_config["args"] = new_args
 
     if 'transportType' in server_config:
         server_config['transportType'] = 'stdio'
-
-if __name__ == "__main__":
-    updated_json = transform_mcp_servers("/Users/shaid/Desktop/sources/agent-guard/config_example.json")
-    print(json.dumps(updated_json, indent=2))

@@ -105,7 +105,7 @@ async def create_agent_guard_proxy_server(remote_app: ClientSession, logger: t.O
 
         @audit_log_operation(logger, "CallTool")
         async def _call_tool(req: types.CallToolRequest) -> types.ServerResult:
-            logger.debug("Calling tool...{req.params.name}")
+            logger.debug(f"Calling tool...{req.params.name}")
             try:
                 result: types.CallToolResult = await remote_app.call_tool(
                     req.params.name,

@@ -100,11 +100,21 @@ async def _stdio_mcp_proxy_async(cap: list[ProxyCapability], argv: tuple[str] = 
     required=False,
     help="Path to the MCP configuration file, Default: Auto-detect under /config/*.json (use docker -v to mount a local directory to /config)",
 )
-def proxy_apply_config(mcp_config_file: Optional[str] = None):
+@click.option(
+    '--cap',
+    '-c',
+    type=cap_options,
+    multiple=True,
+    help=f"Enable specific capabilities for the MCP proxy. Use multiple -c options to enable multiple capabilities. One of: {' '.join(cap_options.choices)}",
+)
+def proxy_apply_config(mcp_config_file: Optional[str] = None, cap: Optional[tuple[str]] = None):
     """
     Generates an Agent-Guard-Proxy-Enabled configuration from
     an existing MCP configuration file (i.e Claude Desktop, Claude Code, etc.)
     """
+    if cap is None:
+        cap = []
+        
     if mcp_config_file is None:
         # Search for a json file under /config
         config_dir = Path("/config")
@@ -114,7 +124,7 @@ def proxy_apply_config(mcp_config_file: Optional[str] = None):
 
         for config_file in config_dir.glob("*.json"):
             try:
-                new_mcp_configuration = transform_mcp_servers(config_file)
+                new_mcp_configuration = transform_mcp_servers(config_file, capabilities=cap)
                 logger.debug(f"Converted MCP configuration at: {config_file}")
                 print(json.dumps(new_mcp_configuration, indent=2))
             except Exception as ex:
