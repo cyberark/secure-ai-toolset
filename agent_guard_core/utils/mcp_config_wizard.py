@@ -32,11 +32,9 @@ def transform_stdio_server(server_config: dict[str, Any]) -> None:
     """Transform a local stdio server config to docker run format."""
     env_args = []
     env = server_config.get('env', {})
-    if not isinstance(env, dict):
-        raise ValueError("'env' must be a dictionary.")
 
-    for key, value in env.items():
-        env_args.extend(["-E", f"{key}={value}"])
+    for key, _ in env.items():
+        env_args.extend(["-e", f"{key}"])
 
     command = server_config['command']
     args = server_config.get('args', [])
@@ -44,7 +42,6 @@ def transform_stdio_server(server_config: dict[str, Any]) -> None:
 
     server_config["command"] = "docker"
     server_config["args"] = new_args
-    server_config["env"] = {}  # Clear env
 
 
 def transform_remote_server(server_config: dict[str, Any]) -> None:
@@ -52,16 +49,21 @@ def transform_remote_server(server_config: dict[str, Any]) -> None:
     url = server_config.pop('url')
     headers = server_config.pop('headers', {})  # remove headers if exists
 
+    env_args = []
+    env = server_config.get('env', {})
+
+    for key, _ in env.items():
+        env_args.extend(["-e", f"{key}"])
+
     header_args = []
     for key, value in headers.items():
         header_args.extend(["--header", f"{key}: {value}"])
 
-    new_args = ["run", "agc", "mcp-proxy", "start", "uvx", "mcp-remote", url] + header_args
+    new_args = ["run"] + env_args + ["agc", "mcp-proxy", "start", "uvx", "mcp-remote", url] + header_args
 
     server_config["command"] = "docker"
     server_config["args"] = new_args
-    server_config["env"] = {}  # Ensure clean env
-    
+
     if 'transportType' in server_config:
         server_config['transportType'] = 'stdio'
 
