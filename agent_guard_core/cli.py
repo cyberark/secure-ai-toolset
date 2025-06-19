@@ -28,6 +28,13 @@ logger = logging.getLogger(__name__)
 class ProxyCapability(str, Enum):
     AUDIT = "audit"
 
+
+cap_options = click.Choice([e.value for e in ProxyCapability])
+
+def cap_option(f):
+    return click.option("--cap", "-c", type=cap_options, help="Enable specific capabilities for the MCP proxy. Use multiple -c"
+                                                              f"options to enable multiple capabilities. One of: {' '.join(cap_options.choices)}", 
+                                                              multiple=True)(f)
 @click.group(help=(
     "Agent Guard CLI: Secure your AI agents with environment credentials from multiple secret providers.\n"
     "Use 'configure' to manage configuration options.")
@@ -39,7 +46,6 @@ def cli():
 def mcp_proxy():
     pass
 
-cap_options = click.Choice([e.value for e in ProxyCapability])
 
 @mcp_proxy.command(name="start", help="Starts the Agent Guard MCP proxy")
 @click.option(
@@ -50,8 +56,7 @@ cap_options = click.Choice([e.value for e in ProxyCapability])
     default=False,
     help="debug mode"
 )
-@click.option("--cap", "-c", type=cap_options, help="Enable specific capabilities for the MCP proxy. Use multiple -c"
-                                                                                         f"options to enable multiple capabilities. One of: {' '.join(cap_options.choices)}", multiple=True)
+@cap_option
 @click.argument('argv', nargs=-1)
 def mcp_proxy_start(is_debug: Optional[bool] = False, cap: Optional[list[ProxyCapability]] = None, argv: tuple[str] = ()):
     if cap is None:
@@ -100,13 +105,7 @@ async def _stdio_mcp_proxy_async(cap: list[ProxyCapability], argv: tuple[str] = 
     required=False,
     help="Path to the MCP configuration file, Default: Auto-detect under /config/*.json (use docker -v to mount a local directory to /config)",
 )
-@click.option(
-    '--cap',
-    '-c',
-    type=cap_options,
-    multiple=True,
-    help=f"Enable specific capabilities for the MCP proxy. Use multiple -c options to enable multiple capabilities. One of: {' '.join(cap_options.choices)}",
-)
+@cap_option
 def proxy_apply_config(mcp_config_file: Optional[str] = None, cap: Optional[tuple[str]] = None):
     """
     Generates an Agent-Guard-Proxy-Enabled configuration from
