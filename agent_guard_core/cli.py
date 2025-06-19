@@ -83,7 +83,7 @@ async def _stdio_mcp_proxy_async(cap: list[ProxyCapability], argv: tuple[str] = 
     try:
         logger.debug(f"Starting MCP server with config: {stdio_params.model_dump()}")
         async with stdio_client(stdio_params, errlog=sys.stderr) as streams, ClientSession(*streams) as session:
-            app = await create_agent_guard_proxy_server(remote_app=session, logger=proxy_logger)
+            app = await create_agent_guard_proxy_server(remote_app=session, audit_logger=proxy_logger)
             async with stdio_server() as (read_stream, write_stream):
                 logger.debug("Proxy server is running...")
                 await app.run(

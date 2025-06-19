@@ -12,12 +12,13 @@ from mcp.types import CompleteResult, ListResourceTemplatesResult, ListToolsResu
 
 from agent_guard_core.proxy.proxy_utils import audit_log_operation
 
+logger = logging.getLogger(__name__)
 
-async def create_agent_guard_proxy_server(remote_app: ClientSession, logger: t.Optional[logging.Logger] = None) -> server.Server[object]:  # noqa: C901, PLR0915
+async def create_agent_guard_proxy_server(remote_app: ClientSession, audit_logger: t.Optional[logging.Logger] = None) -> server.Server[object]:  # noqa: C901, PLR0915
     """Create a server instance from a remote app."""
-    if logger is None:
-        logger = logging.getLogger("null")
-        logger.addHandler(logging.NullHandler())
+    if audit_logger is None:
+        audit_logger = logging.getLogger("null")
+        audit_logger.addHandler(logging.NullHandler())
 
     logger.debug("Sending initialization request to remote MCP server...")
     response = await remote_app.initialize()
@@ -29,14 +30,14 @@ async def create_agent_guard_proxy_server(remote_app: ClientSession, logger: t.O
     if capabilities.prompts:
         logger.debug("Capabilities: adding Prompts...")
 
-        @audit_log_operation(logger, "ListPrompts")
+        @audit_log_operation(audit_logger, "ListPrompts")
         async def _list_prompts(_: t.Any) -> types.ServerResult:  # noqa: ANN401
             result = await remote_app.list_prompts()
             return types.ServerResult(result)
 
         app.request_handlers[types.ListPromptsRequest] = _list_prompts
 
-        @audit_log_operation(logger, "GetPrompt")
+        @audit_log_operation(audit_logger, "GetPrompt")
         async def _get_prompt(req: types.GetPromptRequest) -> types.ServerResult:
             result = await remote_app.get_prompt(req.params.name, req.params.arguments)
             return types.ServerResult(result)
@@ -46,21 +47,21 @@ async def create_agent_guard_proxy_server(remote_app: ClientSession, logger: t.O
     if capabilities.resources:
         logger.debug("Capabilities: adding Resources...")
 
-        @audit_log_operation(logger, "ListResources")
+        @audit_log_operation(audit_logger, "ListResources")
         async def _list_resources(_: t.Any) -> types.ServerResult:  # noqa: ANN401
             result: ListResourcesResult = await remote_app.list_resources()
             return types.ServerResult(result)
 
         app.request_handlers[types.ListResourcesRequest] = _list_resources
 
-        @audit_log_operation(logger, "ListResourceTemplates")
+        @audit_log_operation(audit_logger, "ListResourceTemplates")
         async def _list_resource_templates(_: t.Any) -> types.ServerResult:  # noqa: ANN401
             result: ListResourceTemplatesResult = await remote_app.list_resource_templates()
             return types.ServerResult(result)
 
         app.request_handlers[types.ListResourceTemplatesRequest] = _list_resource_templates
 
-        @audit_log_operation(logger, "ReadResource")
+        @audit_log_operation(audit_logger, "ReadResource")
         async def _read_resource(req: types.ReadResourceRequest) -> types.ServerResult:
             result: ReadResourceResult = await remote_app.read_resource(req.params.uri)
             return types.ServerResult(result)
@@ -79,14 +80,14 @@ async def create_agent_guard_proxy_server(remote_app: ClientSession, logger: t.O
     if capabilities.resources:
         logger.debug("Capabilities: adding Resources...")
 
-        @audit_log_operation(logger, "SubscribeResource")
+        @audit_log_operation(audit_logger, "SubscribeResource")
         async def _subscribe_resource(req: types.SubscribeRequest) -> types.ServerResult:
             await remote_app.subscribe_resource(req.params.uri)
             return types.ServerResult(types.EmptyResult())
 
         app.request_handlers[types.SubscribeRequest] = _subscribe_resource
 
-        @audit_log_operation(logger, "UbsubscribeResource")
+        @audit_log_operation(audit_logger, "UbsubscribeResource")
         async def _unsubscribe_resource(req: types.UnsubscribeRequest) -> types.ServerResult:
             await remote_app.unsubscribe_resource(req.params.uri)
             return types.ServerResult(types.EmptyResult())
@@ -96,14 +97,14 @@ async def create_agent_guard_proxy_server(remote_app: ClientSession, logger: t.O
     if capabilities.tools:
         logger.debug("Capabilities: adding Tools...")
 
-        @audit_log_operation(logger, "ListTools")
+        @audit_log_operation(audit_logger, "ListTools")
         async def _list_tools(_: t.Any) -> types.ServerResult:  # noqa: ANN401
             tools: ListToolsResult = await remote_app.list_tools()
             return types.ServerResult(tools)
 
         app.request_handlers[types.ListToolsRequest] = _list_tools
 
-        @audit_log_operation(logger, "CallTool")
+        @audit_log_operation(audit_logger, "CallTool")
         async def _call_tool(req: types.CallToolRequest) -> types.ServerResult:
             logger.debug(f"Calling tool...{req.params.name}")
             try:
