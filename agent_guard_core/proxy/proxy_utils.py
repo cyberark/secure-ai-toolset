@@ -26,6 +26,7 @@ def get_audit_logger(log_level=logging.INFO) -> logging.Logger:
 
     audit_logger = logging.getLogger("agent_guard_core.audit")
     audit_logger.setLevel(log_level)
+    audit_logger.propagate = False
     audit_file_handler = logging.FileHandler(log_path)
     audit_file_handler.setLevel(log_level)
     audit_file_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
