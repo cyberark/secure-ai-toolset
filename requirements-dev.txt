@@ -2,10 +2,18 @@
 #    uv pip compile pyproject.toml -o requirements-dev.txt --extra dev
 annotated-types==0.7.0
     # via pydantic
+anyio==4.9.0
+    # via
+    #   httpx
+    #   mcp
+    #   sse-starlette
+    #   starlette
 astroid==3.3.10
     # via pylint
 autoflake==2.3.1
     # via agent-guard-core (pyproject.toml)
+backports-tarfile==1.2.0
+    # via jaraco-context
 bandit==1.8.3
     # via agent-guard-core (pyproject.toml)
 boto3==1.38.21
@@ -17,7 +25,10 @@ botocore==1.38.21
 cachetools==5.5.2
     # via google-auth
 certifi==2025.4.26
-    # via requests
+    # via
+    #   httpcore
+    #   httpx
+    #   requests
 charset-normalizer==3.4.2
     # via requests
 click==8.2.1
@@ -25,6 +36,7 @@ click==8.2.1
     #   agent-guard-core (pyproject.toml)
     #   click-option-group
     #   python-semantic-release
+    #   uvicorn
 click-option-group==0.5.7
     # via python-semantic-release
 deprecated==1.2.18
@@ -62,10 +74,25 @@ grpcio==1.71.0
     #   grpcio-status
 grpcio-status==1.71.0
     # via google-api-core
+h11==0.16.0
+    # via
+    #   httpcore
+    #   uvicorn
+httpcore==1.0.9
+    # via httpx
+httpx==0.28.1
+    # via mcp
+httpx-sse==0.4.0
+    # via mcp
 id==1.5.0
     # via twine
 idna==3.10
-    # via requests
+    # via
+    #   anyio
+    #   httpx
+    #   requests
+importlib-metadata==8.7.0
+    # via keyring
 importlib-resources==6.5.2
     # via python-semantic-release
 iniconfig==2.1.0
@@ -94,6 +121,12 @@ markupsafe==3.0.2
     # via jinja2
 mccabe==0.7.0
     # via pylint
+mcp==1.9.3
+    # via
+    #   agent-guard-core (pyproject.toml)
+    #   mcp-proxy
+mcp-proxy==0.8.0
+    # via agent-guard-core (pyproject.toml)
 mdurl==0.1.2
     # via markdown-it-py
 more-itertools==10.7.0
@@ -133,9 +166,14 @@ pyasn1==0.6.1
 pyasn1-modules==0.4.2
     # via google-auth
 pydantic==2.11.4
-    # via python-semantic-release
+    # via
+    #   mcp
+    #   pydantic-settings
+    #   python-semantic-release
 pydantic-core==2.33.2
     # via pydantic
+pydantic-settings==2.9.1
+    # via mcp
 pyflakes==3.3.2
     # via autoflake
 pygments==2.19.1
@@ -145,13 +183,21 @@ pygments==2.19.1
 pylint==3.3.7
     # via agent-guard-core (pyproject.toml)
 pytest==8.3.5
+    # via
+    #   agent-guard-core (pyproject.toml)
+    #   pytest-asyncio
+pytest-asyncio==1.0.0
     # via agent-guard-core (pyproject.toml)
 python-dateutil==2.9.0.post0
     # via botocore
 python-dotenv==1.1.0
-    # via agent-guard-core (pyproject.toml)
+    # via
+    #   agent-guard-core (pyproject.toml)
+    #   pydantic-settings
 python-gitlab==5.6.0
     # via python-semantic-release
+python-multipart==0.0.20
+    # via mcp
 python-semantic-release==9.21.1
     # via agent-guard-core (pyproject.toml)
 pyyaml==6.0.2
@@ -190,6 +236,12 @@ six==1.17.0
     # via python-dateutil
 smmap==5.0.2
     # via gitdb
+sniffio==1.3.1
+    # via anyio
+sse-starlette==2.3.6
+    # via mcp
+starlette==0.47.0
+    # via mcp
 stevedore==5.4.1
     # via bandit
 toml==0.10.2
@@ -202,11 +254,14 @@ twine==6.1.0
     # via agent-guard-core (pyproject.toml)
 typing-extensions==4.13.2
     # via
+    #   anyio
     #   pydantic
     #   pydantic-core
     #   typing-inspection
 typing-inspection==0.4.0
-    # via pydantic
+    # via
+    #   pydantic
+    #   pydantic-settings
 urllib3==2.4.0
     # via
     #   botocore
@@ -214,9 +269,15 @@ urllib3==2.4.0
     #   twine
 uv==0.7.6
     # via agent-guard-core (pyproject.toml)
+uvicorn==0.34.3
+    # via
+    #   mcp
+    #   mcp-proxy
 vulture==2.14
     # via agent-guard-core (pyproject.toml)
 wrapt==1.17.2
     # via deprecated
 yapf==0.43.0
     # via agent-guard-core (pyproject.toml)
+zipp==3.23.0
+    # via importlib-metadata

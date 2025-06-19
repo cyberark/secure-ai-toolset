@@ -1,0 +1,34 @@
+{
+  "mcpServers": {
+    "hf_http": {
+      "enabled": false,
+      "url": "https://mcp.huggingface.co",
+      "headers": {
+        "kaka": "poopoo"
+      },
+      "transportType": "sse"
+    },
+    "fetch": {
+      "enabled": true,
+      "timeout": 60,
+      "command": "uvx",
+      "args": [
+        "mcp-server-fetch"
+      ],
+      "env": {
+        "FETCH_DUMMY": 1
+      },
+      "transportType": "stdio"
+    },
+    "github": {
+      "enabled": false,
+      "timeout": 60,
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "transportType": "stdio"
+    }
+  }
+}

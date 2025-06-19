@@ -27,7 +27,7 @@ Sample using direct function call:
 ```python
   def my_agentic_function2():
     env_manager = EnvironmentVariablesManager(
-        FileSecretsProvider(namespace=''))
+        FileSecretsProvider())
     env_manager.populate_env_vars()
 
     ...

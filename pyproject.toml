@@ -7,20 +7,23 @@ license = "Apache-2.0"
 authors = [
     { name = "CyberArk", email = "cyberark@cyberark.com" },
     { name = "Gil Adda", email = "gil.adda@cyberark.com" },
-    { name = "Rafi Schwartz", email = "rafi.schwartz@cyberark.com" }
+    { name = "Rafi Schwartz", email = "rafi.schwartz@cyberark.com" },
+    { name = "Tomer Shtilman", email = "tomer.shtilman@cyberark.com" }
 ]
 packages = [
     { include = "agent_guard_core" },
 ]
 keywords = ["security", "AI", "secrets"]
 repository = "https://github.com/cyberark/agent-guard"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "python-dotenv",
     "requests",
     "click",
     "boto3",
-    "google-cloud-secret-manager"
+    "google-cloud-secret-manager",
+    "mcp>=1.9.1",
+    "mcp-proxy>=0.8.0"
 ]
 
 [build-system]
@@ -33,7 +36,8 @@ agc = "agent_guard_core.cli:cli"
 [project.optional-dependencies]
 dev = [
     "uv",
-    "pytest",
+    "pytest>=8.3.5",
+    "pytest-asyncio>=1.0.0",
     "yapf",
     "isort",
     "autoflake",

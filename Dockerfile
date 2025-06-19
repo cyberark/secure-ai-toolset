@@ -1,12 +1,17 @@
-FROM python:3.9-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 # Copy the project files into the container
-COPY . /app/
+COPY agent_guard_core /app/agent_guard_core
+COPY *.md /app/
+COPY requirements.txt /app/
+COPY pyproject.toml /app/
+RUN ls -al /app/
 
-# Install the project
-RUN pip install --no-cache-dir -e .
+# Install requirements directly (without editable mode)
+RUN pip install --no-cache-dir .
 
 # Set the entrypoint
 ENTRYPOINT ["agc"]
