@@ -139,6 +139,8 @@ Group of commands to manage secrets.
 
 Group of commands to manage Agent Guard configuration.
 
+**Note:** The configure commands are not relevant for containerized environments, as configuration in containers is typically managed through environment variables or mounted config files.
+
 - #### **set**
 
   Set the secret provider and related configuration options.
