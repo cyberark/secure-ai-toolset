@@ -59,19 +59,16 @@ Agent Guard is using the following open source components:
 19) bandit (https://bandit.readthedocs.io/): Apache Software License
     Copyright (c) PyCQA
 
-20) pylint (https://github.com/pylint-dev/pylint): GPL-2.0-or-later
-    Copyright (c) Python Code Quality Authority <code-quality@python.org>
-
-21) vulture (https://github.com/jendrikseipp/vulture): MIT License
+20) vulture (https://github.com/jendrikseipp/vulture): MIT License
     Copyright (c) Jendrik Seipp
 
-23) pandas (https://pandas.pydata.org): BSD License
+21) pandas (https://pandas.pydata.org): BSD License
     Copyright (c) The Pandas Development Team <pandas-dev@python.org>
 
-24) streamlit (https://streamlit.io/): Apache Software License
+22) streamlit (https://streamlit.io/): Apache Software License
     Copyright (c) Snowflake Inc <hello@streamlit.io>
 
-25) fastapi (https://github.com/fastapi/fastapi): MIT License
+23) fastapi (https://github.com/fastapi/fastapi): MIT License
     Copyright (c) tiangolo Sebastián Ramírez <tiangolo@gmail.com>
 
 =================================================================================
