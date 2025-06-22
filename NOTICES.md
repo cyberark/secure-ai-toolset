@@ -11,7 +11,6 @@ This software includes the following third party components:
 | annotated-types | 0.7.0 | MIT License | Adrian Garcia Badaracco <1755071+adriangb@users.noreply.github.com>, Samuel Colvin <s@muelcolvin.com>, Zac Hatfield-Dodds <zac@zhd.dev> | https://github.com/annotated-types/annotated-types |
 | anyio | 4.9.0 | MIT License | Alex Grönholm <alex.gronholm@nextday.fi> | https://anyio.readthedocs.io/en/stable/versionhistory.html |
 | appnope | 0.1.4 | BSD License | Min Ragan-Kelley | http://github.com/minrk/appnope |
-| astroid | 3.3.10 | LGPL-2.1-or-later | pylint-dev | https://github.com/pylint-dev/astroid/issues |
 | asttokens | 3.0.0 | Apache 2.0 | Dmitry Sagalovskiy, Grist Labs | https://github.com/gristlabs/asttokens |
 | astunparse | 1.6.3 | BSD License | Simon Percivall | https://github.com/simonpercivall/astunparse |
 | attrs | 25.3.0 | MIT | Hynek Schlawack <hs@ox.cx> | https://www.attrs.org/en/stable/changelog.html |
@@ -142,7 +141,6 @@ This software includes the following third party components:
 | pydantic_core | 2.33.2 | MIT License | Samuel Colvin <s@muelcolvin.com>, Adrian Garcia Badaracco <1755071+adriangb@users.noreply.github.com>, David Montague <david@pydantic.dev>, David Hewitt <mail@davidhewitt.dev>, Sydney Runkle <sydneymarierunkle@gmail.com>, Victorien Plot <contact@vctrn.dev> | https://github.com/pydantic/pydantic-core |
 | pyflakes | 3.3.2 | MIT License | A lot of people | https://github.com/PyCQA/pyflakes |
 | Pygments | 2.19.1 | BSD License | Georg Brandl <georg@python.org> | https://pygments.org |
-| pylint | 3.3.7 | GPL-2.0-or-later | Python Code Quality Authority <code-quality@python.org> | https://github.com/pylint-dev/pylint |
 | pyparsing | 3.2.0 | MIT License | Paul McGuire <ptmcg.gm+pyparsing@gmail.com> | https://github.com/pyparsing/pyparsing/ |
 | pytest | 8.3.5 | MIT License | Holger Krekel, Bruno Oliveira, Ronny Pfannschmidt, Floris Bruynooghe, Brianna Laugher, Florian Bruhin, Others (See AUTHORS) | https://docs.pytest.org/en/latest/ |
 | pytest-asyncio | 1.0.0 | Apache-2.0 | "Tin Tvrtković <tinchester@gmail.com>" <tinchester@gmail.com> | https://github.com/pytest-dev/pytest-asyncio |
