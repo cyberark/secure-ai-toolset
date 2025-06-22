@@ -2,602 +2,77 @@ Copyright (c) 2025 CyberArk Software Ltd. All rights reserved
 
 Agent Guard is using the following open source components:
 
-1) absl-py (https://github.com/abseil/abseil-py): Apache Software License
-    Copyright (c) The Abseil Authors
-
-2) aiohappyeyeballs (https://github.com/aio-libs/aiohappyeyeballs): Python Software Foundation License
-    Copyright (c) J. Nick Koston
-
-3) aiohttp (https://github.com/aio-libs/aiohttp): Apache Software License
-    Copyright (c) aiohttp team <team@aiohttp.org>
-
-4) aiosignal (https://github.com/aio-libs/aiosignal): Apache Software License
-    Copyright (c) aiohttp team <team@aiohttp.org>
-
-5) annotated-types (https://github.com/annotated-types/annotated-types): MIT License
-    Copyright (c) Adrian Garcia Badaracco <1755071+adriangb@users.noreply.github.com>, Samuel Colvin <s@muelcolvin.com>, Zac Hatfield-Dodds <zac@zhd.dev>
-
-6) anyio (https://anyio.readthedocs.io/en/stable/versionhistory.html): MIT License
-    Copyright (c) Alex Grönholm <alex.gronholm@nextday.fi>
-
-7) appnope (http://github.com/minrk/appnope): BSD License
-    Copyright (c) Min Ragan-Kelley
-
-8) astroid (https://github.com/pylint-dev/astroid/issues): LGPL-2.1-or-later
-    Copyright (c) pylint-dev
-
-9) asttokens (https://github.com/gristlabs/asttokens): Apache 2.0
-    Copyright (c) Dmitry Sagalovskiy, Grist Labs
-
-10) astunparse (https://github.com/simonpercivall/astunparse): BSD License
-    Copyright (c) Simon Percivall
-
-11) attrs (https://www.attrs.org/en/stable/changelog.html): MIT
-    Copyright (c) Hynek Schlawack <hs@ox.cx>
-
-12) autoflake (https://www.github.com/PyCQA/autoflake): MIT License
-    Copyright (c) Steven Myint
-
-13) aws-sso-cyberark (https://github.cyberng.com/Everest/aws-sso-credentials): MIT License
-    Copyright (c) Shadowfax
-
-14) backports.tarfile (https://github.com/jaraco/backports.tarfile): MIT License
-    Copyright (c) "Jason R. Coombs" <jaraco@jaraco.com>
-
-15) bandit (https://bandit.readthedocs.io/): Apache Software License
-    Copyright (c) PyCQA
-
-16) boto3 (https://github.com/boto/boto3): Apache Software License
-    Copyright (c) Amazon Web Services
-
-17) botocore (https://github.com/boto/botocore): Apache Software License
-    Copyright (c) Amazon Web Services
-
-18) cachetools (https://github.com/tkem/cachetools/): MIT License
-    Copyright (c) Thomas Kemmer
-
-19) certifi (https://github.com/certifi/python-certifi): Mozilla Public License 2.0 (MPL 2.0)
-    Copyright (c) Kenneth Reitz
-
-20) charset-normalizer (https://github.com/jawah/charset_normalizer/blob/master/CHANGELOG.md): MIT License
-    Copyright (c) "Ahmed R. TAHRI" <tahri.ahmed@proton.me>
-
-21) click (https://github.com/pallets/click/): BSD-3-Clause
-    Copyright (c) pallets
-
-22) click-option-group (https://github.com/click-contrib/click-option-group): BSD License
-    Copyright (c) Eugene Prilepin <esp.home@gmail.com>
-
-23) comm (https://github.com/ipython/comm): BSD License
-    Copyright (c) Jupyter contributors
-
-24) contourpy (https://github.com/contourpy/contourpy): BSD License
-    Copyright (c) Ian Thomas <ianthomas23@gmail.com>
-
-25) cycler (https://matplotlib.org/cycler/): BSD License
-    Copyright (c) Thomas A Caswell <matplotlib-users@python.org>
-
-26) dataclasses-json (https://github.com/lidatong/dataclasses-json): MIT License
-    Copyright (c) Charles Li
-
-27) debugpy (https://aka.ms/debugpy): MIT License
-    Copyright (c) Microsoft Corporation
-
-28) decorator (https://github.com/micheles/decorator): BSD License
-    Copyright (c) Michele Simionato
-
-29) Deprecated (https://github.com/laurent-laporte-pro/deprecated): MIT License
-    Copyright (c) Laurent LAPORTE
-
-30) dill (https://github.com/uqfoundation/dill): BSD License
-    Copyright (c) Mike McKerns
-
-31) distlib (https://github.com/pypa/distlib): Python Software Foundation License
-    Copyright (c) Vinay Sajip
-
-32) distro (https://github.com/python-distro/distro): Apache Software License
-    Copyright (c) Nir Cohen
-
-33) docutils (https://docutils.sourceforge.io): BSD License; GNU General Public License (GPL); Public Domain; Python Software Foundation License
-    Copyright (c) David Goodger <goodger@python.org>
-
-34) dotty-dict (https://github.com/pawelzny/dotty_dict): MIT License
-    Copyright (c) Pawel Zadrozny
-
-35) executing (https://github.com/alexmojaki/executing): MIT License
-    Copyright (c) Alex Hall
-
-36) filelock (https://github.com/tox-dev/py-filelock): The Unlicense (Unlicense)
-    Copyright (c) tox-dev
-
-37) flatbuffers (https://google.github.io/flatbuffers/): Apache Software License
-    Copyright (c) Derek Bailey
-
-38) fonttools (http://github.com/fonttools/fonttools): MIT License
-    Copyright (c) Just van Rossum
-
-39) frozenlist (https://github.com/aio-libs/frozenlist): Apache Software License
-    Copyright (c) aiohttp team <team@aiohttp.org>
-
-40) gast (https://github.com/serge-sans-paille/gast/): BSD License
-    Copyright (c) serge-sans-paille
-
-41) gitdb (https://github.com/gitpython-developers/gitdb): BSD License
-    Copyright (c) Sebastian Thiel
-
-42) GitPython (https://github.com/gitpython-developers/GitPython): BSD License
-    Copyright (c) Sebastian Thiel, Michael Trier
-
-43) google-api-core (https://github.com/googleapis/python-api-core): Apache Software License
-    Copyright (c) Google LLC <googleapis-packages@google.com>
-
-44) google-auth (https://github.com/googleapis/google-auth-library-python): Apache Software License
-    Copyright (c) Google Cloud Platform
-
-45) google-cloud-secret-manager (https://github.com/googleapis/google-cloud-python/tree/main/packages/google-cloud-secret-manager): Apache Software License
-    Copyright (c) Google LLC
-
-46) google-pasta (https://github.com/google/pasta): Apache Software License
-    Copyright (c) Nick Smith
-
-47) googleapis-common-protos (https://github.com/googleapis/google-cloud-python/tree/main/packages/googleapis-common-protos): Apache Software License
-    Copyright (c) Google LLC <googleapis-packages@google.com>
-
-48) grpc-google-iam-v1 (https://github.com/googleapis/google-cloud-python): Apache Software License
-    Copyright (c) Google LLC <googleapis-packages@google.com>
-
-49) grpcio (https://grpc.io): Apache Software License
-    Copyright (c) The gRPC Authors
-
-50) grpcio-status (https://grpc.io): Apache Software License
-    Copyright (c) The gRPC Authors
-
-51) h11 (https://github.com/python-hyper/h11): MIT License
-    Copyright (c) Nathaniel J. Smith
-
-52) h5py (https://www.h5py.org/): BSD License
-    Copyright (c) Andrew Collette <andrew.collette@gmail.com>
-
-53) httpcore (https://www.encode.io/httpcore/): BSD License
-    Copyright (c) Tom Christie <tom@tomchristie.com>
-
-54) httpx (https://github.com/encode/httpx): BSD License
-    Copyright (c) Tom Christie <tom@tomchristie.com>
-
-55) httpx-sse (https://github.com/florimondmanca/httpx-sse): MIT
-    Copyright (c) Florimond Manca <florimond.manca@protonmail.com>
-
-56) id (https://pypi.org/project/id/): Apache Software License
-    Copyright (c) di
-
-57) idna (https://github.com/kjd/idna): BSD License
-    Copyright (c) Kim Davies <kim+pypi@gumleaf.org>
-
-58) importlib_metadata (https://github.com/python/importlib_metadata): Apache Software License
-    Copyright (c) "Jason R. Coombs" <jaraco@jaraco.com>
-
-59) importlib_resources (https://github.com/python/importlib_resources): Apache Software License
-    Copyright (c) Barry Warsaw <barry@python.org>
-
-60) iniconfig (https://github.com/pytest-dev/iniconfig): MIT License
-    Copyright (c) Ronny Pfannschmidt <opensource@ronnypfannschmidt.de>, Holger Krekel <holger.krekel@gmail.com>
-
-61) inquirerpy (https://github.com/kazhala/InquirerPy): MIT License
-    Copyright (c) Kevin Zhuang
-
-62) ipykernel (https://ipython.org): BSD License
-    Copyright (c) IPython Development Team <ipython-dev@scipy.org>
-
-63) ipython (https://ipython.org): BSD License
-    Copyright (c) The IPython Development Team
-
-64) isort (https://github.com/PyCQA/isort/releases): MIT License
-    Copyright (c) Timothy Crosley <timothy.crosley@gmail.com>, staticdev <staticdev-support@proton.me>
-
-65) jaraco.classes (https://github.com/jaraco/jaraco.classes): MIT License
-    Copyright (c) Jason R. Coombs
-
-66) jaraco.context (https://github.com/jaraco/jaraco.context): MIT License
-    Copyright (c) "Jason R. Coombs" <jaraco@jaraco.com>
-
-67) jaraco.functools (https://github.com/jaraco/jaraco.functools): MIT License
-    Copyright (c) "Jason R. Coombs" <jaraco@jaraco.com>
-
-68) jedi (https://github.com/davidhalter/jedi): MIT License
-    Copyright (c) David Halter
-
-69) Jinja2 (https://github.com/pallets/jinja/): BSD License
-    Copyright (c) pallets
-
-70) jiter (https://github.com/pydantic/jiter/): MIT License
-    Copyright (c) Samuel Colvin <samuel@pydantic.dev>
-
-71) jmespath (https://github.com/jmespath/jmespath.py): MIT License
-    Copyright (c) James Saryerwinnie
-
-72) joblib (https://joblib.readthedocs.io): BSD License
-    Copyright (c) Gael Varoquaux <gael.varoquaux@normalesup.org>
-
-73) jsonpatch (https://github.com/stefankoegl/python-json-patch): BSD License
-    Copyright (c) Stefan Kögl
-
-74) jsonpointer (https://github.com/stefankoegl/python-json-pointer): BSD License
-    Copyright (c) Stefan Kögl
-
-75) jupyter_client (https://jupyter.org): BSD License
-    Copyright (c) Jupyter Development Team <jupyter@googlegroups.com>
-
-76) jupyter_core (https://jupyter.org): BSD License
-    Copyright (c) Jupyter Development Team <jupyter@googlegroups.org>
-
-77) keras (https://github.com/keras-team/keras): Apache License 2.0
-    Copyright (c) Keras team <keras-users@googlegroups.com>
-
-78) keyring (https://github.com/jaraco/keyring): MIT License
-    Copyright (c) Kang Zhang <jobo.zh@gmail.com>
-
-79) kiwisolver (https://github.com/nucleic/kiwi): BSD License
-    Copyright (c) The Nucleic Development Team <sccolbert@gmail.com>
-
-80) langchain (https://github.com/langchain-ai/langchain): MIT
-    Copyright (c) langchain-ai
-
-81) langchain-aws (https://github.com/langchain-ai/langchain-aws): MIT License
-    Copyright (c) langchain-ai
-
-82) langchain-community (https://github.com/langchain-ai/langchain): MIT
-    Copyright (c) langchain-ai
-
-83) langchain-core (https://github.com/langchain-ai/langchain): MIT
-    Copyright (c) langchain-ai
-
-84) langchain-text-splitters (https://github.com/langchain-ai/langchain): MIT
-    Copyright (c) langchain-ai
-
-85) langgraph (https://www.github.com/langchain-ai/langgraph): MIT License
-    Copyright (c) langchain-ai
-
-86) langgraph-checkpoint (https://www.github.com/langchain-ai/langgraph): MIT License
-    Copyright (c) langchain-ai
-
-87) langgraph-prebuilt (https://www.github.com/langchain-ai/langgraph): MIT License
-    Copyright (c) langchain-ai
-
-88) langgraph-sdk (https://www.github.com/langchain-ai/langgraph): MIT License
-    Copyright (c) langchain-ai
-
-89) langsmith (https://smith.langchain.com/): MIT License
-    Copyright (c) LangChain
-
-90) libclang (https://github.com/sighingnow/libclang): Apache Software License
-    Copyright (c) Tao He
-
-91) Markdown (https://Python-Markdown.github.io/): BSD License
-    Copyright (c) Manfred Stienstra, Yuri Takhteyev
-
-92) markdown-it-py (https://github.com/executablebooks/markdown-it-py): MIT License
-    Copyright (c) Chris Sewell <chrisj_sewell@hotmail.com>
-
-93) MarkupSafe (https://github.com/pallets/markupsafe/): BSD License
-    Copyright (c) pallets
-
-94) marshmallow (https://github.com/marshmallow-code/marshmallow): MIT License
-    Copyright (c) Steven Loria <sloria1@gmail.com>
-
-95) matplotlib (https://matplotlib.org): Python Software Foundation License
-    Copyright (c) John D. Hunter, Michael Droettboom
-
-96) matplotlib-inline (https://github.com/ipython/matplotlib-inline): BSD License
-    Copyright (c) IPython Development Team <ipython-dev@python.org>
-
-97) mccabe (https://github.com/pycqa/mccabe): MIT License
-    Copyright (c) Tarek Ziade
-
-98) mcp (https://modelcontextprotocol.io): MIT License
-    Copyright (c) Anthropic, PBC.
-
-99) mcp-proxy (https://github.com/sparfenyuk/mcp-proxy): MIT License
-    Copyright (c) Sergey Parfenyuk <sergey.parfenyuk@gmail.com>
-
-100) mdurl (https://github.com/executablebooks/mdurl): MIT License
-    Copyright (c) Taneli Hukkinen <hukkin@users.noreply.github.com>
-
-101) ml-dtypes (https://github.com/jax-ml/ml_dtypes): Apache Software License
-    Copyright (c) ml_dtypes authors <ml_dtypes@google.com>
-
-102) more-itertools (https://github.com/more-itertools/more-itertools): MIT License
-    Copyright (c) Erik Rose <erikrose@grinchcentral.com>
-
-103) msgpack (https://msgpack.org/): Apache 2.0
-    Copyright (c) Inada Naoki <songofacandy@gmail.com>
-
-104) multidict (https://github.com/aio-libs/multidict): Apache Software License
-    Copyright (c) Andrew Svetlov
-
-105) mypy_extensions (https://github.com/python/mypy_extensions): MIT License
-    Copyright (c) The mypy developers <jukka.lehtosalo@iki.fi>
-
-106) namex (https://pypi.org/project/namex/): UNKNOWN
-    Copyright (c) Francois Chollet
-
-107) nest-asyncio (https://github.com/erdewit/nest_asyncio): BSD License
-    Copyright (c) Ewald R. de Wit
-
-108) nh3 (https://github.com/messense/nh3): MIT
-    Copyright (c) messense <messense@icloud.com>
-
-109) numpy (https://numpy.org): BSD License
-    Copyright (c) Travis E. Oliphant et al.
-
-110) openai (https://github.com/openai/openai-python): Apache Software License
-    Copyright (c) OpenAI <support@openai.com>
-
-111) opt_einsum (https://pypi.org/project/opt-einsum/): MIT License
-    Copyright (c) Daniel Smith <dgasmith@icloud.com>
-
-112) optree (https://github.com/metaopt/optree): Apache Software License
-    Copyright (c) OpTree Contributors
-
-113) orjson (https://github.com/ijl/orjson): Apache Software License; MIT License
-    Copyright (c) ijl <ijl@mailbox.org>
-
-114) ormsgpack (https://github.com/aviramha/ormsgpack): Apache Software License; MIT License
-    Copyright (c) Aviram Hassan <aviramyhassan@gmail.com>, Emanuele Giaquinta <emanuele.giaquinta@gmail.com>
-
-115) packaging (https://github.com/pypa/packaging): Apache Software License; BSD License
-    Copyright (c) Donald Stufft <donald@stufft.io>
-
-116) pandas (https://pandas.pydata.org): BSD License
-    Copyright (c) The Pandas Development Team <pandas-dev@python.org>
-
-117) parso (https://github.com/davidhalter/parso): MIT License
-    Copyright (c) David Halter
-
-118) pbr (https://docs.openstack.org/pbr/latest/): Apache Software License
-    Copyright (c) OpenStack
-
-119) pexpect (https://pexpect.readthedocs.io/): ISC License (ISCL)
-    Copyright (c) Noah Spurrier; Thomas Kluyver; Jeff Quast
-
-120) pfzy (https://github.com/kazhala/pfzy): MIT License
-    Copyright (c) Kevin Zhuang
-
-121) pillow (https://python-pillow.org): CMU License (MIT-CMU)
-    Copyright (c) "Jeffrey A. Clark" <aclark@aclark.net>
-
-122) pipenv (https://github.com/pypa/pipenv): MIT License
-    Copyright (c) Pipenv maintainer team <distutils-sig@python.org>
-
-123) platformdirs (https://github.com/tox-dev/platformdirs): MIT License
-    Copyright (c) tox-dev
-
-124) pluggy (https://pypi.org/project/pluggy/): MIT License
-    Copyright (c) Holger Krekel <holger@merlinux.eu>
-
-125) prompt_toolkit (https://github.com/prompt-toolkit/python-prompt-toolkit): BSD License
-    Copyright (c) Jonathan Slenders
-
-126) propcache (https://github.com/aio-libs/propcache): Apache Software License
-    Copyright (c) Andrew Svetlov
-
-127) proto-plus (https://github.com/googleapis/proto-plus-python): Apache Software License
-    Copyright (c) Google LLC <googleapis-packages@google.com>
-
-128) protobuf (https://developers.google.com/protocol-buffers/): 3-Clause BSD License
-    Copyright (c) protobuf@googlegroups.com
-
-129) psutil (https://github.com/giampaolo/psutil): BSD License
-    Copyright (c) Giampaolo Rodola
-
-130) ptyprocess (https://github.com/pexpect/ptyprocess): ISC License (ISCL)
-    Copyright (c) Thomas Kluyver
-
-131) pure_eval (http://github.com/alexmojaki/pure_eval): MIT License
-    Copyright (c) Alex Hall
-
-132) pyasn1 (https://github.com/pyasn1/pyasn1): BSD License
-    Copyright (c) Ilya Etingof
-
-133) pyasn1_modules (https://github.com/pyasn1/pyasn1-modules): BSD License
-    Copyright (c) Ilya Etingof
-
-134) pydantic (https://github.com/pydantic/pydantic): MIT License
-    Copyright (c) Samuel Colvin <s@muelcolvin.com>, Eric Jolibois <em.jolibois@gmail.com>, Hasan Ramezani <hasan.r67@gmail.com>, Adrian Garcia Badaracco <1755071+adriangb@users.noreply.github.com>, Terrence Dorsey <terry@pydantic.dev>, David Montague <david@pydantic.dev>, Serge Matveenko <lig@countzero.co>, Marcelo Trylesinski <marcelotryle@gmail.com>, Sydney Runkle <sydneymarierunkle@gmail.com>, David Hewitt <mail@davidhewitt.io>, Alex Hall <alex.mojaki@gmail.com>, Victorien Plot <contact@vctrn.dev>
-
-135) pydantic-settings (https://github.com/pydantic/pydantic-settings): MIT License
-    Copyright (c) Samuel Colvin <s@muelcolvin.com>, Eric Jolibois <em.jolibois@gmail.com>, Hasan Ramezani <hasan.r67@gmail.com>
-
-136) pydantic_core (https://github.com/pydantic/pydantic-core): MIT License
-    Copyright (c) Samuel Colvin <s@muelcolvin.com>, Adrian Garcia Badaracco <1755071+adriangb@users.noreply.github.com>, David Montague <david@pydantic.dev>, David Hewitt <mail@davidhewitt.dev>, Sydney Runkle <sydneymarierunkle@gmail.com>, Victorien Plot <contact@vctrn.dev>
-
-137) pyflakes (https://github.com/PyCQA/pyflakes): MIT License
-    Copyright (c) A lot of people
-
-138) Pygments (https://pygments.org): BSD License
-    Copyright (c) Georg Brandl <georg@python.org>
-
-139) pylint (https://github.com/pylint-dev/pylint): GPL-2.0-or-later
-    Copyright (c) Python Code Quality Authority <code-quality@python.org>
-
-140) pyparsing (https://github.com/pyparsing/pyparsing/): MIT License
-    Copyright (c) Paul McGuire <ptmcg.gm+pyparsing@gmail.com>
-
-141) pytest (https://docs.pytest.org/en/latest/): MIT License
-    Copyright (c) Holger Krekel, Bruno Oliveira, Ronny Pfannschmidt, Floris Bruynooghe, Brianna Laugher, Florian Bruhin, Others (See AUTHORS)
-
-142) pytest-asyncio (https://github.com/pytest-dev/pytest-asyncio): Apache-2.0
-    Copyright (c) "Tin Tvrtković <tinchester@gmail.com>" <tinchester@gmail.com>
-
-143) python-dateutil (https://github.com/dateutil/dateutil): Apache Software License; BSD License
-    Copyright (c) Gustavo Niemeyer
-
-144) python-dotenv (https://github.com/theskumar/python-dotenv): BSD License
+1) python-dotenv (https://github.com/theskumar/python-dotenv): BSD License
     Copyright (c) Saurabh Kumar
 
-145) python-gitlab (https://github.com/python-gitlab/python-gitlab): GNU Lesser General Public License v3 (LGPLv3)
-    Copyright (c) Gauvain Pocentek <gauvain@pocentek.net>
-
-146) python-multipart (https://github.com/Kludex/python-multipart): Apache Software License
-    Copyright (c) Andrew Dunham <andrew@du.nham.ca>, Marcelo Trylesinski <marcelotryle@gmail.com>
-
-147) python-semantic-release (https://python-semantic-release.readthedocs.io): MIT
-    Copyright (c) Rolf Erik Lekang <me@rolflekang.com>
-
-148) pytz (http://pythonhosted.org/pytz): MIT License
-    Copyright (c) Stuart Bishop
-
-149) PyYAML (https://pyyaml.org/): MIT License
-    Copyright (c) Kirill Simonov
-
-150) pyzmq (https://pyzmq.readthedocs.org): BSD License
-    Copyright (c) Brian E. Granger, Min Ragan-Kelley
-
-151) readme_renderer (https://github.com/pypa/readme_renderer): Apache Software License
-    Copyright (c) The Python Packaging Authority <admin@mail.pypi.org>
-
-152) requests (https://requests.readthedocs.io): Apache Software License
+2) requests (https://requests.readthedocs.io): Apache Software License
     Copyright (c) Kenneth Reitz
 
-153) requests-toolbelt (https://toolbelt.readthedocs.io/): Apache Software License
-    Copyright (c) Ian Cordasco, Cory Benfield
-
-154) rfc3986 (http://rfc3986.readthedocs.io): Apache Software License
-    Copyright (c) Ian Stapleton Cordasco
-
-155) rich (https://github.com/Textualize/rich): MIT License
-    Copyright (c) Will McGugan
-
-156) rsa (https://stuvel.eu/rsa): Apache Software License
-    Copyright (c) Sybren A. Stüvel
-
-157) s3transfer (https://github.com/boto/s3transfer): Apache Software License
-    Copyright (c) Amazon Web Services
-
-158) scikit-learn (https://scikit-learn.org): BSD License
-    Copyright (c) scikit-learn
-
-159) scipy (https://scipy.org/): BSD License
-    Copyright (c) scipy
-
-160) seaborn (https://github.com/mwaskom/seaborn): BSD License
-    Copyright (c) Michael Waskom <mwaskom@gmail.com>
-
-161) shellingham (https://github.com/sarugaku/shellingham): ISC License (ISCL)
-    Copyright (c) Tzu-ping Chung
-
-162) six (https://github.com/benjaminp/six): MIT License
-    Copyright (c) Benjamin Peterson
-
-163) smmap (https://github.com/gitpython-developers/smmap): BSD License
-    Copyright (c) Sebastian Thiel
-
-164) sniffio (https://github.com/python-trio/sniffio): Apache Software License; MIT License
-    Copyright (c) "Nathaniel J. Smith" <njs@pobox.com>
-
-165) SQLAlchemy (https://www.sqlalchemy.org): MIT
-    Copyright (c) Mike Bayer
-
-166) sse-starlette (https://github.com/sysid/sse-starlette): BSD License
-    Copyright (c) sysid <sysid@gmx.de>
-
-167) stack-data (http://github.com/alexmojaki/stack_data): MIT License
-    Copyright (c) Alex Hall
-
-168) starlette (https://github.com/encode/starlette): BSD License
-    Copyright (c) Tom Christie <tom@tomchristie.com>
-
-169) stevedore (https://docs.openstack.org/stevedore/latest/): Apache Software License
-    Copyright (c) OpenStack
-
-170) tenacity (https://github.com/jd/tenacity): Apache Software License
-    Copyright (c) Julien Danjou
-
-171) tensorboard (https://github.com/tensorflow/tensorboard): Apache Software License
-    Copyright (c) Google Inc.
-
-172) tensorboard-data-server (https://github.com/tensorflow/tensorboard/tree/master/tensorboard/data/server): Apache Software License
-    Copyright (c) Google Inc.
-
-173) tensorflow (https://www.tensorflow.org/): Apache Software License
-    Copyright (c) Google Inc.
-
-174) tensorflow-io-gcs-filesystem (https://github.com/tensorflow/io): Apache Software License
-    Copyright (c) Google Inc.
-
-175) termcolor (https://github.com/termcolor/termcolor): MIT License
-    Copyright (c) Konstantin Lepa <konstantin.lepa@gmail.com>
-
-176) third-party-license-file-generator (https://github.com/ftpsolutions/python-third-party-license-file-generator): MIT License
-    Copyright (c) Edward Beech
-
-177) threadpoolctl (https://github.com/joblib/threadpoolctl): BSD License
-    Copyright (c) Thomas Moreau
-
-178) toml (https://github.com/uiri/toml): MIT License
-    Copyright (c) William Pearson
-
-179) tomlkit (https://github.com/sdispater/tomlkit): MIT License
-    Copyright (c) Sébastien Eustace
-
-180) tornado (http://www.tornadoweb.org/): Apache Software License
-    Copyright (c) Facebook
-
-181) tqdm (https://tqdm.github.io): MIT License; Mozilla Public License 2.0 (MPL 2.0)
-    Copyright (c) tqdm
-
-182) traitlets (https://github.com/ipython/traitlets): BSD License
-    Copyright (c) IPython Development Team <ipython-dev@python.org>
-
-183) twine (https://twine.readthedocs.io/): Apache Software License
-    Copyright (c) Donald Stufft and individual contributors <donald@stufft.io>
-
-184) typing-inspect (https://github.com/ilevkivskyi/typing_inspect): MIT License
-    Copyright (c) Ivan Levkivskyi
-
-185) typing-inspection (https://github.com/pydantic/typing-inspection): MIT License
-    Copyright (c) Victorien Plot <contact@vctrn.dev>
-
-186) typing_extensions (https://github.com/python/typing_extensions): PSF-2.0
-    Copyright (c) "Guido van Rossum, Jukka Lehtosalo, Łukasz Langa, Michael Lee" <levkivskyi@gmail.com>
-
-187) tzdata (https://github.com/python/tzdata): Apache Software License
-    Copyright (c) Python Software Foundation
-
-188) urllib3 (https://github.com/urllib3/urllib3/blob/main/CHANGES.rst): MIT
-    Copyright (c) Andrey Petrov <andrey.petrov@shazow.net>
-
-189) uv (https://pypi.org/project/uv/): Apache Software License; MIT License
-    Copyright (c) uv
-
-190) uvicorn (https://www.uvicorn.org/): BSD License
-    Copyright (c) Tom Christie <tom@tomchristie.com>, Marcelo Trylesinski <marcelotryle@gmail.com>
-
-191) virtualenv (https://github.com/pypa/virtualenv): MIT License
-    Copyright (c) pypa
-
-192) vulture (https://github.com/jendrikseipp/vulture): MIT License
-    Copyright (c) Jendrik Seipp
-
-193) Werkzeug (https://github.com/pallets/werkzeug/): BSD License
+3) click (https://github.com/pallets/click/): BSD-3-Clause
     Copyright (c) pallets
 
-194) wrapt (https://github.com/GrahamDumpleton/wrapt): BSD License
-    Copyright (c) Graham Dumpleton
+4) boto3 (https://github.com/boto/boto3): Apache Software License
+    Copyright (c) Amazon Web Services
 
-195) xxhash (https://github.com/ifduyue/python-xxhash): BSD License
-    Copyright (c) Yue Du
+5) botocore (https://github.com/boto/botocore): Apache Software License
+    Copyright (c) Amazon Web Services
 
-196) yapf (https://github.com/google/yapf/blob/main/CHANGELOG.md): Apache Software License
+6) google-cloud-secret-manager (https://github.com/googleapis/google-cloud-python/tree/main/packages/google-cloud-secret-manager): Apache Software License
+    Copyright (c) Google LLC
+
+7) mcp (https://modelcontextprotocol.io): MIT License
+    Copyright (c) Anthropic, PBC.
+
+8) mcp-proxy (https://github.com/sparfenyuk/mcp-proxy): MIT License
+    Copyright (c) Sergey Parfenyuk <sergey.parfenyuk@gmail.com>
+
+9) uv (https://pypi.org/project/uv/): Apache Software License; MIT License
+    Copyright (c) uv
+
+10) uvicorn (https://www.uvicorn.org/): BSD License
+    Copyright (c) Tom Christie <tom@tomchristie.com>, Marcelo Trylesinski <marcelotryle@gmail.com>
+
+11) pytest (https://docs.pytest.org/en/latest/): MIT License
+    Copyright (c) Holger Krekel, Bruno Oliveira, Ronny Pfannschmidt, Floris Bruynooghe, Brianna Laugher, Florian Bruhin, Others (See AUTHORS)
+
+12) pytest-asyncio (https://github.com/pytest-dev/pytest-asyncio): Apache-2.0
+    Copyright (c) "Tin Tvrtković <tinchester@gmail.com>" <tinchester@gmail.com>
+
+13) yapf (https://github.com/google/yapf/blob/main/CHANGELOG.md): Apache Software License
     Copyright (c) Google Inc.
 
-197) yarl (https://github.com/aio-libs/yarl): Apache Software License
-    Copyright (c) Andrew Svetlov
+14) isort (https://github.com/PyCQA/isort/releases): MIT License
+    Copyright (c) Timothy Crosley <timothy.crosley@gmail.com>, staticdev <staticdev-support@proton.me>
 
-198) zipp (https://github.com/jaraco/zipp): MIT
-    Copyright (c) "Jason R. Coombs" <jaraco@jaraco.com>
+15) autoflake (https://www.github.com/PyCQA/autoflake): MIT License
+    Copyright (c) Steven Myint
 
-199) zstandard (https://github.com/indygreg/python-zstandard): BSD License
-    Copyright (c) Gregory Szorc
+16) toml (https://github.com/uiri/toml): MIT License
+    Copyright (c) William Pearson
+
+17) twine (https://twine.readthedocs.io/): Apache Software License
+    Copyright (c) Donald Stufft and individual contributors <donald@stufft.io>
+
+18) python-semantic-release (https://python-semantic-release.readthedocs.io): MIT
+    Copyright (c) Rolf Erik Lekang <me@rolflekang.com>
+
+19) bandit (https://bandit.readthedocs.io/): Apache Software License
+    Copyright (c) PyCQA
+
+20) pylint (https://github.com/pylint-dev/pylint): GPL-2.0-or-later
+    Copyright (c) Python Code Quality Authority <code-quality@python.org>
+
+21) vulture (https://github.com/jendrikseipp/vulture): MIT License
+    Copyright (c) Jendrik Seipp
+
+23) pandas (https://pandas.pydata.org): BSD License
+    Copyright (c) The Pandas Development Team <pandas-dev@python.org>
+
+24) streamlit (https://streamlit.io/): Apache Software License
+    Copyright (c) Snowflake Inc <hello@streamlit.io>
+
+25) fastapi (https://github.com/fastapi/fastapi): MIT License
+    Copyright (c) tiangolo Sebastián Ramírez <tiangolo@gmail.com>
 
 =================================================================================
 

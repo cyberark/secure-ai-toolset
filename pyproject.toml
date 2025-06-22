@@ -45,7 +45,6 @@ dev = [
     "twine",
     "python-semantic-release",
     "bandit",
-    "twine",
     "pylint",
     "vulture",
 ]
