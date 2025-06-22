@@ -80,6 +80,8 @@ Group of commands to manage Agent Guard MCP proxy.
 
   This provides a comprehensive audit trail suitable for security monitoring and compliance.
 
+  **Important Security Note:** Audit logs may contain sensitive information from both requests and responses, including any data submitted to or returned from the AI model. Ensure logs are stored securely with appropriate access controls, and implement log rotation and retention policies according to your organization's security requirements.
+
   **Note for containerized environments:** To persist audit logs from containers, mount a local directory to the container's `/logs` directory:
   ```sh
   docker run -v /path/to/local/logs:/logs cyberark/agent-guard agc mcp-proxy start --cap audit <command>
@@ -125,13 +127,19 @@ Group of commands to manage secrets.
   - `--secret_value, -v [VALUE]`  
     The value of the secret to store.
   - `--namespace, -n [NAMESPACE]`  
-    (Optional) The namespace to use.
+    (Optional) The namespace to organize secrets. Default: `default`.
   - Various provider-specific options for AWS, GCP, and Conjur.
 
   **Example:**
   ```sh
+  # Store a secret in the default namespace
   agc secrets set -p AWS_SECRETS_MANAGER_PROVIDER -k my-secret -v "my-secret-value"
+  
+  # Store a secret in a custom namespace
+  agc secrets set -p AWS_SECRETS_MANAGER_PROVIDER -k my-secret -v "my-secret-value" -n production
   ```
+
+  **Note:** Secrets are organized within namespaces. In AWS Secrets Manager, for example, secrets are stored as key-value pairs within a single JSON object located at `{namespace}/agentic_env_vars` (e.g., `default/agentic_env_vars` or `production/agentic_env_vars`).
 
 - #### **get**
 
@@ -143,13 +151,20 @@ Group of commands to manage secrets.
   - `--secret_key, -k [KEY]`  
     The name of the secret to retrieve.
   - `--namespace, -n [NAMESPACE]`  
-    (Optional) The namespace to use.
+    (Optional) The namespace to retrieve the secret from. Default: `default`.
   - Various provider-specific options for AWS, GCP, and Conjur.
 
   **Example:**
   ```sh
+  # Retrieve a secret from the default namespace
   agc secrets get -p AWS_SECRETS_MANAGER_PROVIDER -k my-secret
+  
+  # Retrieve a secret from a custom namespace
+  agc secrets get -p AWS_SECRETS_MANAGER_PROVIDER -k my-secret -n production
   ```
+
+
+  **Note:** When retrieving secrets, you must specify the same namespace used when storing the secret.
 
 ### **configure**
 

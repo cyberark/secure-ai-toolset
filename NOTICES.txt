@@ -2,26 +2,77 @@ Copyright (c) 2025 CyberArk Software Ltd. All rights reserved
 
 Agent Guard is using the following open source components:
 
-1) boto / boto3 (https://github.com/boto/boto3): Apache Software License (Apache-2.0)
-    Copyright 2013-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved
+1) python-dotenv (https://github.com/theskumar/python-dotenv): BSD License
+    Copyright (c) Saurabh Kumar
 
-2) boto / botocore (https://github.com/boto/botocore): Apache Software License (Apache-2.0)
-    Copyright 2012-2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+2) requests (https://requests.readthedocs.io): Apache Software License
+    Copyright (c) Kenneth Reitz
 
-3) pytest-dev / pytest (https://github.com/pytest-dev/pytest): MIT License
-    Copyright (c) 2004 Holger Krekel and others
+3) click (https://github.com/pallets/click/): BSD-3-Clause
+    Copyright (c) pallets
 
-4) python-poetry / poetry (https://github.com/python-poetry/poetry): MIT License
-    Copyright (c) 2018-present Sébastien Eustace
+4) boto3 (https://github.com/boto/boto3): Apache Software License
+    Copyright (c) Amazon Web Services
 
-5) pydantic / pydantic (https://github.com/pydantic/pydantic): MIT License
-    Copyright (c) 2017 to present Pydantic Services Inc. and individual contributors.
+5) botocore (https://github.com/boto/botocore): Apache Software License
+    Copyright (c) Amazon Web Services
 
-6) google / yapf (https://github.com/google/yapf): Apache Software License (Apache-2.0)
-    Copyright 2015 Google Inc. All Rights Reserved.
+6) google-cloud-secret-manager (https://github.com/googleapis/google-cloud-python/tree/main/packages/google-cloud-secret-manager): Apache Software License
+    Copyright (c) Google LLC
 
-7) PyCQA / isort (https://github.com/PyCQA/isort): MIT License
-    Copyright (c) 2013 Timothy Edmund Crosley
+7) mcp (https://modelcontextprotocol.io): MIT License
+    Copyright (c) Anthropic, PBC.
+
+8) mcp-proxy (https://github.com/sparfenyuk/mcp-proxy): MIT License
+    Copyright (c) Sergey Parfenyuk <sergey.parfenyuk@gmail.com>
+
+9) uv (https://pypi.org/project/uv/): Apache Software License; MIT License
+    Copyright (c) uv
+
+10) uvicorn (https://www.uvicorn.org/): BSD License
+    Copyright (c) Tom Christie <tom@tomchristie.com>, Marcelo Trylesinski <marcelotryle@gmail.com>
+
+11) pytest (https://docs.pytest.org/en/latest/): MIT License
+    Copyright (c) Holger Krekel, Bruno Oliveira, Ronny Pfannschmidt, Floris Bruynooghe, Brianna Laugher, Florian Bruhin, Others (See AUTHORS)
+
+12) pytest-asyncio (https://github.com/pytest-dev/pytest-asyncio): Apache-2.0
+    Copyright (c) "Tin Tvrtković <tinchester@gmail.com>" <tinchester@gmail.com>
+
+13) yapf (https://github.com/google/yapf/blob/main/CHANGELOG.md): Apache Software License
+    Copyright (c) Google Inc.
+
+14) isort (https://github.com/PyCQA/isort/releases): MIT License
+    Copyright (c) Timothy Crosley <timothy.crosley@gmail.com>, staticdev <staticdev-support@proton.me>
+
+15) autoflake (https://www.github.com/PyCQA/autoflake): MIT License
+    Copyright (c) Steven Myint
+
+16) toml (https://github.com/uiri/toml): MIT License
+    Copyright (c) William Pearson
+
+17) twine (https://twine.readthedocs.io/): Apache Software License
+    Copyright (c) Donald Stufft and individual contributors <donald@stufft.io>
+
+18) python-semantic-release (https://python-semantic-release.readthedocs.io): MIT
+    Copyright (c) Rolf Erik Lekang <me@rolflekang.com>
+
+19) bandit (https://bandit.readthedocs.io/): Apache Software License
+    Copyright (c) PyCQA
+
+20) pylint (https://github.com/pylint-dev/pylint): GPL-2.0-or-later
+    Copyright (c) Python Code Quality Authority <code-quality@python.org>
+
+21) vulture (https://github.com/jendrikseipp/vulture): MIT License
+    Copyright (c) Jendrik Seipp
+
+23) pandas (https://pandas.pydata.org): BSD License
+    Copyright (c) The Pandas Development Team <pandas-dev@python.org>
+
+24) streamlit (https://streamlit.io/): Apache Software License
+    Copyright (c) Snowflake Inc <hello@streamlit.io>
+
+25) fastapi (https://github.com/fastapi/fastapi): MIT License
+    Copyright (c) tiangolo Sebastián Ramírez <tiangolo@gmail.com>
 
 =================================================================================
 
