@@ -3,6 +3,7 @@ FROM python:slim
 WORKDIR /app
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
 # Copy the project files into the container
 COPY agent_guard_core /app/agent_guard_core
 COPY *.md /app/
