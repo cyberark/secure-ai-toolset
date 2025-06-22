@@ -20,8 +20,9 @@ def audit_log_operation(audit_logger, handler_name):
     return decorator
 
 
-def get_audit_logger(log_level=logging.INFO) -> logging.Logger:
-    log_path = Path("/logs/agent_guard_core_proxy.log") if os.access("/logs", os.W_OK) else Path("agent_guard_core_proxy.log")
+def get_audit_logger(session_id: str, log_level = logging.INFO) -> logging.Logger:
+    file_name = f"agent_guard_core_proxy_{session_id[:5]}.log"
+    log_path = Path(f"/logs/{file_name}") if os.access("/logs", os.W_OK) else Path(file_name)
     logger.debug(f"Using audit log path: {log_path}")
 
     audit_logger = logging.getLogger("agent_guard_core.audit")

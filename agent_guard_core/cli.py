@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import sys
+import uuid
 from enum import Enum
 from pathlib import Path
 from typing import Any, Optional
@@ -67,7 +68,8 @@ def mcp_proxy_start(is_debug: bool = False, cap: Optional[list[ProxyCapability]]
     asyncio.run(_stdio_mcp_proxy_async(argv=argv, cap=cap, is_debug=is_debug))
 
 async def _stdio_mcp_proxy_async(cap: list[ProxyCapability], argv: tuple[str] = (), is_debug: bool = False):
-    logger.debug(f"Starting up...")
+    session_id = uuid.uuid4().hex
+    logger.debug(f"Starting up oroxy with session id {session_id}")
     stdio_params: Optional[StdioServerParameters] = None
     
     if len(argv) == 0:
@@ -78,7 +80,7 @@ async def _stdio_mcp_proxy_async(cap: list[ProxyCapability], argv: tuple[str] = 
 
     if ProxyCapability.AUDIT in cap:
         logger.debug("Enabling audit logging for the MCP proxy.")
-        proxy_logger = get_audit_logger(logging.DEBUG if is_debug else logging.INFO)
+        proxy_logger = get_audit_logger(session_id=session_id, log_level=logging.DEBUG if is_debug else logging.INFO)
     try:
         logger.debug(f"Starting MCP server with config: {stdio_params.model_dump()}")
         async with stdio_client(stdio_params, errlog=sys.stderr) as streams, ClientSession(*streams) as session:
