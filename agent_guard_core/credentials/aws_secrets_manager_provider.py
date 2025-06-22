@@ -3,6 +3,9 @@ from typing import Dict, Optional
 
 import boto3
 
+import logging
+logging.getLogger('botocore').setLevel(logging.CRITICAL)
+
 from agent_guard_core.credentials.enum import CredentialsProvider
 from agent_guard_core.credentials.secrets_provider import secrets_provider_fm
 
