@@ -356,6 +356,7 @@ def config_gcp_options(func):
 @secret_name_option
 @secret_value_option
 @namespace_option
+@aws_options
 @conjur_options
 @gcp_options
 def set(provider, secret_key, secret_value, namespace):
@@ -379,6 +380,7 @@ def set(provider, secret_key, secret_value, namespace):
 @provider_option
 @secret_name_option
 @namespace_option
+@aws_options
 @conjur_options
 @gcp_options
 def get(provider, secret_key, namespace):
