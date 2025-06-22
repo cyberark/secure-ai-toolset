@@ -2,7 +2,6 @@ Copyright (c) 2025 CyberArk Software Ltd. All rights reserved
 
 Agent Guard is using the following open source components:
 
-
 1) python-dotenv (https://github.com/theskumar/python-dotenv): BSD License
     Copyright (c) Saurabh Kumar
 
@@ -69,7 +68,11 @@ Agent Guard is using the following open source components:
 23) pandas (https://pandas.pydata.org): BSD License
     Copyright (c) The Pandas Development Team <pandas-dev@python.org>
 
-add streamlit and fastapi
+24) streamlit (https://streamlit.io/): Apache Software License
+    Copyright (c) Snowflake Inc <hello@streamlit.io>
+
+25) fastapi (https://github.com/fastapi/fastapi): MIT License
+    Copyright (c) tiangolo Sebastián Ramírez <tiangolo@gmail.com>
 
 =================================================================================
 
