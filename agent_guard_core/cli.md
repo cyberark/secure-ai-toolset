@@ -37,7 +37,7 @@ Group of commands to manage Agent Guard MCP proxy.
   agc mcp-proxy start -d --cap audit uvx mcp-server-fetch
   
   # For containerized environments with persistent logs
-  docker run -v /path/to/local/logs:/logs cyberark/agent-guard agc mcp-proxy start --cap audit uvx mcp-server-fetch
+  docker run -v /path/to/local/logs:/logs agc mcp-proxy start --cap audit uvx mcp-server-fetch
   ```
 
 - #### **apply-config**
@@ -57,7 +57,7 @@ Group of commands to manage Agent Guard MCP proxy.
   agc mcp-proxy apply-config --mcp-config-file config_example.json --cap audit
 
   # For containerized environments
-  docker run -v /path/to/local/config:/config cyberark/agent-guard agc mcp-proxy apply-config --cap audit
+  docker run -v /path/to/local/config:/config agc mcp-proxy apply-config --cap audit
   ```
 
   **Note:** When using containerized environments, mount your local config directory to the `/config` folder in the container using the `-v` flag (e.g., `-v /path/to/local/config:/config`). The command will automatically detect JSON configuration files in the mounted directory.
@@ -84,7 +84,7 @@ Group of commands to manage Agent Guard MCP proxy.
 
   **Note for containerized environments:** To persist audit logs from containers, mount a local directory to the container's `/logs` directory:
   ```sh
-  docker run -v /path/to/local/logs:/logs cyberark/agent-guard agc mcp-proxy start --cap audit <command>
+  docker run -v /path/to/local/logs:/logs agc mcp-proxy start --cap audit <command>
   ```
   
   This ensures logs are preserved even after the container exits.
