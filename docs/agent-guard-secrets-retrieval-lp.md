@@ -2,8 +2,8 @@
 ## 🌟 Overview
 
 Agent Guard for Secret Retrieval supports the following:
-- Working with a [Python library](/agent-guard-secrets-python.md) 
-- Working in a [containerized](/agent-guard-secrets-docker.md) environment, for example Docker in AWS
+- Working with a [Python library](/docs/agent-guard-secrets-python.md) 
+- Working in a [containerized](/docs/agent-guard-secrets-docker.md) environment, for example Docker in AWS
 
 This toolset is intended for AI agent builders to simplify your work and reduce the level of boilerplate code you need to write.
 

@@ -72,19 +72,19 @@ docker run -v /tmp/config:/config agc mcp-proxy apply-config -c audit
 ````
 
 #### Output:
-![apply-config](images\mcp-proxy-apply-config.png)
+![apply-config](/docs/images/mcp-proxy-apply-config.png)
 
 
 Copy over to your AI agent's MCP config file the activity you want to log. For example, `fetch` logs request and response activity between your AI agent and the MCP server you are working with:
 
-![ai-agent-config](images\mcp-proxy-ai-agent-config.png)
+![ai-agent-config](/docs/images/mcp-proxy-ai-agent-config.png)
 
 
 ### Log output
 When you run your MCP host, you should start seeing the host interacting with the proxied MCP server querying it for the List operations like this:
 
-![log](images\output.png)
+![log](/docs/images/output.png)
 
 As you interact with the server, you should see more logs:
 
-![server-interaction-logs](images\output-server-interaction.png)
+![server-interaction-logs](/docs/images/output-server-interaction.png)

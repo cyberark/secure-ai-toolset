@@ -33,7 +33,7 @@ The toolset includes a [Python library](https://pypi.org/project/agent-guard-cor
 This toolset can populate API keys and secrets as environment variables. The secrets are stored in your secret management of choice and are provisioned at runtime into your process memory.
 The secrets can be populated and depopulated, for a specific context: Agent, Tool, HTTP call.
 Currently [supported](https://github.com/cyberark/agent-guard/tree/main/agent_guard_core/credentials) secret providers:
-- CyberArk Conjur
+- CyberArk Secrets Manager (previously called CyberArk Conjur)
 - AWS Secrets Manager
 - Local `.env` file (for development purposes)
 
