@@ -78,13 +78,12 @@ async def main() -> None:
 
 ## ⚡ Getting Started
 
-Take a look at our [getting started](https://github.com/cyberark/agent-guard/blob/main/GETTING_STARTED.md) page and try it out!
+Please take a look at our [getting started](https://github.com/cyberark/agent-guard/blob/main/GETTING_STARTED.md) page and try it out!
 
 ## 🤝 Contribution
 
-Make sure to read the [CONTRIBUTING.md](https://github.com/cyberark/agent-guard/blob/main/CONTRIBUTING.md) file if you want to contribute to this project.
+Please make sure to read the [CONTRIBUTING.md](https://github.com/cyberark/agent-guard/blob/main/CONTRIBUTING.md) file if you want to contribute to this project.
 
 ## 💁  Contact
 
 Feel free to contact us via GitHub issues or through LinkedIn: [Gil Adda](https://www.linkedin.com/in/gil-adda-6117b9/), [Rafi Schwarz](https://www.linkedin.com/in/rafi-schwarz/). 
-
