@@ -447,6 +447,8 @@ cli.add_command(mcp_proxy)
 
 if __name__ == '__main__':
     try:
+        # TODO: remove this
+        # cli(["secrets", "get", "-p", "aws-secretsmanager", "-k" ,"weather_api_key_2", "-n", "default/agentic_env_vars"], standalone_mode=False)  # Use empty list to avoid click's default behavior of parsing sys.argv
         cli(sys.argv[1:], standalone_mode=False)
     except KeyboardInterrupt:
         logger.debug("KeyboardInterrupt caught at top level, exiting gracefully.")

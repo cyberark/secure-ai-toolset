@@ -33,12 +33,12 @@ class BaseSecretsProvider(abc.ABC):
     def delete(self, key: str) -> None:
         pass
 
-    @abc.abstractmethod
-    def get_secret_dictionary(self) -> Dict[str, str]:
-        pass
+    # @abc.abstractmethod
+    # def get_secret_dictionary(self) -> Dict[str, str]:
+    #     pass
 
-    @abc.abstractmethod
-    def store_secret_dictionary(self, secret_dictionary: Dict):
-        pass
+    # @abc.abstractmethod
+    # def store_secret_dictionary(self, secret_dictionary: Dict):
+    #     pass
 
 secrets_provider_fm: FlavorManager[str, Type[BaseSecretsProvider]] = FlavorManager()
