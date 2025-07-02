@@ -74,5 +74,5 @@ Make sure to read the [CONTRIBUTING.md](https://github.com/cyberark/agent-guard/
 
 ## 💁  Contact
 
-Feel free to contact us via GitHub issues or through LinkedIn: [Gil Adda](https://www.linkedin.com/in/gil-adda-6117b9/), [Rafi Schwarz](https://www.linkedin.com/in/rafi-schwarz/).
+Feel free to contact us via GitHub issues.
 
