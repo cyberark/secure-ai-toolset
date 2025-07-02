@@ -2,7 +2,7 @@
 import abc
 import json
 import logging
-from typing import Any, Optional, Type
+from typing import Optional, Type
 
 from agent_guard_core.utils.flavor_manager import FlavorManager
 
