@@ -1,16 +1,15 @@
 import json
-from typing import Dict, Optional, Union
+import logging
+from typing import Any, Dict, Optional, Union
 
 import boto3
-
-import logging
 
 logging.getLogger("botocore").setLevel(logging.CRITICAL)
 
 from agent_guard_core.credentials.enum import CredentialsProvider
 from agent_guard_core.credentials.secrets_provider import secrets_provider_fm
 
-from .secrets_provider import BaseSecretsProvider, SecretProviderException
+from .secrets_provider import BaseSecretsProvider, SecretNotFoundException, SecretProviderException
 
 SERVICE_NAME = "secretsmanager"
 DEFAULT_REGION = "us-east-1"
@@ -81,7 +80,7 @@ class AWSSecretsProvider(BaseSecretsProvider):
             self.logger.error(message)
             raise SecretProviderException(message)
 
-    def get(self, key: str) -> Optional[Union[str, Dict[str, str]]]:
+    def get(self, key: str) -> str:
         """
         Retrieves a secret from AWS Secrets Manager by key.
         
@@ -92,82 +91,50 @@ class AWSSecretsProvider(BaseSecretsProvider):
         :return: The secret value if retrieval is successful, None otherwise.
         :raises SecretProviderException: If there is an error retrieving the secret.
         """
-        if not key:
-            message = "get: key is missing"
-            self.logger.warning(message)
-            raise SecretProviderException(message)
-            
         # Determine which secret ID to use
-        secret_id = self._namespace if self._namespace else key
+        secret_id = self._namespace or key
         
         # Get the raw secret string
         secret_text = self._get_raw_secret(secret_id)
-        if not secret_text:
-            return None
+        if secret_text is None:
+            raise SecretNotFoundException(key)
             
-        # If we have a namespace, parse the JSON and get the specific key
-        if self._namespace:
-            try:
-                secrets_dict = json.loads(secret_text)
-                if isinstance(secrets_dict, dict):
-                    return secrets_dict.get(key)
-                else:
-                    message = f"get: Expected JSON object in namespace {self._namespace}, got: {type(secrets_dict)}"
-                    self.logger.warning(message)
-                    return None
-            except json.JSONDecodeError as e:
-                message = f"get: Failed to parse JSON from namespace {self._namespace}: {str(e)}"
-                self.logger.warning(message)
-                return None
-        else:
-            # For direct secret access, try to parse as JSON first
-            try:
-                return json.loads(secret_text)
-            except json.JSONDecodeError:
-                # If not valid JSON, return as string
-                return secret_text
-
-    def _update_namespace_collection(self, update_function):
-        """
-        Helper method to update a collection in a namespace.
+        if self._namespace is None:
+            return secret_text
         
-        :param update_function: Function that updates the collection dictionary
-        :raises SecretProviderException: If there is an error updating the collection
-        """
-        if not self._namespace:
-            raise SecretProviderException("_update_namespace_collection: namespace is not set")
-            
-        # Get current collection
-        raw_secret = self._get_raw_secret(self._namespace)
-        collection = {}
-        
-        if raw_secret:
-            try:
-                collection = json.loads(raw_secret)
-                if not isinstance(collection, dict):
-                    collection = {}
-            except json.JSONDecodeError:
-                # If not valid JSON, start with empty dict
-                collection = {}
-                
-        # Apply the update
-        update_function(collection)
-        
-        # Store the updated collection
-        secret_string = json.dumps(collection)
         try:
-            # Try to create the secret first
-            try:
-                self._client.create_secret(Name=self._namespace, SecretString=secret_string)
-            except self._client.exceptions.ResourceExistsException:
-                # If it already exists, update it
-                self._client.put_secret_value(SecretId=self._namespace, SecretString=secret_string)
+            secrets_dict = json.loads(secret_text)
+            if isinstance(secrets_dict, dict):
+                return secrets_dict.get(key)
+            else:
+                message = f"get: Expected JSON object in namespace {self._namespace}, got: {type(secrets_dict)}"
+                self.logger.warning(message)
+                raise SecretProviderException(message)
+        except json.JSONDecodeError as e:
+            message = f"get: Failed to parse JSON from namespace {self._namespace}: {str(e)}"
+            self.logger.warning(message)
+            return None
+
+    def _store(self, key: str, secret: str) -> None:
+        """
+        Stores a secret in AWS Secrets Manager.
+        
+        :param key: The name of the secret key.
+        :param secret: The secret value to store (string or dict).
+        :raises SecretProviderException: If key or secret is missing or if there is an error storing the secret.
+        """
+        
+        try:
+            self.connect()
+            self._client.create_secret(Name=key, SecretString=secret)
+        except self._client.exceptions.ResourceExistsException:
+            self._client.put_secret_value(SecretId=key, SecretString=secret)
         except Exception as e:
-            message = f"Error updating namespace collection: {str(e)}"
+            message = f"Error storing secret: {str(e)}"
             self.logger.error(message)
             raise SecretProviderException(message)
-
-    def store(self, key: str, secret: Union[str, Dict[str, str]]) -> None:
+        
+    def store(self, key: str, secret: str) -> None:
         """
         Stores a secret in AWS Secrets Manager.
         
@@ -175,38 +142,17 @@ class AWSSecretsProvider(BaseSecretsProvider):
         Otherwise, stores the secret directly with its key as the SecretId.
         
         :param key: The name of the secret key.
-        :param secret: The secret value to store (string or dictionary).
+        :param secret: The secret value to store (string).
         :raises SecretProviderException: If key or secret is missing or if there is an error storing the secret.
         """
-        if not key or secret is None:
-            message = "store: key or secret is missing"
-            self.logger.warning(message)
-            raise SecretProviderException(message)
 
-        try:
-            self.connect()
-            
-            # Handle namespace-based storage
-            if self._namespace:
-                def update_collection(collection):
-                    collection[key] = secret
-                    
-                self._update_namespace_collection(update_collection)
-            else:
-                # Direct secret storage
-                secret_string = secret
-                if isinstance(secret, dict):
-                    secret_string = json.dumps(secret)
-                
-                try:
-                    self._client.create_secret(Name=key, SecretString=secret_string)
-                except self._client.exceptions.ResourceExistsException:
-                    self._client.put_secret_value(SecretId=key, SecretString=secret_string)
-                    
-        except Exception as e:
-            message = f"Error storing secret: {str(e)}"
-            self.logger.error(message)
-            raise SecretProviderException(message)
+        if self._namespace:
+            collection = self._get_raw_secret(self._namespace) or {}
+            collection[key] = secret
+            secret = json.dumps(collection)
+            key = self._namespace
+        
+        self._store(key, secret)
 
     def delete(self, key: str) -> None:
         """
@@ -230,7 +176,7 @@ class AWSSecretsProvider(BaseSecretsProvider):
             if self._namespace:
                 # Get existing secrets in the namespace
                 raw_secret = self._get_raw_secret(self._namespace)
-                if not raw_secret:
+                if raw_secret is None:
                     return  # Namespace doesn't exist, nothing to delete
                     
                 try:

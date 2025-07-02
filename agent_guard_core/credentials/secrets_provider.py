@@ -1,7 +1,7 @@
 # this is a abstract class for secrets provider
 import abc
 import logging
-from typing import Dict, Optional, Type
+from typing import Type
 
 from agent_guard_core.utils.flavor_manager import FlavorManager
 
@@ -11,7 +11,11 @@ class SecretProviderException(Exception):
     def __init__(self, message: str):
         super().__init__(message)
 
-
+class SecretNotFoundException(SecretProviderException):
+    def __init__(self, key: str):
+        message = f"Secret with key '{key}' not found."
+        super().__init__(message)
+        self.key = key
 class BaseSecretsProvider(abc.ABC):
 
     def __init__(self, *args, **kwargs):
@@ -26,7 +30,7 @@ class BaseSecretsProvider(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def get(self, key: str) -> Optional[str]:
+    def get(self, key: str) -> str:
         pass
 
     @abc.abstractmethod
