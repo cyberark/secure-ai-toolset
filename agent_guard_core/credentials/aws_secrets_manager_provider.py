@@ -52,7 +52,7 @@ class AWSSecretsProvider(BaseSecretsProvider):
                 message=f"Error connecting to the secret provider: AWSSecretsProvider with this exception: {str(e)}"
             )
 
-    def _get(self, secret_id: str) -> Optional[str]:
+    def _get(self, key: str) -> Optional[str]:
         """
         Internal method to retrieve raw secret value from AWS Secrets Manager.
         
@@ -62,18 +62,18 @@ class AWSSecretsProvider(BaseSecretsProvider):
         """
         try:
             self.connect()
-            response = self._client.get_secret_value(SecretId=secret_id)  # type: ignore
+            response = self._client.get_secret_value(SecretId=key)  # type: ignore
             
             meta = response.get("ResponseMetadata", {})
             if meta.get("HTTPStatusCode") != 200 or "SecretString" not in response:
-                message = f"_get_raw_secret: secret retrieval error for ID {secret_id}"
+                message = f"_get_raw_secret: secret retrieval error for ID {key}"
                 logger.error(message)
                 raise SecretProviderException(message)
                 
             return str(response["SecretString"])
         
         except self._client.exceptions.ResourceNotFoundException:  # type: ignore
-            logger.warning(f"Secret not found: {secret_id}")
+            logger.warning(f"Secret not found: {key}")
             return None
         except Exception as e:
             message = f"Error retrieving secret: {str(e)}"
