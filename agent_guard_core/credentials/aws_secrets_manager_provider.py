@@ -32,7 +32,6 @@ class AWSSecretsProvider(BaseSecretsProvider):
         super().__init__(namespace, **kwargs)
         self._client: Optional[Any] = None
         self._region_name = region_name
-        self._namespace = namespace
 
     def connect(self) -> bool:
         """
