@@ -46,6 +46,7 @@ dev = [
     "python-semantic-release",
     "bandit",
     "vulture",
+    "mypy>=1.16.1",
 ]
 servers = [
     "uvicorn", "streamlit", "fastapi", "pandas"
