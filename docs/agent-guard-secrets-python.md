@@ -78,7 +78,7 @@ async def main() -> None:
 
 ## ⚡ Getting Started
 
-Take a look at our [getting started](https://github.com/cyberark/agent-guard/blob/main/GETTING_STARTED.md) page and try it out!
+Take a look at our [getting started](/docs/agent-guard-secrets-python-get-started.md) page and try it out!
 
 ## 🤝 Contribution
 
