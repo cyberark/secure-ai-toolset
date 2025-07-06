@@ -14,8 +14,7 @@ from mcp import ClientSession, StdioServerParameters, stdio_client, stdio_server
 
 from agent_guard_core.config.config_manager import ConfigManager, ConfigurationOptions
 from agent_guard_core.credentials.enum import AwsEnvVars, ConjurEnvVars, CredentialsProvider, GcpEnvVars
-from agent_guard_core.credentials.gcp_secrets_manager_provider import (DEFAULT_PROJECT_ID, DEFAULT_REPLICATION_TYPE,
-                                                                       DEFAULT_SECRET_ID)
+from agent_guard_core.credentials.gcp_secrets_manager_provider import DEFAULT_PROJECT_ID, DEFAULT_REPLICATION_TYPE
 from agent_guard_core.credentials.secrets_provider import BaseSecretsProvider, secrets_provider_fm
 from agent_guard_core.proxy.audited_proxy import create_agent_guard_proxy_server
 from agent_guard_core.proxy.proxy_utils import get_audit_logger
@@ -178,8 +177,8 @@ def gcp_options(func):
         provider = kwargs.get('provider')
         if provider == CredentialsProvider.GCP_SECRETS_MANAGER:
             os.environ[GcpEnvVars.GCP_PROJECT_ID] = gcp_project_id or os.environ.get(GcpEnvVars.GCP_PROJECT_ID, DEFAULT_PROJECT_ID)
-            os.environ[GcpEnvVars.GCP_SECRET_ID] = gcp_secret_id or os.environ.get(GcpEnvVars.GCP_SECRET_ID, DEFAULT_SECRET_ID)
-            os.environ[GcpEnvVars.GCP_REGION] = gcp_region or os.environ.get(GcpEnvVars.GCP_REGION, str())
+            os.environ[GcpEnvVars.GCP_SECRET_ID] = gcp_secret_id or os.environ.get(GcpEnvVars.GCP_SECRET_ID, None)
+            os.environ[GcpEnvVars.GCP_REGION] = gcp_region or os.environ.get(GcpEnvVars.GCP_REGION, None)
             os.environ[GcpEnvVars.GCP_REPLICATION_TYPE] = gcp_replication_type or os.environ.get(GcpEnvVars.GCP_REPLICATION_TYPE, DEFAULT_REPLICATION_TYPE)
 
             # Region required if replication is user-managed

@@ -36,7 +36,7 @@ def get_config_provider():
 
 def get_secret_provider():
     config_provider = get_config_provider()
-    configuration = config_provider.get_secret_dictionary()
+    configuration = config_provider.get()
 
     secret_provider_id = configuration.get(SECRET_PROVIDER_KEY)
     namespace = configuration.get(SECRET_NAMESPACE_KEY)

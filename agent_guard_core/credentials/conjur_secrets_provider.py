@@ -26,7 +26,6 @@ DEFAULT_API_TOKEN_DURATION = DEFAULT_TOKEN_EXPIRATION - API_TOKEN_SAFETY_BUFFER
 
 DEFAULT_REGION = "us-east-1"
 DEFAULT_NAMESPACE = "data/default"
-DEFAULT_SECRET_ID = "agentic_env_vars"
 DEFAULT_CONJUR_ACCOUNT = "conjur"
 
 HTTP_TIMEOUT_SECS = 2.0
@@ -80,7 +79,6 @@ class ConjurSecretsProvider(BaseSecretsProvider):
 
         self._account = os.getenv(ConjurEnvVars.CONJUR_ACCOUNT, DEFAULT_CONJUR_ACCOUNT)
         self._branch = namespace
-        self._secret_name = DEFAULT_SECRET_ID
 
         # Define private vars initialized elsewhere
         self._access_token = None

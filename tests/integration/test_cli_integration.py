@@ -2,11 +2,17 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
+import sys
 
 import pytest
 from click.testing import CliRunner
 
-from agent_guard_core.cli import cli
+# Import the CLI module using an indirect approach to avoid side effects during test discovery
+@pytest.fixture
+def cli_module():
+    from agent_guard_core.cli import cli
+    return cli
+
 from agent_guard_core.config.config_manager import ConfigurationOptions
 from agent_guard_core.credentials.enum import CredentialsProvider
 
@@ -18,10 +24,22 @@ def runner():
 
 @pytest.fixture
 def temp_config_home(monkeypatch):
-    # Create a temporary directory and patch Path.home() to use it
+    """Create a temporary home directory for configuration files"""
     with tempfile.TemporaryDirectory() as temp_dir:
-        monkeypatch.setattr("pathlib.Path.home", lambda: Path(temp_dir))
-        yield Path(temp_dir)
+        temp_dir_path = Path(temp_dir)
+        
+        # Create the .agent_guard directory structure
+        config_dir = temp_dir_path / ".agent_guard"
+        config_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Create an empty config.env file
+        config_file = config_dir / "config.env"
+        config_file.touch()
+        
+        # Patch Path.home() to return our temporary directory
+        monkeypatch.setattr("pathlib.Path.home", lambda: temp_dir_path)
+        
+        yield temp_dir_path
 
 
 @pytest.fixture
@@ -62,19 +80,19 @@ def clean_environment(monkeypatch):
     yield
 
 
-def test_configure_set_and_get_secret_provider(runner, temp_config_home):
+def test_configure_set_and_get_secret_provider(runner, temp_config_home, cli_module):
     # Iterate over all provider types and set/get each one
     for provider in [provider.value for provider in CredentialsProvider]:
         # Set a value using the CLI
         result = runner.invoke(
-            cli,
+            cli_module,
             ['config', 'set', '--provider', provider],
             input="\n"  # for any prompt
         )
         assert result.exit_code == 0
 
         # Get the value using the CLI
-        result = runner.invoke(cli, [
+        result = runner.invoke(cli_module, [
             'config', 'get', '--key', ConfigurationOptions.SECRET_PROVIDER.name
         ])
         assert result.exit_code == 0
@@ -84,9 +102,9 @@ def test_configure_set_and_get_secret_provider(runner, temp_config_home):
         assert value == provider
 
 
-def test_configure_set_and_get_conjur_provider(runner, temp_config_home):
+def test_configure_set_and_get_conjur_provider(runner, temp_config_home, cli_module):
     # Set values using the CLI
-    result = runner.invoke(cli, [
+    result = runner.invoke(cli_module, [
         'config', 'set', '--provider',
         CredentialsProvider.CONJUR.value,
         '--conjur-authn-login', 'user1'  # Changed from conjur_authn_login to conjur-authn-login
@@ -96,7 +114,7 @@ def test_configure_set_and_get_conjur_provider(runner, temp_config_home):
 
     # Get provider value
     result = runner.invoke(
-        cli,
+        cli_module,
         ['config', 'get', '--key', ConfigurationOptions.SECRET_PROVIDER.name])
     assert result.exit_code == 0
     output = result.output.strip()
@@ -105,7 +123,7 @@ def test_configure_set_and_get_conjur_provider(runner, temp_config_home):
     assert value == CredentialsProvider.CONJUR.value
 
     # Get conjur_authn_login value
-    result = runner.invoke(cli,
+    result = runner.invoke(cli_module,
                            ['config', 'get', '--key', 'CONJUR_AUTHN_LOGIN'])
     assert result.exit_code == 0
     output = result.output.strip()
@@ -114,38 +132,38 @@ def test_configure_set_and_get_conjur_provider(runner, temp_config_home):
     assert value == "user1"
 
 
-def test_configure_get_nonexistent_key(runner, temp_config_home):
+def test_configure_get_nonexistent_key(runner, temp_config_home, cli_module):
     # Try to get a key that does not exist
-    result = runner.invoke(cli, ['config', 'get', '--key', 'NON_EXISTENT_KEY'])
+    result = runner.invoke(cli_module, ['config', 'get', '--key', 'NON_EXISTENT_KEY'])
     assert result.exit_code == 2
     assert "'--key': 'NON_EXISTENT_KEY' is not one of" in result.output
 
 
-def test_config_list_command(runner, temp_config_home):
+def test_config_list_command(runner, temp_config_home, cli_module):
     """Test the config list command to display all configuration parameters."""
     # First set some configuration values
     runner.invoke(
-        cli,
+        cli_module,
         ['config', 'set', '--provider', CredentialsProvider.FILE_DOTENV.value],
         input="\n"
     )
 
     # Run the list command
-    result = runner.invoke(cli, ['config', 'list'])
+    result = runner.invoke(cli_module, ['config', 'list'])
 
     # Check that the command executed successfully
     assert result.exit_code == 0
 
     # Check that the output contains the expected configuration
     assert "Agent Guard Configuration:" in result.output
-    assert f"{ConfigurationOptions.SECRET_PROVIDER.name}={CredentialsProvider.FILE_DOTENV.value}" in result.output
+    assert f'"{ConfigurationOptions.SECRET_PROVIDER.name}": "{CredentialsProvider.FILE_DOTENV.value}"' in result.output
 
 
-def test_secrets_set_and_get_commands(runner, temp_config_home, temp_secrets_dir):
+def test_secrets_set_and_get_commands(runner, temp_config_home, temp_secrets_dir, cli_module):
     """Test setting and retrieving secrets using the CLI."""
     # First set the configuration to use the file provider (simplest for testing)
     runner.invoke(
-        cli,
+        cli_module,
         ['config', 'set', '--provider', CredentialsProvider.FILE_DOTENV.value],
         input="\n"
     )
@@ -156,7 +174,7 @@ def test_secrets_set_and_get_commands(runner, temp_config_home, temp_secrets_dir
 
     # Set a secret
     set_result = runner.invoke(
-        cli,
+        cli_module,
         [
             'secrets', 'set',
             '--provider', CredentialsProvider.FILE_DOTENV.value,
@@ -171,7 +189,7 @@ def test_secrets_set_and_get_commands(runner, temp_config_home, temp_secrets_dir
 
     # Get the secret
     get_result = runner.invoke(
-        cli,
+        cli_module,
         [
             'secrets', 'get',
             '--provider', CredentialsProvider.FILE_DOTENV.value,
@@ -185,11 +203,11 @@ def test_secrets_set_and_get_commands(runner, temp_config_home, temp_secrets_dir
     assert secret_value in get_result.output
 
 
-def test_secrets_get_nonexistent(runner, temp_config_home, temp_secrets_dir):
+def test_secrets_get_nonexistent(runner, temp_config_home, temp_secrets_dir, cli_module):
     """Test behavior when getting a nonexistent secret."""
     # Set up the configuration
     runner.invoke(
-        cli,
+        cli_module,
         ['config', 'set', '--provider', CredentialsProvider.FILE_DOTENV.value],
         input="\n"
     )
@@ -198,7 +216,7 @@ def test_secrets_get_nonexistent(runner, temp_config_home, temp_secrets_dir):
 
     # Try to get a secret that doesn't exist
     result = runner.invoke(
-        cli,
+        cli_module,
         [
             'secrets', 'get',
             '--provider', CredentialsProvider.FILE_DOTENV.value,
@@ -213,14 +231,14 @@ def test_secrets_get_nonexistent(runner, temp_config_home, temp_secrets_dir):
         assert result.output.strip() == "" or "not found" in result.output.lower()
     else:
         # If it fails, check for an error message
-        assert "not found" in result.output.lower() or "failed to retrieve" in result.output.lower()
+        assert "not found" in result.exception.__str__().lower() or "failed to retrieve" in result.exception.__str__().lower()
 
 
-def test_store_and_get_secret(runner, temp_config_home, clean_environment, temp_secrets_dir):
+def test_store_and_get_secret(runner, temp_config_home, clean_environment, temp_secrets_dir, cli_module):
     """Test storing and retrieving a secret through the CLI using the file provider"""
     # First configure the file provider
     result = runner.invoke(
-        cli,
+        cli_module,
         ['config', 'set', '--provider', CredentialsProvider.FILE_DOTENV.value]
     )
     assert result.exit_code == 0, f"Failed to configure file provider: {result.output}"
@@ -231,7 +249,7 @@ def test_store_and_get_secret(runner, temp_config_home, clean_environment, temp_
 
     # Store a secret
     result = runner.invoke(
-        cli,
+        cli_module,
         [
             'secrets', 'set',
             '--provider', CredentialsProvider.FILE_DOTENV.value,
@@ -244,7 +262,7 @@ def test_store_and_get_secret(runner, temp_config_home, clean_environment, temp_
 
     # Retrieve the secret
     result = runner.invoke(
-        cli,
+        cli_module,
         [
             'secrets', 'get',
             '--provider', CredentialsProvider.FILE_DOTENV.value,

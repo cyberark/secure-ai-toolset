@@ -28,7 +28,7 @@ print_header(title="Configuration", sub_title="Manage Secret Store Settings")
 try:
     config_file_path = get_config_file_path()
     config_provider = FileSecretsProvider(namespace=config_file_path)
-    configuration_dict = config_provider.get_secret_dictionary()
+    configuration_dict = config_provider.get()
     if not configuration_dict:
         st.warning(
             "Configuration file is missing or empty. Generating default settings"

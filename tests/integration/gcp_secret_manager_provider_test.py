@@ -121,7 +121,7 @@ def test_get_secret_dictionary(provider):
         provider.store(key, value)
 
     # Get all secrets as dictionary
-    fetched_secrets = provider.get_secret_dictionary()
+    fetched_secrets = provider.get()
 
     # Verify all secrets are present
     for key, value in test_secrets.items():
@@ -142,7 +142,7 @@ def test_store_secret_dictionary(provider):
     }
 
     # Store dictionary of secrets
-    provider.store_secret_dictionary(test_secrets)
+    provider.store(test_secrets)
 
     # Verify each secret
     for key, value in test_secrets.items():
@@ -153,7 +153,7 @@ def test_store_secret_dictionary(provider):
 @pytest.mark.gcp
 def test_store_empty_secret_dictionary(provider):
     # Store an empty dictionary
-    provider.store_secret_dictionary({})
+    provider.store({})
     # Verify that no exception is raised and the dictionary is accepted
 
 
@@ -161,5 +161,5 @@ def test_store_empty_secret_dictionary(provider):
 def test_store_none_secret_dictionary(provider):
     # Attempt to store None as a dictionary
     with pytest.raises(SecretProviderException) as e:
-        provider.store_secret_dictionary(None)
+        provider.store(None)
     assert "Dictionary not provided" in str(e.value)

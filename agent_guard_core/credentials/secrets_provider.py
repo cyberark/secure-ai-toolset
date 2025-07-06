@@ -68,7 +68,7 @@ class BaseSecretsProvider(abc.ABC):
         
         self._store(key, secret)
 
-    def get(self, key: str) -> str:
+    def get(self, key: Optional[str]) -> str:
         """
         Retrieves a secret from AWS Secrets Manager by key.
         
