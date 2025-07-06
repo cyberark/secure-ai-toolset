@@ -1,3 +1,4 @@
+# TODO: Move to credentials/base/secrets_provider.py
 # this is a abstract class for secrets provider
 import abc
 import json
@@ -18,11 +19,27 @@ class SecretNotFoundException(SecretProviderException):
         message = f"Secret with key '{key}' not found."
         super().__init__(message)
         self.key = key
+        
 class BaseSecretsProvider(abc.ABC):
 
     def __init__(self, namespace: Optional[str] = None, **kwargs) -> None:
         self._namespace = namespace
 
+    def _get_raw_secret(self, key: str) -> Optional[str]:
+        """
+        Retrieves the raw secret value from the provider by key.
+        
+        :param key: The name of the secret to retrieve.
+        :return: The raw secret string or None if not found.
+        :raises SecretProviderException: If there is an error retrieving the secret.
+        """
+        try:
+            return self._get(key)
+        except Exception as e:
+            message = f"Error retrieving secret: {str(e)}"
+            logger.error(message)
+            raise SecretProviderException(message)
+    
     def store(self, key: str, secret: str) -> None:
         """
         Stores a secret in AWS Secrets Manager.
@@ -36,8 +53,15 @@ class BaseSecretsProvider(abc.ABC):
         """
 
         if self._namespace is not None:
-            collection_raw = self._get(self._namespace)
-            collection = json.loads(collection_raw) if collection_raw else {}
+            
+            collection_raw = self._get_raw_secret(key=self._namespace)
+
+            try:
+                collection = json.loads(collection_raw) if collection_raw else {}
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to parse JSON from namespace {self._namespace}: {str(e)}")
+                return None
+            
             collection[key] = secret
             secret = json.dumps(collection)
             key = self._namespace
@@ -59,7 +83,8 @@ class BaseSecretsProvider(abc.ABC):
         secret_id = self._namespace or key
         
         # Get the raw secret string
-        secret_text = self._get(secret_id)
+        secret_text = self._get_raw_secret(key=secret_id)
+        
         if secret_text is None:
             raise SecretNotFoundException(key)
             
@@ -69,14 +94,20 @@ class BaseSecretsProvider(abc.ABC):
         try:
             secrets_dict = json.loads(secret_text)
             if isinstance(secrets_dict, dict):
-                return secrets_dict.get(key)
+                secret_value = secrets_dict.get(key)
+                if secret_value is not None:
+                    return secret_value
+                else:
+                    message = f"get: Key '{key}' not found in namespace {self._namespace}"
+                    logger.warning(message)
+                    raise SecretNotFoundException(key)
             else:
                 message = f"get: Expected JSON object in namespace {self._namespace}, got: {type(secrets_dict)}"
                 logger.warning(message)
                 raise SecretProviderException(message)
         except json.JSONDecodeError as e:
             message = f"get: Failed to parse JSON from namespace {self._namespace}: {str(e)}"
-            logger.warning(message)
+            logger.error(message)
             return None
         
     
