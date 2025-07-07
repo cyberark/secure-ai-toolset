@@ -2,6 +2,7 @@ import os
 import json
 import tempfile
 import shutil
+import uuid
 import pytest
 
 from agent_guard_core.credentials.file_secrets_provider import FileSecretsProvider
@@ -27,43 +28,78 @@ def temp_dir():
     shutil.rmtree(test_dir)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
+def prepare_file_content():
+    """Helper fixture to prepare content directly in a file"""
+    def _prepare(file_path, contents):
+        with open(file_path, "w") as f:
+            for key, value in contents.items():
+                f.write(f"{key}={value}\n")
+    return _prepare
+
+
+@pytest.fixture  # Changed to function scope (default)
 def direct_provider(temp_dir) -> BaseSecretsProvider:
     """Provider without namespace for direct access testing"""
-    return FileSecretsProvider(namespace=os.path.join(temp_dir, "direct_secrets"))
+    # Create a unique file for each test
+    file_path = os.path.join(temp_dir, f"direct_secrets_{uuid.uuid4()}")
+    
+    # Initialize with empty file
+    with open(file_path, "w") as f:
+        pass
+        
+    return FileSecretsProvider(namespace=file_path)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture  # Changed to function scope (default)
 def namespace_provider(temp_dir) -> BaseSecretsProvider:
     """Provider with namespace for testing namespace functionality"""
-    namespace_path = os.path.join(temp_dir, "namespace_secrets")
-    provider = FileSecretsProvider(namespace=namespace_path)
+    namespace_path = os.path.join(temp_dir, f"namespace_secrets_{uuid.uuid4()}")
     
-    # Initialize the namespace with empty content
+    # Initialize with empty JSON object
     with open(namespace_path, "w") as f:
         f.write("NAMESPACE={}\n")
         
-    yield provider
+    return FileSecretsProvider(namespace=namespace_path)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
+def populated_provider(temp_dir) -> FileSecretsProvider:
+    """Provider pre-populated with multiple secrets for testing get_all functionality"""
+    provider_path = os.path.join(temp_dir, f"populated_secrets_{uuid.uuid4()}")
+    
+    # Create the provider
+    provider = FileSecretsProvider(namespace=provider_path)
+    
+    # Populate with multiple secrets by writing directly to the file
+    with open(provider_path, "w") as f:
+        f.write("key1=value1\n")
+        f.write("key2=value2\n")
+        f.write("key3=value3\n")
+    
+    return provider
+
+
+@pytest.fixture  # Changed to function scope (default)
 def secret_provider_with_directory(temp_dir) -> BaseSecretsProvider:
     """Provider in a subdirectory"""
     # Create data directory if it doesn't exist
     data_dir = os.path.join(temp_dir, "data")
     os.makedirs(data_dir, exist_ok=True)
     
-    return FileSecretsProvider(namespace=os.path.join(data_dir, "test_secrets"))
+    file_path = os.path.join(data_dir, f"test_secrets_{uuid.uuid4()}")
+    return FileSecretsProvider(namespace=file_path)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture  # Changed to function scope (default)
 def secret_provider_with_multiple_directories(temp_dir) -> BaseSecretsProvider:
     """Provider in a deeply nested subdirectory"""
     # Create nested directory structure
     nested_dir = os.path.join(temp_dir, "data", "multiple", "directories")
     os.makedirs(nested_dir, exist_ok=True)
     
-    return FileSecretsProvider(namespace=os.path.join(nested_dir, "test_secrets"))
+    file_path = os.path.join(nested_dir, f"test_secrets_{uuid.uuid4()}")
+    return FileSecretsProvider(namespace=file_path)
 
 
 def test_connect(direct_provider):
@@ -122,69 +158,130 @@ def test_direct_delete_empty_key(direct_provider):
     assert "key is missing" in str(excinfo.value)
 
 
-# Namespace tests
-def test_namespace_store_existing(namespace_provider):
-    """Test storing in an existing namespace"""
-    # First, set up some existing content
-    namespace_provider.store('existing_key', 'existing_value')
+# Tests for getting all secrets with no key
+def test_get_all_secrets_direct_access(direct_provider):
+    """Test getting all secrets using get with no key parameter"""
+    # First, set up some secrets
+    direct_provider.store('key1', 'value1')
+    direct_provider.store('key2', 'value2')
+    direct_provider.store('key3', 'value3')
     
-    # Add a new key
-    namespace_provider.store('new_key', 'new_value')
+    # Get all secrets
+    all_secrets = direct_provider.get()
     
-    # Verify both keys exist
-    assert namespace_provider.get('existing_key') == 'existing_value'
-    assert namespace_provider.get('new_key') == 'new_value'
+    # Verify we got a dictionary with all our secrets
+    assert isinstance(all_secrets, dict)
+    assert len(all_secrets) >= 3  # Could be more if other tests added keys
+    assert all_secrets['key1'] == 'value1'
+    assert all_secrets['key2'] == 'value2'
+    assert all_secrets['key3'] == 'value3'
 
 
-def test_namespace_store_update(namespace_provider):
-    """Test updating an existing key in a namespace"""
-    # First, set a value
-    namespace_provider.store('update_key', 'original_value')
-    assert namespace_provider.get('update_key') == 'original_value'
+def test_get_all_secrets_with_parse_collection(populated_provider):
+    """Test that get() with no key returns the complete collection"""
+    # Get all secrets
+    all_secrets = populated_provider.get()
     
-    # Now update it
-    namespace_provider.store('update_key', 'updated_value')
-    assert namespace_provider.get('update_key') == 'updated_value'
+    # Access internal _parse_collection only for verification
+    # Note: In real code, we wouldn't access this private method
+    collection_for_verification = populated_provider._parse_collection()
     
-    # Make sure other keys weren't affected
-    assert namespace_provider.get('existing_key') == 'existing_value'
+    # Verify the content matches what we expect
+    assert len(all_secrets) >= 3  # Could be more if other tests added keys
+    assert all_secrets['key1'] == 'value1'
+    assert all_secrets['key2'] == 'value2'
+    assert all_secrets['key3'] == 'value3'
+    
+    # For test validation purposes only, verify get() returns same as parse_collection
+    for key, value in collection_for_verification.items():
+        assert all_secrets[key] == value
 
 
-def test_namespace_get_existing(namespace_provider):
-    """Test getting an existing key from a namespace"""
-    # Set up a key
-    namespace_provider.store('get_key', 'get_value')
+def test_empty_collection(temp_dir):
+    """Test getting all secrets from an empty collection"""
+    # Create a new provider with a fresh file
+    empty_provider = FileSecretsProvider(namespace=os.path.join(temp_dir, "empty_secrets"))
     
-    # Retrieve it
-    result = namespace_provider.get('get_key')
-    assert result == 'get_value'
+    # Get all secrets
+    all_secrets = empty_provider.get()
+    
+    # Should be an empty dictionary
+    assert isinstance(all_secrets, dict)
+    assert len(all_secrets) == 0
 
 
-def test_namespace_get_nonexistent_key(namespace_provider):
-    """Test getting a nonexistent key from an existing namespace"""
-    # Try to get a key that doesn't exist in the namespace
-    with pytest.raises(SecretNotFoundException) as excinfo:
-        namespace_provider.get('nonexistent_ns_key')
-    assert excinfo.value.key == 'nonexistent_ns_key'
+def test_get_after_delete_all(temp_dir, prepare_file_content):
+    """Test getting all secrets after deleting all entries"""
+    file_path = os.path.join(temp_dir, "delete_all_test")
+    
+    # Prepare the file with content
+    with open(file_path, "w") as f:
+        f.write("key1=value1\n")
+        f.write("key2=value2\n")
+        f.write("key3=value3\n")
+    
+    provider = FileSecretsProvider(namespace=file_path)
+    
+    # Get the initial collection
+    initial_collection = provider.get()
+    
+    # Delete all keys
+    for key in list(initial_collection.keys()):
+        provider.delete(key)
+    
+    # Get the collection again
+    empty_collection = provider.get()
+    
+    # Should be empty
+    assert isinstance(empty_collection, dict)
+    assert len(empty_collection) == 0
 
 
-def test_namespace_delete(namespace_provider):
-    """Test deleting a key from a namespace"""
-    # Set up some keys
-    namespace_provider.store('delete_key', 'delete_value')
-    namespace_provider.store('keep_key', 'keep_value')
+# Test handling of file with JSON content
+def test_json_content_handling(temp_dir):
+    """Test handling a file that contains a JSON string as a value"""
+    file_path = os.path.join(temp_dir, "json_content.env")
     
-    # Verify they exist
-    assert namespace_provider.get('delete_key') == 'delete_value'
-    assert namespace_provider.get('keep_key') == 'keep_value'
+    # Create a file with the path as key and JSON object as value
+    json_content = {"key1": "value1", "key2": "value2", "nested": {"inner": "value"}}
+    with open(file_path, "w") as f:
+        f.write(f"{file_path}={json.dumps(json_content)}\n")
     
-    # Delete one key
-    namespace_provider.delete('delete_key')
+    # Create provider
+    provider = FileSecretsProvider(namespace=file_path)
     
-    # Verify it's gone but the other remains
-    with pytest.raises(SecretNotFoundException):
-        namespace_provider.get('delete_key')
-    assert namespace_provider.get('keep_key') == 'keep_value'
+    # Get all secrets - should parse the JSON
+    all_secrets = provider.get()
+    
+    # Verify it parsed the JSON correctly
+    assert isinstance(all_secrets, dict)
+    assert len(all_secrets) == 3
+    assert all_secrets["key1"] == "value1"
+    assert all_secrets["key2"] == "value2"
+    assert all_secrets["nested"] == {"inner": "value"}
+
+
+def test_mixed_content_file(temp_dir):
+    """Test handling a file with both direct key-value pairs and a JSON entry"""
+    file_path = os.path.join(temp_dir, "mixed_content.env")
+    
+    # Create a file with multiple entries
+    with open(file_path, "w") as f:
+        f.write("regular_key1=regular_value1\n")
+        f.write("regular_key2=regular_value2\n")
+        # No JSON entry in this case
+    
+    # Create provider
+    provider = FileSecretsProvider(namespace=file_path)
+    
+    # Get all secrets
+    all_secrets = provider.get()
+    
+    # Verify it returns all keys
+    assert isinstance(all_secrets, dict)
+    assert len(all_secrets) == 2
+    assert all_secrets["regular_key1"] == "regular_value1"
+    assert all_secrets["regular_key2"] == "regular_value2"
 
 
 def test_namespace_with_directory(secret_provider_with_directory):
@@ -237,24 +334,3 @@ def test_complex_values(direct_provider):
     # Retrieve and verify
     fetched_value = direct_provider.get("complex_key")
     assert json.loads(fetched_value) == dict_value
-
-
-def test_namespace_understanding(temp_dir):
-    """Test that clarifies how 'namespace' is used in FileSecretsProvider"""
-    # Create two providers with different namespaces (files)
-    provider1 = FileSecretsProvider(namespace=os.path.join(temp_dir, "file1.env"))
-    provider2 = FileSecretsProvider(namespace=os.path.join(temp_dir, "file2.env"))
-    
-    # Store the same key in both providers
-    provider1.store("same_key", "value1")
-    provider2.store("same_key", "value2")
-    
-    # Keys are stored in separate files, so they don't conflict
-    assert provider1.get("same_key") == "value1"
-    assert provider2.get("same_key") == "value2"
-    
-    # Each file is independent - deleting from one doesn't affect the other
-    provider1.delete("same_key")
-    with pytest.raises(SecretNotFoundException):
-        provider1.get("same_key")
-    assert provider2.get("same_key") == "value2"

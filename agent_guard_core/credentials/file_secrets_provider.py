@@ -1,7 +1,7 @@
 import os
 import json
 import logging
-from typing import Any, Optional, Dict, OrderedDict
+from typing import Any, Optional, Dict, Union
 
 from dotenv import dotenv_values
 
@@ -17,20 +17,15 @@ class FileSecretsProvider(BaseSecretsProvider):
     """
     FileSecretsProvider is a class that implements the BaseSecretsProvider interface.
     It provides methods to store, retrieve, and delete secrets in a file-based storage.
-    
-    This provider uses a .env file for storage. The namespace parameter specifies the path
-    to the file where secrets will be stored.
     """
 
-    def __init__(self, namespace: Optional[str] = ".env", **kwargs: Any) -> None:
+    def __init__(self, namespace: str = ".env", **kwargs: Any) -> None:
         """
         Initialize the FileSecretsProvider with a namespace.
 
         :param namespace: The file path where secrets will be stored.
          It can include slashes to represent a directory structure.
         """
-        super().__init__(namespace, **kwargs)
-
         if namespace is None:
             raise SecretProviderException("Namespace cannot be empty")
 
@@ -42,17 +37,19 @@ class FileSecretsProvider(BaseSecretsProvider):
         if base_path and not os.path.exists(base_path):
             os.makedirs(base_path, exist_ok=True)
 
-        # Convert relative paths to absolute
-        self.file_path = os.path.abspath(namespace)
+        namespace = os.path.abspath(
+            os.path.join(base_path, file_name))
 
         # Check if the file exists, if not, create it
-        if not os.path.exists(self.file_path):
+        if not os.path.exists(namespace):
             try:
-                with open(self.file_path, "w"):
+                with open(namespace, "w"):
                     pass  # Create an empty file
             except Exception as e:
                 raise SecretProviderException(
                     f"Failed to create secrets file: {e}")
+        
+        super().__init__(namespace=namespace, **kwargs)
 
     def connect(self) -> bool:
         """
@@ -64,19 +61,31 @@ class FileSecretsProvider(BaseSecretsProvider):
 
     def _parse_collection(self) -> Dict[str, str]:
         """
-        Parse the dotenv file and return its contents as a dictionary.
+        Helper method to parse the dotenv file and return its contents as a dictionary.
         
         :return: Dictionary containing the key-value pairs from the dotenv file
         :raises SecretProviderException: If there is an error reading or parsing the file
         """
         try:
-            if not os.path.exists(self.file_path):
+            if not os.path.exists(self._namespace):
                 return {}
                 
-            collection = dotenv_values(self.file_path)
+            collection = dotenv_values(self._namespace)
             if collection is None:
                 collection = {}
                 
+            # Check if this is actually a JSON string stored in the file
+            if len(collection) == 1 and list(collection.keys())[0] == self._namespace:
+                # This means the file contains a single entry with the file path as key
+                try:
+                    json_str = collection[self._namespace]
+                    parsed_json = json.loads(json_str)
+                    if isinstance(parsed_json, dict):
+                        return parsed_json
+                except (json.JSONDecodeError, TypeError):
+                    pass
+            
+            # Otherwise, return the collection as is
             return dict(collection)
             
         except Exception as e:
@@ -96,27 +105,29 @@ class FileSecretsProvider(BaseSecretsProvider):
             current_values = self._parse_collection() or {}
             current_values[key] = secret
 
-            with open(self.file_path, "w") as file:
-                for k, v in current_values.items():
+            with open(self._namespace, "w") as file:
+                for k, v in json.loads(secret).items():
                     file.write(f"{k}={v}\n")
         except Exception as ex:
             message = f"Failed to store secret {key}: {ex}"
             logger.error(message)
             raise SecretProviderException(message)
 
-    def _get(self, key: str) -> Optional[str]:
+    def _get(self, key: Optional[str] = None) -> Union[Optional[str], Dict[str, str]]:
         """
-        Retrieve a secret from the file.
+        Retrieve the entire collection of secrets from the file.
+        For FileSecretsProvider, we always return the entire collection and let the caller
+        filter for specific keys.
 
-        :param key: The key for the secret.
-        :return: The secret if it exists, otherwise None.
-        :raises SecretProviderException: If there is an error retrieving the secret.
+        :param key: Not used in this implementation. Included for compatibility with the interface.
+        :return: A dictionary of all key-value pairs from the file.
+        :raises SecretProviderException: If there is an error retrieving the secrets.
         """
         try:
-            collection = self._parse_collection()
-            return collection.get(key)
+            # Always return the entire collection, regardless of key
+            return self._parse_collection()
         except Exception as e:
-            message = f"Error retrieving secret: {str(e)}"
+            message = f"Error retrieving secrets from file {self._namespace}: {str(e)}"
             logger.error(message)
             raise SecretProviderException(message)
 
@@ -133,30 +144,16 @@ class FileSecretsProvider(BaseSecretsProvider):
             raise SecretProviderException(message)
 
         try:
-            # Check if we're working with a namespace
-            if self._namespace is not None:
-                # Get the namespace collection
-                collection_raw = self._get_raw_secret(key=self._namespace)
-                if collection_raw:
-                    try:
-                        collection = json.loads(collection_raw)
-                        if key in collection:
-                            del collection[key]
-                            # Store the updated collection back
-                            self._store(self._namespace, json.dumps(collection))
-                    except json.JSONDecodeError as e:
-                        message = f"Failed to parse JSON from namespace {self._namespace}: {str(e)}"
-                        logger.error(message)
-                        raise SecretProviderException(message)
-            else:
-                # Direct key-value storage
-                collection = self._parse_collection()
-                if key in collection:
-                    del collection[key]
-                    # Write the updated collection back to the file
-                    with open(self.file_path, "w") as file:
-                        for k, v in collection.items():
-                            file.write(f"{k}={v}\n")
+            collection = self._parse_collection()
+            
+            # Check if key exists in the collection
+            if key in collection:
+                del collection[key]
+                
+                # Write the updated collection back to the file
+                with open(self._namespace, "w") as file:
+                    for k, v in collection.items():
+                        file.write(f"{k}={v}\n")
         except Exception as e:
             message = f"Error deleting secret: {str(e)}"
             logger.error(message)

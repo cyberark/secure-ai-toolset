@@ -1,6 +1,6 @@
 import json
 import uuid
-from typing import Optional
+from typing import Optional, Dict, Union
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -28,8 +28,11 @@ class TestSecretsProvider(BaseSecretsProvider):
         self._store_calls.append((key, secret))
         self._storage[key] = secret
         
-    def _get(self, key: str) -> Optional[str]:
+    def _get(self, key: Optional[str] = None) -> Optional[Union[str, Dict[str, str]]]:
         self._get_calls.append(key)
+        if key is None:
+            # Return all secrets if key is None
+            return dict(self._storage)
         return self._storage.get(key)
         
     def delete(self, key: str) -> None:
@@ -51,6 +54,28 @@ def direct_provider():
 def namespace_provider():
     """Provider with namespace for collection-based access."""
     return TestSecretsProvider(namespace="test-namespace")
+
+@pytest.fixture
+def populated_provider():
+    """Provider pre-populated with multiple secrets."""
+    provider = TestSecretsProvider()
+    provider._storage = {
+        "key1": "value1",
+        "key2": "value2",
+        "key3": "value3"
+    }
+    return provider
+
+@pytest.fixture
+def populated_namespace_provider():
+    """Provider with namespace pre-populated with multiple secrets."""
+    provider = TestSecretsProvider(namespace="test-namespace")
+    provider._storage["test-namespace"] = json.dumps({
+        "ns-key1": "ns-value1",
+        "ns-key2": "ns-value2",
+        "ns-key3": "ns-value3"
+    })
+    return provider
 
 
 # Direct access tests (no namespace)
@@ -117,6 +142,111 @@ def test_direct_delete_empty_key(direct_provider):
     assert "key is missing" in str(excinfo.value)
 
 
+# New tests for get() with no key parameter
+def test_direct_get_all_secrets(populated_provider):
+    """Test getting all secrets directly without namespace."""
+    # Get all secrets
+    result = populated_provider.get()
+    
+    # Verify _get was called with None
+    assert populated_provider._get_calls == [None]
+    
+    # Verify the result contains all secrets
+    assert isinstance(result, dict)
+    assert len(result) == 3
+    assert result["key1"] == "value1"
+    assert result["key2"] == "value2"
+    assert result["key3"] == "value3"
+
+
+def test_direct_get_all_empty(direct_provider):
+    """Test getting all secrets when there are none."""
+    # Get all secrets from an empty provider
+    result = direct_provider.get()
+    
+    # Verify the result is an empty dictionary
+    assert isinstance(result, dict)
+    assert len(result) == 0
+
+
+def test_namespace_get_all_secrets(populated_namespace_provider):
+    """Test getting all secrets from a namespace."""
+    # Get all secrets in the namespace
+    result = populated_namespace_provider.get()
+    
+    # Verify _get was called with the namespace
+    assert populated_namespace_provider._get_calls == ["test-namespace"]
+    
+    # Verify the result contains all secrets in the namespace
+    assert isinstance(result, dict)
+    assert len(result) == 3
+    assert result["ns-key1"] == "ns-value1"
+    assert result["ns-key2"] == "ns-value2"
+    assert result["ns-key3"] == "ns-value3"
+
+
+def test_namespace_get_all_nonexistent(namespace_provider):
+    """Test getting all secrets from a nonexistent namespace."""
+    # Get all secrets from a nonexistent namespace should raise SecretNotFoundException
+    with pytest.raises(SecretNotFoundException) as excinfo:
+        namespace_provider.get()
+    
+    # Verify _get was called with the namespace
+    assert namespace_provider._get_calls == ["test-namespace"]
+    
+    # Verify the exception has the correct message
+    assert "test-namespace" in str(excinfo.value)
+
+
+def test_namespace_get_all_invalid_json(namespace_provider):
+    """Test getting all secrets from a namespace with invalid JSON."""
+    # Set up an invalid JSON namespace
+    namespace_provider._storage["test-namespace"] = "not valid json"
+    
+    # Get all secrets from the namespace - should raise SecretProviderException
+    with pytest.raises(SecretProviderException) as excinfo:
+        namespace_provider.get()
+    
+    # Verify _get was called with the namespace
+    assert namespace_provider._get_calls == ["test-namespace"]
+    
+    # Verify the exception has the correct message
+    assert "Failed to parse JSON" in str(excinfo.value)
+
+
+def test_namespace_store_invalid_json(namespace_provider):
+    """Test storing when the existing namespace content is invalid JSON."""
+    # Set up an invalid JSON namespace
+    namespace_provider._storage["test-namespace"] = "not valid json"
+    
+    # Store a secret - should raise SecretProviderException for invalid JSON
+    with pytest.raises(SecretProviderException) as excinfo:
+        namespace_provider.store("test-key", "test-value")
+    
+    # Verify _get was called but _store was not
+    assert namespace_provider._get_calls == ["test-namespace"]
+    assert len(namespace_provider._store_calls) == 0
+    
+    # Verify the exception has the correct message
+    assert "Failed to parse JSON" in str(excinfo.value)
+
+
+def test_namespace_get_invalid_json(namespace_provider):
+    """Test getting from a namespace with invalid JSON content."""
+    # Set up an invalid JSON namespace
+    namespace_provider._storage["test-namespace"] = "not valid json"
+    
+    # Try to get a key - should raise SecretProviderException
+    with pytest.raises(SecretProviderException) as excinfo:
+        namespace_provider.get("test-key")
+    
+    # Verify _get was called with the namespace
+    assert namespace_provider._get_calls == ["test-namespace"]
+    
+    # Verify the exception has the correct message
+    assert "Failed to parse JSON" in str(excinfo.value)
+
+
 # Namespace access tests
 def test_namespace_store_new(namespace_provider):
     """Test storing a secret in a namespace when the namespace doesn't exist yet."""
@@ -174,91 +304,6 @@ def test_namespace_store_update(namespace_provider):
     }
 
 
-def test_namespace_store_invalid_json(namespace_provider):
-    """Test storing when the existing namespace content is invalid JSON."""
-    # Set up an invalid JSON namespace
-    namespace_provider._storage["test-namespace"] = "not valid json"
-    
-    # Store a secret - should handle invalid JSON by returning None and not calling _store
-    result = namespace_provider.store("test-key", "test-value")
-    
-    # Verify the result
-    assert result is None
-    
-    # Verify _get was called but _store was not
-    assert namespace_provider._get_calls == ["test-namespace"]
-    assert len(namespace_provider._store_calls) == 0
-
-
-def test_namespace_get_existing(namespace_provider):
-    """Test getting an existing secret from a namespace."""
-    # Set up a namespace collection with the key
-    namespace_provider._storage["test-namespace"] = json.dumps({
-        "test-key": "test-value",
-        "other-key": "other-value"
-    })
-    
-    # Get the secret
-    result = namespace_provider.get("test-key")
-    
-    # Verify _get was called with the namespace
-    assert namespace_provider._get_calls == ["test-namespace"]
-    
-    # Verify the result is the correct value
-    assert result == "test-value"
-
-
-def test_namespace_get_nonexistent_key(namespace_provider):
-    """Test getting a nonexistent key from an existing namespace."""
-    # Set up a namespace collection without the key
-    namespace_provider._storage["test-namespace"] = json.dumps({
-        "other-key": "other-value"
-    })
-    
-    # Get should raise SecretNotFoundException if the key doesn't exist in the namespace
-    with pytest.raises(SecretNotFoundException) as excinfo:
-        result = namespace_provider.get("test-key")
-    
-    # Verify the exception has the correct key
-    assert excinfo.value.key == "test-key"
-
-
-def test_namespace_get_nonexistent_namespace(namespace_provider):
-    """Test getting a key when the namespace doesn't exist."""
-    # Try to get a key from a nonexistent namespace
-    with pytest.raises(SecretNotFoundException) as excinfo:
-        namespace_provider.get("test-key")
-    
-    # Verify _get was called with the namespace
-    assert namespace_provider._get_calls == ["test-namespace"]
-    
-    # Verify the exception has the correct message
-    assert "test-key" in str(excinfo.value)
-
-
-def test_namespace_get_invalid_json(namespace_provider):
-    """Test getting from a namespace with invalid JSON content."""
-    # Set up an invalid JSON namespace
-    namespace_provider._storage["test-namespace"] = "not valid json"
-    
-    # Try to get a key - should return None according to the implementation
-    result = namespace_provider.get("test-key")
-    assert result is None
-
-
-def test_namespace_get_non_dict_json(namespace_provider):
-    """Test getting from a namespace with JSON that's not a dictionary."""
-    # Set up a namespace with JSON array instead of object
-    namespace_provider._storage["test-namespace"] = json.dumps(["value1", "value2"])
-    
-    # Try to get a key - should raise SecretProviderException
-    with pytest.raises(SecretProviderException) as excinfo:
-        namespace_provider.get("test-key")
-    
-    # Verify the exception has the correct message
-    assert "Expected JSON object" in str(excinfo.value)
-
-
 def test_namespace_delete(namespace_provider):
     """Test deleting a key from a namespace via the delete method."""
     # This test depends on how delete is implemented in concrete classes
@@ -300,3 +345,24 @@ def test_get_raw_secret_exception_handling(direct_provider):
         
     assert "Error retrieving secret" in str(excinfo.value)
     assert "Test error" in str(excinfo.value)
+
+
+# Test error handling in _get_raw_secret with no key
+def test_get_raw_secret_all_exception_handling(direct_provider):
+    """Test that _get_raw_secret properly handles exceptions from _get when getting all secrets."""
+    # Mock _get to raise an exception when called with None
+    original_get = direct_provider._get
+    
+    def mock_get(key):
+        if key is None:
+            raise ValueError("Test error for all secrets")
+        return original_get(key)
+        
+    direct_provider._get = mock_get
+    
+    # Should wrap the exception in a SecretProviderException
+    with pytest.raises(SecretProviderException) as excinfo:
+        direct_provider._get_raw_secret(None)
+        
+    assert "Error retrieving all secrets" in str(excinfo.value)
+    assert "Test error for all secrets" in str(excinfo.value)

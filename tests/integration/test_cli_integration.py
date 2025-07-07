@@ -11,7 +11,8 @@ from click.testing import CliRunner
 @pytest.fixture
 def cli_module():
     from agent_guard_core.cli import cli
-    return cli
+    # Return the actual Click command object, not the module
+    return cli.cli
 
 from agent_guard_core.config.config_manager import ConfigurationOptions
 from agent_guard_core.credentials.enum import CredentialsProvider
@@ -156,7 +157,7 @@ def test_config_list_command(runner, temp_config_home, cli_module):
 
     # Check that the output contains the expected configuration
     assert "Agent Guard Configuration:" in result.output
-    assert f'"{ConfigurationOptions.SECRET_PROVIDER.name}": "{CredentialsProvider.FILE_DOTENV.value}"' in result.output
+    assert f'SECRET_PROVIDER={CredentialsProvider.FILE_DOTENV.value}' in result.output
 
 
 def test_secrets_set_and_get_commands(runner, temp_config_home, temp_secrets_dir, cli_module):

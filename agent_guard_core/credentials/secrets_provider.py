@@ -3,7 +3,7 @@
 import abc
 import json
 import logging
-from typing import Optional, Type
+from typing import Optional, Type, Dict, Union, Any
 
 from agent_guard_core.utils.flavor_manager import FlavorManager
 
@@ -21,28 +21,52 @@ class SecretNotFoundException(SecretProviderException):
         self.key = key
         
 class BaseSecretsProvider(abc.ABC):
-
+    
     def __init__(self, namespace: Optional[str] = None, **kwargs) -> None:
         self._namespace = namespace
 
-    def _get_raw_secret(self, key: str) -> Optional[str]:
+    def _get_raw_secret(self, key: Optional[str] = None) -> Optional[Union[str, Dict[str, Any]]]:
         """
         Retrieves the raw secret value from the provider by key.
+        If key is None, retrieves all secrets.
         
-        :param key: The name of the secret to retrieve.
-        :return: The raw secret string or None if not found.
+        :param key: The name of the secret to retrieve, or None to get all secrets.
+        :return: The raw secret string, a dictionary of all secrets, or None if not found.
         :raises SecretProviderException: If there is an error retrieving the secret.
         """
         try:
             return self._get(key)
         except Exception as e:
-            message = f"Error retrieving secret: {str(e)}"
+            message = f"Error retrieving {'all secrets' if key is None else f'secret: {key}'}: {str(e)}"
             logger.error(message)
             raise SecretProviderException(message)
     
+    def _try_parse(self, raw_secret: str) -> Union[str, Dict[str, str]]:
+        """
+        Parses the raw secret string into a dictionary or returns it as is if it's already a dictionary.
+        :param raw_secret: The raw secret string to parse.
+        :return: A dictionary representation of the secret or the raw string if it's not JSON.
+        :raises SecretProviderException: If raw_secret is None or if parsing fails.
+        """
+        if raw_secret is None:
+            logger.error("Raw secret is None")
+            raise SecretProviderException("Raw secret is None")
+        if isinstance(raw_secret, str):
+            try:
+                return json.loads(raw_secret)
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to parse JSON: {str(e)}")
+                raise SecretProviderException(f"Failed to parse JSON: {str(e)}")
+        elif isinstance(raw_secret, dict):
+            return raw_secret
+        else:
+            logger.error(f"Unexpected type for raw secret: {type(raw_secret)}")
+            raise SecretProviderException(f"Unexpected type for raw secret: {type(raw_secret)}")
+        
+    
     def store(self, key: str, secret: str) -> None:
         """
-        Stores a secret in AWS Secrets Manager.
+        Stores a secret in the secrets provider.
         
         If namespace is provided, stores the secret as a key in the namespace collection.
         Otherwise, stores the secret directly with its key as the SecretId.
@@ -51,32 +75,35 @@ class BaseSecretsProvider(abc.ABC):
         :param secret: The secret value to store (string).
         :raises SecretProviderException: If key or secret is missing or if there is an error storing the secret.
         """
-
         if self._namespace is not None:
-            
-            collection_raw = self._get_raw_secret(key=self._namespace)
-
-            try:
-                collection = json.loads(collection_raw) if collection_raw else {}
-            except json.JSONDecodeError as e:
-                logger.error(f"Failed to parse JSON from namespace {self._namespace}: {str(e)}")
-                return None
-            
+            raw_secret = self._get_raw_secret(key=self._namespace)
+            if raw_secret is None:
+                # If the namespace doesn't exist, create a new collection
+                collection = {}
+            else:
+                # Parse the existing collection
+                try:
+                    collection = self._try_parse(raw_secret)
+                except SecretProviderException as e:
+                    logger.error(f"Failed to parse existing secrets in namespace {self._namespace}: {str(e)}")
+                    raise e
             collection[key] = secret
             secret = json.dumps(collection)
             key = self._namespace
         
         self._store(key, secret)
 
-    def get(self, key: Optional[str]) -> str:
+    def get(self, key: Optional[str] = None) -> Union[str, Dict[str, str]]:
         """
-        Retrieves a secret from AWS Secrets Manager by key.
+        Retrieves a secret or all secrets from the provider.
         
-        If namespace is provided, gets the secret as a key in the namespace collection.
-        Otherwise, gets the secret directly by its key.
+        If key is None and namespace is None, returns all secrets.
+        If key is None and namespace is provided, returns all secrets in the namespace.
+        If key is provided and namespace is None, gets the specific secret.
+        If key is provided and namespace is provided, gets the specific secret from the namespace.
         
-        :param key: The name of the secret to retrieve.
-        :return: The secret value if retrieval is successful, None otherwise.
+        :param key: The name of the secret to retrieve, or None to get all secrets.
+        :return: The secret value if key is provided, or a dictionary of all secrets if key is None.
         :raises SecretProviderException: If there is an error retrieving the secret.
         """
         # Determine which secret ID to use
@@ -86,29 +113,28 @@ class BaseSecretsProvider(abc.ABC):
         secret_text = self._get_raw_secret(key=secret_id)
         
         if secret_text is None:
-            raise SecretNotFoundException(key)
+            raise SecretNotFoundException(f"{secret_id}:{key}" if key else secret_id)
             
         if self._namespace is None:
             return secret_text
         
-        try:
-            secrets_dict = json.loads(secret_text)
-            if isinstance(secrets_dict, dict):
-                secret_value = secrets_dict.get(key)
-                if secret_value is not None:
-                    return secret_value
-                else:
-                    message = f"get: Key '{key}' not found in namespace {self._namespace}"
-                    logger.warning(message)
-                    raise SecretNotFoundException(key)
+        secrets_dict = self._try_parse(secret_text)
+        if isinstance(secrets_dict, dict):
+            if self._namespace and key is None:
+                # If no key is provided, return all secrets in the namespace
+                return secrets_dict
+            # If a key is provided, return the specific secret
+            secret_value = secrets_dict.get(key)
+            if secret_value is not None:
+                return secret_value
             else:
-                message = f"get: Expected JSON object in namespace {self._namespace}, got: {type(secrets_dict)}"
+                message = f"get: Key '{key}' not found in namespace {self._namespace}"
                 logger.warning(message)
-                raise SecretProviderException(message)
-        except json.JSONDecodeError as e:
-            message = f"get: Failed to parse JSON from namespace {self._namespace}: {str(e)}"
-            logger.error(message)
-            return None
+                raise SecretNotFoundException(key)
+        else:
+            message = f"get: Expected JSON object in namespace {self._namespace}, got: {type(secrets_dict)}"
+            logger.warning(message)
+            raise SecretProviderException(message)
         
     
     @abc.abstractmethod
@@ -120,7 +146,7 @@ class BaseSecretsProvider(abc.ABC):
         ...
 
     @abc.abstractmethod
-    def _get(self, key: str) -> Optional[str]:
+    def _get(self, key: Optional[str] = None) -> Optional[Union[str, Dict[str, str]]]:
         ...
 
     @abc.abstractmethod

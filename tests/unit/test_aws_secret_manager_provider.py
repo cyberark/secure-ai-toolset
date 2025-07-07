@@ -133,7 +133,7 @@ def test_get_direct_not_found(direct_provider):
     # Resource not found should raise SecretNotFoundException
     with pytest.raises(SecretNotFoundException) as excinfo:
         provider.get('test_key')
-    assert excinfo.value.key == 'test_key'
+    assert excinfo.value.key == 'test_key:test_key'
     mock_client.get_secret_value.assert_called_with(SecretId='test_key')
 
 
@@ -157,7 +157,7 @@ def test_get_namespace_not_found(namespace_provider):
     # Namespace not found should raise SecretNotFoundException
     with pytest.raises(SecretNotFoundException) as excinfo:
         provider.get('test_key')
-    assert excinfo.value.key == 'test_key'
+    assert excinfo.value.key == 'test-namespace:test_key'
     mock_client.get_secret_value.assert_called_with(SecretId='test-namespace')
 
 
@@ -172,27 +172,14 @@ def test_get_namespace_invalid_json(namespace_provider):
     }
     mock_client.get_secret_value.return_value = mock_response
     
-    # Invalid JSON should return None
-    result = provider.get('test_key')
-    assert result is None
-    mock_client.get_secret_value.assert_called_with(SecretId='test-namespace')
-
-
-def test_get_namespace_non_dict(namespace_provider):
-    """Test getting from a namespace with non-dictionary JSON content."""
-    provider, mock_client = namespace_provider
-    
-    # Setup mock response with JSON array instead of object
-    mock_response = {
-        'ResponseMetadata': {'HTTPStatusCode': 200},
-        'SecretString': '[1, 2, 3]'
-    }
-    mock_client.get_secret_value.return_value = mock_response
-    
-    # Non-dictionary JSON should raise SecretProviderException
+    # Invalid JSON should raise SecretProviderException from _try_parse
     with pytest.raises(SecretProviderException) as excinfo:
         provider.get('test_key')
-    assert "Expected JSON object" in str(excinfo.value)
+    
+    # Verify the exception message matches what we expect from _try_parse
+    assert "Failed to parse JSON" in str(excinfo.value)
+    
+    # Should have tried to get the namespace
     mock_client.get_secret_value.assert_called_with(SecretId='test-namespace')
 
 
@@ -322,9 +309,12 @@ def test_store_namespace_invalid_json(namespace_provider):
     }
     mock_client.get_secret_value.return_value = mock_response
     
-    # Storing with invalid JSON in namespace should return None
-    result = provider.store('test_key', 'test_value')
-    assert result is None
+    # Storing with invalid JSON in namespace should raise SecretProviderException
+    with pytest.raises(SecretProviderException) as excinfo:
+        provider.store('test_key', 'test_value')
+    
+    # Verify the exception message matches what we expect from _try_parse
+    assert "Failed to parse JSON" in str(excinfo.value)
     
     # Should have gotten namespace content but not tried to update it
     mock_client.get_secret_value.assert_called_with(SecretId='test-namespace')

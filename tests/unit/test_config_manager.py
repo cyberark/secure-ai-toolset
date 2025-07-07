@@ -13,7 +13,6 @@ class DummyFileSecretsProvider:
     _shared_storage = {}
 
     def __init__(self, namespace):
-        self.file_path = namespace
         # Ensure the file exists
         Path(namespace).parent.mkdir(parents=True, exist_ok=True)
         if not os.path.exists(namespace):

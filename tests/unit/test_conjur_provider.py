@@ -182,9 +182,17 @@ def test_namespace_get_invalid_json(mock_get, mock_conjur_provider):
     namespace_response.text = "not valid json"
     mock_get.return_value = namespace_response
     
-    # Should return None for invalid JSON
-    result = mock_conjur_provider.get("test-key")
-    assert result is None
+    # Should raise SecretProviderException for invalid JSON
+    with pytest.raises(SecretProviderException) as excinfo:
+        mock_conjur_provider.get("test-key")
+    
+    # Verify the exception has the correct message
+    assert "Failed to parse JSON" in str(excinfo.value)
+    
+    # Verify the request was made with the namespace
+    mock_get.assert_called_once()
+    args, kwargs = mock_get.call_args
+    assert "test-namespace" in args[0]
 
 
 @patch('agent_guard_core.credentials.conjur_secrets_provider.requests.post')
