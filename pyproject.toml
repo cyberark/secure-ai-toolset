@@ -31,7 +31,7 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [project.scripts]
-agc = "agent_guard_core.cli:cli"
+agc = "agent_guard_core.cli.cli:cli"
 
 [project.optional-dependencies]
 dev = [
