@@ -2,15 +2,18 @@
 import asyncio
 import json
 import logging
+import os
 import sys
 import uuid
 from enum import Enum
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import click
 from mcp import ClientSession, StdioServerParameters, stdio_client, stdio_server
 
+from agent_guard_core.credentials.secrets_provider import BaseSecretsProvider, secrets_provider_fm
+from agent_guard_core.model.secret_uri import SecretUri
 from agent_guard_core.proxy.audited_proxy import create_agent_guard_proxy_server
 from agent_guard_core.proxy.proxy_utils import get_audit_logger
 from agent_guard_core.utils.mcp_config_wizard import transform_mcp_servers
@@ -23,13 +26,24 @@ class ProxyCapability(str, Enum):
 
 cap_options = click.Choice([e.value for e in ProxyCapability])
 
-def cap_option(f):
+def cap_option(f) -> Any:
     return click.option("--cap", "-c", type=cap_options, help="Enable specific capabilities for the MCP proxy. Use multiple -c"
                                                               f"options to enable multiple capabilities. One of: {' '.join(cap_options.choices)}", 
                                                               multiple=True)(f)
 
+def secret_uri_option(f) -> Any:
+    return click.option(
+        '--secret-uri',
+        '-s',
+        help="Secret URI to fetch credentials from. Format: <provider>://<key>[/<env_var>]. "
+             "Example: conjur://mysecret/MY_ENV_VAR",
+        type=str,
+        required=False,
+        multiple=True
+    )(f)
+
 @click.group(help="Commands to manage Agent Guard MCP proxy.")
-def mcp_proxy():
+def mcp_proxy() -> Any:
     pass
 
 
@@ -43,17 +57,27 @@ def mcp_proxy():
     help="debug mode"
 )
 @cap_option
+@secret_uri_option
 @click.argument('argv', nargs=-1)
-def mcp_proxy_start(is_debug: bool = False, cap: Optional[list[ProxyCapability]] = None, argv: tuple[str] = ()):
+def mcp_proxy_start(is_debug: bool = False, 
+                    cap: Optional[list[ProxyCapability]] = None, 
+                    secret_uri: Optional[list[str]] = None,
+                    argv: tuple[str] = ()):
     if cap is None:
         cap = []
-    
+    if secret_uri is None:
+        secret_uri = []
+
     if is_debug:
         logging.disable(logging.NOTSET)
         
-    asyncio.run(_stdio_mcp_proxy_async(argv=argv, cap=cap, is_debug=is_debug))
+    asyncio.run(_stdio_mcp_proxy_async(argv=argv, cap=cap, secret_uris=secret_uri, is_debug=is_debug))
 
-async def _stdio_mcp_proxy_async(cap: list[ProxyCapability], argv: tuple[str] = (), is_debug: bool = False):
+async def _stdio_mcp_proxy_async(cap: list[ProxyCapability], 
+                                 secret_uris: list[str],
+                                 argv: tuple[str] = (), 
+                                 is_debug: bool = False
+                                 ):
     session_id = uuid.uuid4().hex
     logger.debug(f"Starting up oroxy with session id {session_id}")
     stdio_params: Optional[StdioServerParameters] = None
@@ -63,6 +87,10 @@ async def _stdio_mcp_proxy_async(cap: list[ProxyCapability], argv: tuple[str] = 
     
     stdio_params = StdioServerParameters(command=argv[0], args=argv[1:])
     proxy_logger: Optional[logging.Logger] = None
+
+    if secret_uris:
+        logger.debug(f"Using secret URIs: {secret_uris}")
+        apply_secrets(secret_uris)
 
     if ProxyCapability.AUDIT in cap:
         logger.debug("Enabling audit logging for the MCP proxy.")
@@ -116,3 +144,28 @@ def proxy_apply_config(mcp_config_file: Optional[str] = None, cap: Optional[tupl
             except Exception as ex:
                 logger.debug(f"Error reading MCP config file {config_file}: {ex}")
                 continue
+
+def apply_secrets(secret_uris: list[str]) -> None:
+    provider_map: dict[str, BaseSecretsProvider] = {}
+
+    for uri in secret_uris:
+        secret_uri: Optional[SecretUri] = None
+
+        try:
+            secret_uri = SecretUri.from_uri(uri)
+        except Exception as e:
+            logger.warning(f"Failed to parse secret URI '{uri}': {e}")
+            continue
+        
+        provider = provider_map.setdefault(secret_uri.provider, secrets_provider_fm.get(secret_uri.provider)())
+
+        if not provider.connect():
+            raise click.ClickException(f"Failed to connect to provider: {provider}")
+        
+        secret = provider.get(key=secret_uri.key)
+        if secret is None:
+            logger.warning(f"Secret '{secret_uri.key}' not found in provider '{secret_uri.provider}'")
+            continue
+
+        logger.debug(f"Setting environment variable '{secret_uri.env_var}' with secret value")
+        os.environ[secret_uri.env_var] = secret

@@ -7,7 +7,6 @@ from typing import Any, Optional
 import click
 
 from agent_guard_core.config.config_manager import ConfigManager, ConfigurationOptions
-from agent_guard_core.credentials import secrets_provider
 from agent_guard_core.credentials.enum import AwsEnvVars, ConjurEnvVars, CredentialsProvider, GcpEnvVars
 from agent_guard_core.credentials.gcp_secrets_manager_provider import DEFAULT_PROJECT_ID, DEFAULT_REPLICATION_TYPE
 from agent_guard_core.credentials.secrets_provider import BaseSecretsProvider, secrets_provider_fm
