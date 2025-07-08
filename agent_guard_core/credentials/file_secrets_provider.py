@@ -67,25 +67,12 @@ class FileSecretsProvider(BaseSecretsProvider):
         :raises SecretProviderException: If there is an error reading or parsing the file
         """
         try:
+            collection = {}
             if not os.path.exists(self._namespace):
-                return {}
+                return collection
                 
             collection = dotenv_values(self._namespace)
-            if collection is None:
-                collection = {}
                 
-            # Check if this is actually a JSON string stored in the file
-            if len(collection) == 1 and list(collection.keys())[0] == self._namespace:
-                # This means the file contains a single entry with the file path as key
-                try:
-                    json_str = collection[self._namespace]
-                    parsed_json = json.loads(json_str)
-                    if isinstance(parsed_json, dict):
-                        return parsed_json
-                except (json.JSONDecodeError, TypeError):
-                    pass
-            
-            # Otherwise, return the collection as is
             return dict(collection)
             
         except Exception as e:

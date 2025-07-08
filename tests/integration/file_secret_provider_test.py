@@ -237,30 +237,6 @@ def test_get_after_delete_all(temp_dir, prepare_file_content):
     assert len(empty_collection) == 0
 
 
-# Test handling of file with JSON content
-def test_json_content_handling(temp_dir):
-    """Test handling a file that contains a JSON string as a value"""
-    file_path = os.path.join(temp_dir, "json_content.env")
-    
-    # Create a file with the path as key and JSON object as value
-    json_content = {"key1": "value1", "key2": "value2", "nested": {"inner": "value"}}
-    with open(file_path, "w") as f:
-        f.write(f"{file_path}={json.dumps(json_content)}\n")
-    
-    # Create provider
-    provider = FileSecretsProvider(namespace=file_path)
-    
-    # Get all secrets - should parse the JSON
-    all_secrets = provider.get()
-    
-    # Verify it parsed the JSON correctly
-    assert isinstance(all_secrets, dict)
-    assert len(all_secrets) == 3
-    assert all_secrets["key1"] == "value1"
-    assert all_secrets["key2"] == "value2"
-    assert all_secrets["nested"] == {"inner": "value"}
-
-
 def test_mixed_content_file(temp_dir):
     """Test handling a file with both direct key-value pairs and a JSON entry"""
     file_path = os.path.join(temp_dir, "mixed_content.env")
@@ -334,3 +310,92 @@ def test_complex_values(direct_provider):
     # Retrieve and verify
     fetched_value = direct_provider.get("complex_key")
     assert json.loads(fetched_value) == dict_value
+
+
+def test_env_file_format_handling(temp_dir):
+    """Test handling a typical .env file with various environment variable formats"""
+    file_path = os.path.join(temp_dir, "typical.env")
+    
+    # Create a file with typical .env file content
+    with open(file_path, "w") as f:
+        f.write("""# Database configuration
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=myapp
+DB_USER=admin
+DB_PASSWORD=s3cr3t!
+
+# API configuration
+API_URL=https://api.example.com/v1
+API_KEY=abcdef123456
+API_TIMEOUT=30
+
+# Feature flags
+FEATURE_DEBUG=true
+FEATURE_EXPERIMENTAL=false
+
+# Values with spaces and special characters
+USER_AGENT=Mozilla/5.0 (Windows NT 10.0; Win64; x64)
+WELCOME_MESSAGE=Hello, world! Welcome to our application.
+
+# Empty value
+EMPTY_VALUE=
+
+# Quoted values
+QUOTED_STRING="This is a quoted string with spaces"
+SINGLE_QUOTED='Single quoted string'
+
+# Comments and spacing should be ignored
+
+# Environment selection
+ENV=development
+""")
+    
+    # Create provider
+    provider = FileSecretsProvider(namespace=file_path)
+    
+    # Get all environment variables
+    env_vars = provider.get()
+    
+    # Verify basic parsing works
+    assert isinstance(env_vars, dict)
+    assert len(env_vars) == 16  # All keys except comments
+    
+    # Test database config
+    assert env_vars["DB_HOST"] == "localhost"
+    assert env_vars["DB_PORT"] == "5432"
+    assert env_vars["DB_NAME"] == "myapp"
+    assert env_vars["DB_USER"] == "admin"
+    assert env_vars["DB_PASSWORD"] == "s3cr3t!"
+    
+    # Test API config
+    assert env_vars["API_URL"] == "https://api.example.com/v1"
+    assert env_vars["API_KEY"] == "abcdef123456"
+    assert env_vars["API_TIMEOUT"] == "30"
+    
+    # Test feature flags
+    assert env_vars["FEATURE_DEBUG"] == "true"
+    assert env_vars["FEATURE_EXPERIMENTAL"] == "false"
+    
+    # Test complex values
+    assert env_vars["USER_AGENT"] == "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+    assert env_vars["WELCOME_MESSAGE"] == "Hello, world! Welcome to our application."
+    
+    # Test empty value
+    assert env_vars["EMPTY_VALUE"] == ""
+    
+    # Test quoted values (quotes typically preserved by dotenv)
+    assert env_vars["QUOTED_STRING"] == "This is a quoted string with spaces"
+    assert env_vars["SINGLE_QUOTED"] == "Single quoted string"
+    
+    # Test environment
+    assert env_vars["ENV"] == "development"
+    
+    # Test storing and retrieving a new variable
+    provider.store("NEW_VARIABLE", "new_value")
+    assert provider.get("NEW_VARIABLE") == "new_value"
+    
+    # Get all variables again to check persistence
+    updated_vars = provider.get()
+    assert updated_vars["NEW_VARIABLE"] == "new_value"
+    assert len(updated_vars) == 17  # Original 15 + 1 new
