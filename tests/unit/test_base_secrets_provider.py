@@ -15,18 +15,12 @@ class TestSecretsProvider(BaseSecretsProvider):
     def __init__(self, namespace: Optional[str] = None, **kwargs):
         super().__init__(namespace, **kwargs)
         self._connect_called = False
-        self._store_calls = []
         self._get_calls = []
-        self._delete_calls = []
         self._storage = {}  # In-memory storage for testing
         
     def connect(self) -> bool:
         self._connect_called = True
         return True
-        
-    def _store(self, key: str, secret: str) -> None:
-        self._store_calls.append((key, secret))
-        self._storage[key] = secret
         
     def _get(self, key: Optional[str] = None) -> Optional[Union[str, Dict[str, str]]]:
         self._get_calls.append(key)
@@ -34,14 +28,6 @@ class TestSecretsProvider(BaseSecretsProvider):
             # Return all secrets if key is None
             return dict(self._storage)
         return self._storage.get(key)
-        
-    def delete(self, key: str) -> None:
-        if not key:
-            raise SecretProviderException("delete: key is missing")
-            
-        self._delete_calls.append(key)
-        if key in self._storage:
-            del self._storage[key]
 
 
 # Fixtures
@@ -79,17 +65,6 @@ def populated_namespace_provider():
 
 
 # Direct access tests (no namespace)
-def test_direct_store(direct_provider):
-    """Test storing a secret directly without namespace."""
-    direct_provider.store("test-key", "test-value")
-    
-    # Verify _store was called with the correct arguments
-    assert direct_provider._store_calls == [("test-key", "test-value")]
-    
-    # Verify the secret was stored
-    assert direct_provider._storage["test-key"] == "test-value"
-    
-
 def test_direct_get(direct_provider):
     """Test getting a secret directly without namespace."""
     # Store a secret first
@@ -116,30 +91,6 @@ def test_direct_get_nonexistent(direct_provider):
     
     # Verify the exception has the correct message
     assert "nonexistent-key" in str(excinfo.value)
-
-
-def test_direct_delete(direct_provider):
-    """Test deleting a secret directly without namespace."""
-    # Store a secret first
-    direct_provider._storage["test-key"] = "test-value"
-    
-    # Delete the secret
-    direct_provider.delete("test-key")
-    
-    # Verify delete was called with the correct arguments
-    assert direct_provider._delete_calls == ["test-key"]
-    
-    # Verify the secret was deleted
-    assert "test-key" not in direct_provider._storage
-
-
-def test_direct_delete_empty_key(direct_provider):
-    """Test deleting with an empty key."""
-    with pytest.raises(SecretProviderException) as excinfo:
-        direct_provider.delete("")
-        
-    # Verify the exception has the correct message
-    assert "key is missing" in str(excinfo.value)
 
 
 # New tests for get() with no key parameter
@@ -214,23 +165,6 @@ def test_namespace_get_all_invalid_json(namespace_provider):
     assert "Failed to parse JSON" in str(excinfo.value)
 
 
-def test_namespace_store_invalid_json(namespace_provider):
-    """Test storing when the existing namespace content is invalid JSON."""
-    # Set up an invalid JSON namespace
-    namespace_provider._storage["test-namespace"] = "not valid json"
-    
-    # Store a secret - should raise SecretProviderException for invalid JSON
-    with pytest.raises(SecretProviderException) as excinfo:
-        namespace_provider.store("test-key", "test-value")
-    
-    # Verify _get was called but _store was not
-    assert namespace_provider._get_calls == ["test-namespace"]
-    assert len(namespace_provider._store_calls) == 0
-    
-    # Verify the exception has the correct message
-    assert "Failed to parse JSON" in str(excinfo.value)
-
-
 def test_namespace_get_invalid_json(namespace_provider):
     """Test getting from a namespace with invalid JSON content."""
     # Set up an invalid JSON namespace
@@ -245,77 +179,6 @@ def test_namespace_get_invalid_json(namespace_provider):
     
     # Verify the exception has the correct message
     assert "Failed to parse JSON" in str(excinfo.value)
-
-
-# Namespace access tests
-def test_namespace_store_new(namespace_provider):
-    """Test storing a secret in a namespace when the namespace doesn't exist yet."""
-    # Store a secret in the namespace
-    namespace_provider.store("test-key", "test-value")
-    
-    # Verify _get and _store were called correctly
-    assert namespace_provider._get_calls == ["test-namespace"]
-    assert len(namespace_provider._store_calls) == 1
-    assert namespace_provider._store_calls[0][0] == "test-namespace"
-    
-    # Verify the JSON structure
-    stored_json = json.loads(namespace_provider._store_calls[0][1])
-    assert stored_json == {"test-key": "test-value"}
-
-
-def test_namespace_store_existing(namespace_provider):
-    """Test storing a secret in an existing namespace."""
-    # Set up an existing namespace collection
-    namespace_provider._storage["test-namespace"] = json.dumps({
-        "existing-key": "existing-value"
-    })
-    
-    # Store a new secret in the namespace
-    namespace_provider.store("test-key", "test-value")
-    
-    # Verify _get and _store were called correctly
-    assert namespace_provider._get_calls == ["test-namespace"]
-    assert len(namespace_provider._store_calls) == 1
-    
-    # Verify the JSON structure contains both keys
-    stored_json = json.loads(namespace_provider._store_calls[0][1])
-    assert stored_json == {
-        "existing-key": "existing-value",
-        "test-key": "test-value"
-    }
-
-
-def test_namespace_store_update(namespace_provider):
-    """Test updating an existing secret in a namespace."""
-    # Set up an existing namespace collection with the key
-    namespace_provider._storage["test-namespace"] = json.dumps({
-        "test-key": "old-value",
-        "other-key": "other-value"
-    })
-    
-    # Update the existing secret
-    namespace_provider.store("test-key", "new-value")
-    
-    # Verify the JSON structure has the updated value
-    stored_json = json.loads(namespace_provider._store_calls[0][1])
-    assert stored_json == {
-        "test-key": "new-value",
-        "other-key": "other-value"
-    }
-
-
-def test_namespace_delete(namespace_provider):
-    """Test deleting a key from a namespace via the delete method."""
-    # This test depends on how delete is implemented in concrete classes
-    # Since BaseSecretsProvider doesn't implement namespace-aware delete,
-    # we'll just verify the delete method is called
-    namespace_provider._storage["test-namespace"] = json.dumps({
-        "test-key": "test-value", 
-        "other-key": "other-value"
-    })
-    
-    namespace_provider.delete("test-key")
-    assert namespace_provider._delete_calls == ["test-key"]
 
 
 # Abstract class verification
@@ -366,3 +229,54 @@ def test_get_raw_secret_all_exception_handling(direct_provider):
         
     assert "Error retrieving all secrets" in str(excinfo.value)
     assert "Test error for all secrets" in str(excinfo.value)
+
+
+# Test the _try_parse method
+def test_try_parse_none():
+    """Test that _try_parse handles None input."""
+    provider = TestSecretsProvider()
+    
+    with pytest.raises(SecretProviderException) as excinfo:
+        provider._try_parse(None)
+    
+    assert "Raw secret is None" in str(excinfo.value)
+
+
+def test_try_parse_string_json():
+    """Test that _try_parse correctly parses JSON strings."""
+    provider = TestSecretsProvider()
+    
+    result = provider._try_parse('{"key": "value"}')
+    assert isinstance(result, dict)
+    assert result == {"key": "value"}
+
+
+def test_try_parse_string_invalid_json():
+    """Test that _try_parse raises exception for invalid JSON strings."""
+    provider = TestSecretsProvider()
+    
+    with pytest.raises(SecretProviderException) as excinfo:
+        provider._try_parse('not valid json')
+    
+    assert "Failed to parse JSON" in str(excinfo.value)
+
+
+def test_try_parse_dict():
+    """Test that _try_parse passes through dictionaries."""
+    provider = TestSecretsProvider()
+    
+    input_dict = {"key": "value"}
+    result = provider._try_parse(input_dict)
+    
+    assert result is input_dict
+    assert result == {"key": "value"}
+
+
+def test_try_parse_invalid_type():
+    """Test that _try_parse raises exception for invalid types."""
+    provider = TestSecretsProvider()
+    
+    with pytest.raises(SecretProviderException) as excinfo:
+        provider._try_parse(123)
+    
+    assert "Unexpected type for raw secret" in str(excinfo.value)

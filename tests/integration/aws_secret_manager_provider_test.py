@@ -1,21 +1,31 @@
 import json
 import os
 import pytest
+import boto3
 
 from agent_guard_core.credentials.aws_secrets_manager_provider import AWSSecretsProvider
-from agent_guard_core.credentials.secrets_provider import SecretProviderException
+from agent_guard_core.credentials.secrets_provider import SecretProviderException, SecretNotFoundException
 
 
 @pytest.fixture(scope="module")
-def provider():
+def aws_client():
+    """Creates a boto3 client for AWS Secrets Manager for test setup/teardown."""
+    if not (os.environ.get('AWS_ACCESS_KEY_ID') and os.environ.get('AWS_SECRET_ACCESS_KEY')):
+        pytest.skip("AWS credentials not available in environment")
+    
+    try:
+        client = boto3.client(service_name="secretsmanager", region_name="us-east-1")
+        return client
+    except Exception as e:
+        pytest.skip(f"Error creating AWS client: {str(e)}")
+
+
+@pytest.fixture(scope="module")
+def provider(aws_client):
     """
     Creates real AWS secrets provider instance for integration testing.
     Tests will be skipped if AWS credentials aren't available.
     """
-    # Check for AWS credentials
-    if not (os.environ.get('AWS_ACCESS_KEY_ID') and os.environ.get('AWS_SECRET_ACCESS_KEY')):
-        pytest.skip("AWS credentials not available in environment")
-    
     provider = AWSSecretsProvider()
     
     # Test the connection works before continuing
@@ -29,16 +39,111 @@ def provider():
 
 
 @pytest.fixture(scope="module")
-def namespace_provider():
-    """
-    Creates AWS secrets provider with namespace for integration testing.
-    Tests will be skipped if AWS credentials aren't available.
-    """
-    # Check for AWS credentials
+def test_secret(aws_client):
+    """Creates a test secret in AWS Secrets Manager for testing."""
+    secret_id = "test_key"
+    secret_value = "test_value"
+    
+    # Create the secret for testing
+    try:
+        aws_client.create_secret(
+            Name=secret_id,
+            SecretString=secret_value
+        )
+    except aws_client.exceptions.ResourceExistsException:
+        # Update if it already exists
+        aws_client.put_secret_value(
+            SecretId=secret_id,
+            SecretString=secret_value
+        )
+    
+    yield secret_id, secret_value
+    
+    # Clean up
+    try:
+        aws_client.delete_secret(
+            SecretId=secret_id,
+            ForceDeleteWithoutRecovery=True
+        )
+    except:
+        pass
+
+
+@pytest.fixture(scope="module")
+def test_complex_secret(aws_client):
+    """Creates a test secret with complex JSON value."""
+    secret_id = "complex_test_key"
+    secret_value = {"key1": "value1", "key2": "value2"}
+    
+    # Create the secret for testing
+    try:
+        aws_client.create_secret(
+            Name=secret_id,
+            SecretString=json.dumps(secret_value)
+        )
+    except aws_client.exceptions.ResourceExistsException:
+        # Update if it already exists
+        aws_client.put_secret_value(
+            SecretId=secret_id,
+            SecretString=json.dumps(secret_value)
+        )
+    
+    yield secret_id, secret_value
+    
+    # Clean up
+    try:
+        aws_client.delete_secret(
+            SecretId=secret_id,
+            ForceDeleteWithoutRecovery=True
+        )
+    except:
+        pass
+
+
+@pytest.fixture(scope="module")
+def namespace_fixture(aws_client):
+    """Creates a namespaced secret for testing."""
+    namespace = "test-namespace"
+    namespace_content = {
+        "key1": "value1",
+        "key2": "value2",
+        "key3": "value3",
+        "complex_key": {"nested": {"key": "value"}, "list": [1, 2, 3]}
+    }
+    
+    # Create or update the namespace secret
+    try:
+        aws_client.create_secret(
+            Name=namespace,
+            SecretString=json.dumps(namespace_content)
+        )
+    except aws_client.exceptions.ResourceExistsException:
+        aws_client.put_secret_value(
+            SecretId=namespace,
+            SecretString=json.dumps(namespace_content)
+        )
+    
+    yield namespace, namespace_content
+    
+    # Clean up
+    try:
+        aws_client.delete_secret(
+            SecretId=namespace,
+            ForceDeleteWithoutRecovery=True
+        )
+    except:
+        pass
+
+
+@pytest.fixture(scope="module")
+def namespace_provider(namespace_fixture):
+    """Creates AWS secrets provider with namespace for integration testing."""
+    namespace, _ = namespace_fixture
+    
     if not (os.environ.get('AWS_ACCESS_KEY_ID') and os.environ.get('AWS_SECRET_ACCESS_KEY')):
         pytest.skip("AWS credentials not available in environment")
     
-    provider = AWSSecretsProvider(namespace="test-namespace")
+    provider = AWSSecretsProvider(namespace=namespace)
     
     # Test the connection works before continuing
     try:
@@ -47,20 +152,7 @@ def namespace_provider():
     except Exception as e:
         pytest.skip(f"Error connecting to AWS: {str(e)}")
     
-    # Clean up the namespace before tests
-    try:
-        response = provider._client.get_secret_value(SecretId="test-namespace")
-        provider._client.delete_secret(SecretId="test-namespace", ForceDeleteWithoutRecovery=True)
-    except provider._client.exceptions.ResourceNotFoundException:
-        pass
-    
     yield provider
-    
-    # Clean up after tests
-    try:
-        provider._client.delete_secret(SecretId="test-namespace", ForceDeleteWithoutRecovery=True)
-    except provider._client.exceptions.ResourceNotFoundException:
-        pass
 
 
 @pytest.mark.aws
@@ -74,167 +166,54 @@ def test_provider_connect(provider):
 
 
 @pytest.mark.aws
-def test_store_secret(provider):
-    key = "test_key"
-    value = "test_value"
-
-    # Store get and compare
-    provider.store(key, value)
-    fetched_value = provider.get(key)
-    assert fetched_value == value
-
-    # delete secret and check its none
-    provider.delete(key)
-    fetched_value = provider.get(key)
-    assert not fetched_value
+def test_get_secret(provider, test_secret):
+    secret_id, expected_value = test_secret
+    fetched_value = provider.get(secret_id)
+    assert fetched_value == expected_value
 
 
 @pytest.mark.aws
-def test_get_secret(provider):
-    provider.store("another_test_key", "another_test_value")
-    fetched_value = provider.get("another_test_key")
-    assert fetched_value == "another_test_value"
-    
-    # Clean up
-    provider.delete("another_test_key")
-
-
-@pytest.mark.aws
-def test_store_secret_with_none_key(provider):
-    with pytest.raises(SecretProviderException) as e:
-        provider.store(None, "test_value")
-    assert "key or secret is missing" in str(e.value)
-
-
-@pytest.mark.aws
-def test_store_secret_with_empty_key(provider):
-    with pytest.raises(SecretProviderException) as e:
-        provider.store("", "test_value")
-    assert "key or secret is missing" in str(e.value)
-
-
-@pytest.mark.aws
-def test_store_secret_with_none_value(provider):
-    with pytest.raises(SecretProviderException) as e:
-        provider.store("test_key", None)
-    assert "key or secret is missing" in str(e.value)
+def test_get_complex_secret(provider, test_complex_secret):
+    secret_id, expected_value = test_complex_secret
+    fetched_value = provider.get(secret_id)
+    assert fetched_value == expected_value
 
 
 @pytest.mark.aws
 def test_get_nonexistent_secret(provider):
-    fetched_value = provider.get("nonexistent_key")
-    assert fetched_value is None
+    with pytest.raises(SecretNotFoundException):
+        provider.get("nonexistent_key_that_should_not_exist")
 
 
 @pytest.mark.aws
-def test_store_and_update_secret(provider):
-    provider.store("update_test_key", "initial_value")
-    provider.store("update_test_key", "updated_value")
-    fetched_value = provider.get("update_test_key")
-    assert fetched_value == "updated_value"
-    
-    # Clean up
-    provider.delete("update_test_key")
-
-
-@pytest.mark.aws
-def test_store_dictionary_secret(provider):
-    test_dict = {"key1": "value1", "key2": "value2"}
-    provider.store("dict_test_key", test_dict)
-    fetched_value = provider.get("dict_test_key")
-    assert fetched_value == test_dict
-    
-    # Clean up
-    provider.delete("dict_test_key")
-
-
-# Namespace-specific tests
-@pytest.mark.aws
-def test_namespace_provider_ctor(namespace_provider):
+def test_namespace_provider_ctor(namespace_provider, namespace_fixture):
+    namespace, _ = namespace_fixture
     assert namespace_provider is not None
-    assert namespace_provider._namespace == "test-namespace"
+    assert namespace_provider._namespace == namespace
 
 
 @pytest.mark.aws
-def test_namespace_store_secret(namespace_provider):
-    key = "ns_test_key"
-    value = "test_value"
-
-    # Store get and compare
-    namespace_provider.store(key, value)
-    fetched_value = namespace_provider.get(key)
-    assert fetched_value == value
+def test_namespace_get_secret(namespace_provider, namespace_fixture):
+    _, namespace_content = namespace_fixture
     
-    # Check directly that the value is stored in the namespace
-    response = namespace_provider._client.get_secret_value(SecretId="test-namespace")
-    secrets_dict = json.loads(response["SecretString"])
-    assert key in secrets_dict
-    assert secrets_dict[key] == value
+    # Test getting individual keys from namespace
+    assert namespace_provider.get("key1") == namespace_content["key1"]
+    assert namespace_provider.get("key2") == namespace_content["key2"]
+    assert namespace_provider.get("key3") == namespace_content["key3"]
     
-    # Delete and verify
-    namespace_provider.delete(key)
-    fetched_value = namespace_provider.get(key)
-    assert fetched_value is None
+    # Test getting all secrets from namespace when key is None
+    all_secrets = namespace_provider.get()
+    assert all_secrets == namespace_content
 
 
 @pytest.mark.aws
-def test_namespace_multiple_secrets(namespace_provider):
-    # Store multiple secrets in the same namespace
-    namespace_provider.store("key1", "value1")
-    namespace_provider.store("key2", "value2")
-    namespace_provider.store("key3", "value3")
-    
-    # Retrieve and verify each one
-    assert namespace_provider.get("key1") == "value1"
-    assert namespace_provider.get("key2") == "value2"
-    assert namespace_provider.get("key3") == "value3"
-    
-    # Check all keys are in the same namespace
-    response = namespace_provider._client.get_secret_value(SecretId="test-namespace")
-    secrets_dict = json.loads(response["SecretString"])
-    assert len(secrets_dict) == 3
-    assert secrets_dict["key1"] == "value1"
-    assert secrets_dict["key2"] == "value2"
-    assert secrets_dict["key3"] == "value3"
-    
-    # Delete one key and verify others remain
-    namespace_provider.delete("key2")
-    assert namespace_provider.get("key1") == "value1"
-    assert namespace_provider.get("key2") is None
-    assert namespace_provider.get("key3") == "value3"
-    
-    response = namespace_provider._client.get_secret_value(SecretId="test-namespace")
-    secrets_dict = json.loads(response["SecretString"])
-    assert len(secrets_dict) == 2
-    assert "key2" not in secrets_dict
+def test_namespace_get_complex_value(namespace_provider, namespace_fixture):
+    _, namespace_content = namespace_fixture
+    complex_value = namespace_provider.get("complex_key")
+    assert complex_value == namespace_content["complex_key"]
 
 
 @pytest.mark.aws
-def test_namespace_store_complex_values(namespace_provider):
-    # Test storing and retrieving complex values in a namespace
-    dict_value = {"nested": {"key": "value"}, "list": [1, 2, 3]}
-    namespace_provider.store("complex_key", dict_value)
-    
-    fetched_value = namespace_provider.get("complex_key")
-    assert fetched_value == dict_value
-    
-    # Check raw storage format
-    response = namespace_provider._client.get_secret_value(SecretId="test-namespace")
-    secrets_dict = json.loads(response["SecretString"])
-    assert secrets_dict["complex_key"] == dict_value
-
-
-@pytest.mark.aws
-def test_namespace_nonexistent_key(namespace_provider):
-    # Test getting a key that doesn't exist in the namespace
-    assert namespace_provider.get("nonexistent_ns_key") is None
-
-
-@pytest.mark.aws
-def test_namespace_update_secret(namespace_provider):
-    # Test updating a secret in the namespace
-    namespace_provider.store("update_key", "original")
-    assert namespace_provider.get("update_key") == "original"
-    
-    namespace_provider.store("update_key", "updated")
-    assert namespace_provider.get("update_key") == "updated"
+def test_namespace_get_nonexistent_key(namespace_provider):
+    with pytest.raises(SecretNotFoundException):
+        namespace_provider.get("nonexistent_ns_key_that_should_not_exist")

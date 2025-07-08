@@ -32,73 +32,77 @@ def temp_dir():
 def prepare_file_content():
     """Helper fixture to prepare content directly in a file"""
     def _prepare(file_path, contents):
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
         with open(file_path, "w") as f:
             for key, value in contents.items():
                 f.write(f"{key}={value}\n")
     return _prepare
 
 
-@pytest.fixture  # Changed to function scope (default)
-def direct_provider(temp_dir) -> BaseSecretsProvider:
-    """Provider without namespace for direct access testing"""
-    # Create a unique file for each test
+@pytest.fixture
+def direct_provider(temp_dir, prepare_file_content) -> BaseSecretsProvider:
+    """Provider with prepopulated test data"""
     file_path = os.path.join(temp_dir, f"direct_secrets_{uuid.uuid4()}")
     
-    # Initialize with empty file
-    with open(file_path, "w") as f:
-        pass
+    # Create test data
+    test_data = {
+        "direct_key": "direct_value",
+        "test_key": "test_value"
+    }
+    prepare_file_content(file_path, test_data)
         
     return FileSecretsProvider(namespace=file_path)
 
 
-@pytest.fixture  # Changed to function scope (default)
-def namespace_provider(temp_dir) -> BaseSecretsProvider:
-    """Provider with namespace for testing namespace functionality"""
-    namespace_path = os.path.join(temp_dir, f"namespace_secrets_{uuid.uuid4()}")
+@pytest.fixture
+def populated_provider(temp_dir, prepare_file_content) -> FileSecretsProvider:
+    """Provider pre-populated with multiple secrets for testing get functionality"""
+    provider_path = os.path.join(temp_dir, f"populated_secrets_{uuid.uuid4()}")
     
-    # Initialize with empty JSON object
-    with open(namespace_path, "w") as f:
-        f.write("NAMESPACE={}\n")
-        
-    return FileSecretsProvider(namespace=namespace_path)
+    # Prepare test data
+    test_data = {
+        "key1": "value1",
+        "key2": "value2",
+        "key3": "value3"
+    }
+    prepare_file_content(provider_path, test_data)
+    
+    return FileSecretsProvider(namespace=provider_path)
 
 
 @pytest.fixture
-def populated_provider(temp_dir) -> FileSecretsProvider:
-    """Provider pre-populated with multiple secrets for testing get_all functionality"""
-    provider_path = os.path.join(temp_dir, f"populated_secrets_{uuid.uuid4()}")
-    
-    # Create the provider
-    provider = FileSecretsProvider(namespace=provider_path)
-    
-    # Populate with multiple secrets by writing directly to the file
-    with open(provider_path, "w") as f:
-        f.write("key1=value1\n")
-        f.write("key2=value2\n")
-        f.write("key3=value3\n")
-    
-    return provider
-
-
-@pytest.fixture  # Changed to function scope (default)
-def secret_provider_with_directory(temp_dir) -> BaseSecretsProvider:
-    """Provider in a subdirectory"""
+def secret_provider_with_directory(temp_dir, prepare_file_content) -> BaseSecretsProvider:
+    """Provider in a subdirectory with prepopulated data"""
     # Create data directory if it doesn't exist
     data_dir = os.path.join(temp_dir, "data")
     os.makedirs(data_dir, exist_ok=True)
     
     file_path = os.path.join(data_dir, f"test_secrets_{uuid.uuid4()}")
+    
+    # Create test data
+    test_data = {
+        "dir_key": "dir_value"
+    }
+    prepare_file_content(file_path, test_data)
+    
     return FileSecretsProvider(namespace=file_path)
 
 
-@pytest.fixture  # Changed to function scope (default)
-def secret_provider_with_multiple_directories(temp_dir) -> BaseSecretsProvider:
-    """Provider in a deeply nested subdirectory"""
+@pytest.fixture
+def secret_provider_with_multiple_directories(temp_dir, prepare_file_content) -> BaseSecretsProvider:
+    """Provider in a deeply nested subdirectory with prepopulated data"""
     # Create nested directory structure
     nested_dir = os.path.join(temp_dir, "data", "multiple", "directories")
     os.makedirs(nested_dir, exist_ok=True)
     
     file_path = os.path.join(nested_dir, f"test_secrets_{uuid.uuid4()}")
+    
+    # Create test data
+    test_data = {
+        "multi_dir_key": "multi_dir_value"
+    }
+    prepare_file_content(file_path, test_data)
+    
     return FileSecretsProvider(namespace=file_path)
 
 
@@ -108,18 +112,11 @@ def test_connect(direct_provider):
     assert direct_provider.connect() is True
 
 
-# Direct access tests
-def test_direct_store_get(direct_provider):
-    """Test storing and getting a secret directly without namespace"""
-    secret_key = 'direct_key'
-    secret_value = 'direct_value'
-    
-    # Store the secret
-    direct_provider.store(secret_key, secret_value)
-    
+def test_direct_get(direct_provider):
+    """Test getting a secret directly without namespace"""
     # Get and verify
-    fetched_secret = direct_provider.get(secret_key)
-    assert fetched_secret == secret_value
+    fetched_secret = direct_provider.get("direct_key")
+    assert fetched_secret == "direct_value"
 
 
 def test_direct_get_nonexistent(direct_provider):
@@ -130,51 +127,17 @@ def test_direct_get_nonexistent(direct_provider):
     assert excinfo.value.key == 'nonexistent_key'
 
 
-def test_direct_delete(direct_provider):
-    """Test deleting a secret directly without namespace"""
-    secret_key = 'to_delete'
-    secret_value = 'delete_me'
-    
-    # Store a secret first
-    direct_provider.store(secret_key, secret_value)
-    
-    # Verify it exists
-    fetched_secret = direct_provider.get(secret_key)
-    assert fetched_secret == secret_value
-    
-    # Delete it
-    direct_provider.delete(secret_key)
-    
-    # Verify it's gone
-    with pytest.raises(SecretNotFoundException) as excinfo:
-        direct_provider.get(secret_key)
-    assert excinfo.value.key == secret_key
-
-
-def test_direct_delete_empty_key(direct_provider):
-    """Test deleting with an empty key directly"""
-    with pytest.raises(SecretProviderException) as excinfo:
-        direct_provider.delete('')
-    assert "key is missing" in str(excinfo.value)
-
-
 # Tests for getting all secrets with no key
 def test_get_all_secrets_direct_access(direct_provider):
     """Test getting all secrets using get with no key parameter"""
-    # First, set up some secrets
-    direct_provider.store('key1', 'value1')
-    direct_provider.store('key2', 'value2')
-    direct_provider.store('key3', 'value3')
-    
     # Get all secrets
     all_secrets = direct_provider.get()
     
     # Verify we got a dictionary with all our secrets
     assert isinstance(all_secrets, dict)
-    assert len(all_secrets) >= 3  # Could be more if other tests added keys
-    assert all_secrets['key1'] == 'value1'
-    assert all_secrets['key2'] == 'value2'
-    assert all_secrets['key3'] == 'value3'
+    assert len(all_secrets) >= 2  # Could be more if other tests added keys
+    assert all_secrets['direct_key'] == 'direct_value'
+    assert all_secrets['test_key'] == 'test_value'
 
 
 def test_get_all_secrets_with_parse_collection(populated_provider):
@@ -200,7 +163,13 @@ def test_get_all_secrets_with_parse_collection(populated_provider):
 def test_empty_collection(temp_dir):
     """Test getting all secrets from an empty collection"""
     # Create a new provider with a fresh file
-    empty_provider = FileSecretsProvider(namespace=os.path.join(temp_dir, "empty_secrets"))
+    empty_file = os.path.join(temp_dir, "empty_secrets")
+    
+    # Create an empty file
+    with open(empty_file, "w") as f:
+        pass
+    
+    empty_provider = FileSecretsProvider(namespace=empty_file)
     
     # Get all secrets
     all_secrets = empty_provider.get()
@@ -210,42 +179,16 @@ def test_empty_collection(temp_dir):
     assert len(all_secrets) == 0
 
 
-def test_get_after_delete_all(temp_dir, prepare_file_content):
-    """Test getting all secrets after deleting all entries"""
-    file_path = os.path.join(temp_dir, "delete_all_test")
-    
-    # Prepare the file with content
-    with open(file_path, "w") as f:
-        f.write("key1=value1\n")
-        f.write("key2=value2\n")
-        f.write("key3=value3\n")
-    
-    provider = FileSecretsProvider(namespace=file_path)
-    
-    # Get the initial collection
-    initial_collection = provider.get()
-    
-    # Delete all keys
-    for key in list(initial_collection.keys()):
-        provider.delete(key)
-    
-    # Get the collection again
-    empty_collection = provider.get()
-    
-    # Should be empty
-    assert isinstance(empty_collection, dict)
-    assert len(empty_collection) == 0
-
-
-def test_mixed_content_file(temp_dir):
-    """Test handling a file with both direct key-value pairs and a JSON entry"""
+def test_mixed_content_file(temp_dir, prepare_file_content):
+    """Test handling a file with both direct key-value pairs"""
     file_path = os.path.join(temp_dir, "mixed_content.env")
     
-    # Create a file with multiple entries
-    with open(file_path, "w") as f:
-        f.write("regular_key1=regular_value1\n")
-        f.write("regular_key2=regular_value2\n")
-        # No JSON entry in this case
+    # Create test data
+    test_data = {
+        "regular_key1": "regular_value1",
+        "regular_key2": "regular_value2"
+    }
+    prepare_file_content(file_path, test_data)
     
     # Create provider
     provider = FileSecretsProvider(namespace=file_path)
@@ -262,36 +205,16 @@ def test_mixed_content_file(temp_dir):
 
 def test_namespace_with_directory(secret_provider_with_directory):
     """Test namespace in a subdirectory"""
-    secret_key = 'dir_key'
-    secret_value = 'dir_value'
-    
-    # Create secret, write and compare after get
-    secret_provider_with_directory.store(secret_key, secret_value)
-    fetched_secret = secret_provider_with_directory.get(secret_key)
-    assert fetched_secret == secret_value
-    
-    # Delete the secret and validate it's gone
-    secret_provider_with_directory.delete(secret_key)
-    with pytest.raises(SecretNotFoundException) as excinfo:
-        secret_provider_with_directory.get(secret_key)
-    assert excinfo.value.key == secret_key
+    # Get and verify the pre-populated secret
+    fetched_secret = secret_provider_with_directory.get("dir_key")
+    assert fetched_secret == "dir_value"
 
 
 def test_namespace_with_multiple_directories(secret_provider_with_multiple_directories):
     """Test namespace in a deeply nested directory structure"""
-    secret_key = 'multi_dir_key'
-    secret_value = 'multi_dir_value'
-    
-    # Create secret, write and compare after get
-    secret_provider_with_multiple_directories.store(secret_key, secret_value)
-    fetched_secret = secret_provider_with_multiple_directories.get(secret_key)
-    assert fetched_secret == secret_value
-    
-    # Delete the secret and validate it's gone
-    secret_provider_with_multiple_directories.delete(secret_key)
-    with pytest.raises(SecretNotFoundException) as excinfo:
-        secret_provider_with_multiple_directories.get(secret_key)
-    assert excinfo.value.key == secret_key
+    # Get and verify the pre-populated secret
+    fetched_secret = secret_provider_with_multiple_directories.get("multi_dir_key")
+    assert fetched_secret == "multi_dir_value"
 
 
 def test_empty_namespace_error():
@@ -301,14 +224,22 @@ def test_empty_namespace_error():
     assert "Namespace cannot be empty" in str(excinfo.value)
 
 
-def test_complex_values(direct_provider):
-    """Test storing and retrieving complex values"""
-    # Try storing a dictionary
+def test_complex_values(temp_dir, prepare_file_content):
+    """Test retrieving complex values"""
+    # Create a file with a JSON string value
+    file_path = os.path.join(temp_dir, "complex_values.env")
     dict_value = {"key1": "value1", "nested": {"inner": "value"}}
-    direct_provider.store("complex_key", json.dumps(dict_value))
     
-    # Retrieve and verify
-    fetched_value = direct_provider.get("complex_key")
+    test_data = {
+        "complex_key": json.dumps(dict_value)
+    }
+    prepare_file_content(file_path, test_data)
+    
+    # Create provider and retrieve value
+    provider = FileSecretsProvider(namespace=file_path)
+    fetched_value = provider.get("complex_key")
+    
+    # Verify the value
     assert json.loads(fetched_value) == dict_value
 
 
@@ -390,12 +321,3 @@ ENV=development
     
     # Test environment
     assert env_vars["ENV"] == "development"
-    
-    # Test storing and retrieving a new variable
-    provider.store("NEW_VARIABLE", "new_value")
-    assert provider.get("NEW_VARIABLE") == "new_value"
-    
-    # Get all variables again to check persistence
-    updated_vars = provider.get()
-    assert updated_vars["NEW_VARIABLE"] == "new_value"
-    assert len(updated_vars) == 17  # Original 15 + 1 new

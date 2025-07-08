@@ -62,36 +62,6 @@ class BaseSecretsProvider(abc.ABC):
         else:
             logger.error(f"Unexpected type for raw secret: {type(raw_secret)}")
             raise SecretProviderException(f"Unexpected type for raw secret: {type(raw_secret)}")
-        
-    
-    def store(self, key: str, secret: str) -> None:
-        """
-        Stores a secret in the secrets provider.
-        
-        If namespace is provided, stores the secret as a key in the namespace collection.
-        Otherwise, stores the secret directly with its key as the SecretId.
-        
-        :param key: The name of the secret key.
-        :param secret: The secret value to store (string).
-        :raises SecretProviderException: If key or secret is missing or if there is an error storing the secret.
-        """
-        if self._namespace is not None:
-            raw_secret = self._get_raw_secret(key=self._namespace)
-            if raw_secret is None:
-                # If the namespace doesn't exist, create a new collection
-                collection = {}
-            else:
-                # Parse the existing collection
-                try:
-                    collection = self._try_parse(raw_secret)
-                except SecretProviderException as e:
-                    logger.error(f"Failed to parse existing secrets in namespace {self._namespace}: {str(e)}")
-                    raise e
-            collection[key] = secret
-            secret = json.dumps(collection)
-            key = self._namespace
-        
-        self._store(key, secret)
 
     def get(self, key: Optional[str] = None) -> Union[str, Dict[str, str]]:
         """
@@ -113,7 +83,7 @@ class BaseSecretsProvider(abc.ABC):
         secret_text = self._get_raw_secret(key=secret_id)
         
         if secret_text is None:
-            raise SecretNotFoundException(f"{secret_id}:{key}" if key else secret_id)
+            raise SecretNotFoundException(f"{secret_id}:{key}" if (key and secret_id!=key) else secret_id)
             
         if self._namespace is None:
             return secret_text
@@ -142,15 +112,7 @@ class BaseSecretsProvider(abc.ABC):
         ...
 
     @abc.abstractmethod
-    def _store(self, key: str, secret: str) -> None:
-        ...
-
-    @abc.abstractmethod
     def _get(self, key: Optional[str] = None) -> Optional[Union[str, Dict[str, str]]]:
-        ...
-
-    @abc.abstractmethod
-    def delete(self, key: str) -> None:
         ...
 
 secrets_provider_fm: FlavorManager[str, Type[BaseSecretsProvider]] = FlavorManager()

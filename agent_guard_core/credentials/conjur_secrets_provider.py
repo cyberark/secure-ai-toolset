@@ -25,7 +25,6 @@ API_TOKEN_SAFETY_BUFFER = 3
 DEFAULT_API_TOKEN_DURATION = DEFAULT_TOKEN_EXPIRATION - API_TOKEN_SAFETY_BUFFER
 
 DEFAULT_REGION = "us-east-1"
-DEFAULT_NAMESPACE = "data/default"
 DEFAULT_CONJUR_ACCOUNT = "conjur"
 
 HTTP_TIMEOUT_SECS = 2.0
@@ -40,13 +39,13 @@ class ConjurSecretsProvider(BaseSecretsProvider):
     """
 
     def __init__(self,
-                 namespace: Optional[str] = DEFAULT_NAMESPACE,
+                 namespace: Optional[str] = None,
                  ext_authn_cred_provider=None,
                  **kwargs):
         """
         Initializes the Conjur Secrets Provider.
 
-        :param namespace: Optional namespace for the secrets. Defaults to 'data/default'.
+        :param namespace: Optional namespace for the secrets. Defaults to None.
         :param ext_authn_cred_provider: Optional external authentication credential provider.
         """
         super().__init__(namespace, **kwargs)
@@ -302,99 +301,3 @@ class ConjurSecretsProvider(BaseSecretsProvider):
             logger.error(f"Error retrieving secret: {e}")
             raise SecretProviderException(str(e))
 
-    def _store(self, key: str, secret: str) -> None:
-        """
-        Internal method to store a secret in Conjur.
-
-        :param key: The path of the secret variable to store
-        :param secret: The secret value to store
-        :raises SecretProviderException: If there is an error storing the secret
-        """
-        try:
-            self.connect()
-
-            # First ensure variable exists in policy
-            policy_path = key.rsplit('/', 1)[0] if '/' in key else ""
-            variable_name = key.rsplit('/', 1)[1] if '/' in key else key
-
-            url = f"{self._url}/policies/{self._account}/policy/{urllib.parse.quote(policy_path)}"
-            policy_body = f"""
-                    - !variable
-                    id: {variable_name}
-                    """
-            # Create variable if needed
-            response = requests.post(
-                url,
-                data=policy_body,
-                headers=self._get_conjur_headers(),
-                timeout=HTTP_TIMEOUT_SECS,
-            )
-            if response.status_code != HTTPStatus.CREATED and response.status_code != HTTPStatus.OK:
-                logger.error(f"Error creating secret variable: {response.text}")
-                # Continue anyway as variable might already exist
-
-            # Set the secret value
-            set_secret_url = f"{self._url}/secrets/{self._account}/variable/{urllib.parse.quote(key)}"
-            response = requests.post(
-                set_secret_url,
-                data=secret,
-                headers=self._get_conjur_headers(),
-                timeout=HTTP_TIMEOUT_SECS,
-            )
-            if response.status_code != HTTPStatus.CREATED and response.status_code != HTTPStatus.OK:
-                logger.error(f"Error storing secret: {response.text}")
-                raise SecretProviderException(f"Error storing secret: {response.text}")
-        except Exception as e:
-            message = f"Error storing secret: {str(e)}"
-            logger.error(message)
-            raise SecretProviderException(message)
-
-    def delete(self, key: str) -> None:
-        """
-        Deletes a secret from Conjur.
-
-        If namespace is provided, removes the key from the namespace collection.
-        Otherwise, attempts to delete the secret directly (though Conjur doesn't support actual deletion).
-
-        :param key: The name of the secret to delete
-        :raises SecretProviderException: If key is missing or if there is an error
-        """
-        if not key:
-            message = "delete: key is missing"
-            logger.warning(message)
-            raise SecretProviderException(message)
-
-        try:
-            self.connect()
-
-            # Handle namespace-based deletion
-            if self._namespace:
-                # Get existing secrets in the namespace
-                raw_secret = self._get(self._namespace)
-                if raw_secret is None:
-                    return  # Namespace doesn't exist, nothing to delete
-
-                try:
-                    secrets_dict = json.loads(raw_secret)
-                    if not isinstance(secrets_dict, dict):
-                        return  # Not a dictionary, can't delete key
-
-                    # If key exists in dictionary, remove it and update
-                    if key in secrets_dict:
-                        del secrets_dict[key]
-
-                        # Store the updated dictionary
-                        self._store(self._namespace, json.dumps(secrets_dict))
-                except json.JSONDecodeError:
-                    # Not valid JSON, can't delete a key
-                    return
-            else:
-                # Conjur doesn't support direct deletion of secrets
-                # We can only overwrite with empty value
-                logger.warning("Conjur doesn't support direct deletion of secrets, overwriting with empty value")
-                self._store(key, "")
-
-        except Exception as e:
-            message = f"Error deleting secret: {str(e)}"
-            logger.error(message)
-            raise SecretProviderException(message)

@@ -6,7 +6,6 @@ from typing import Any, Optional
 
 import click
 
-from agent_guard_core.config.config_manager import ConfigManager, ConfigurationOptions
 from agent_guard_core.credentials.enum import AwsEnvVars, ConjurEnvVars, CredentialsProvider, GcpEnvVars
 from agent_guard_core.credentials.gcp_secrets_manager_provider import DEFAULT_PROJECT_ID, DEFAULT_REPLICATION_TYPE
 from agent_guard_core.credentials.secrets_provider import BaseSecretsProvider, secrets_provider_fm
@@ -15,10 +14,6 @@ from agent_guard_core.credentials.secrets_provider import BaseSecretsProvider, s
 @click.group(name="secrets")
 def secrets():
     """Commands to manage secrets in Agent Guard."""
-
-default_provider = ConfigManager().get_config_value(
-    ConfigurationOptions.SECRET_PROVIDER.value
-) or CredentialsProvider.AWS_SECRETS_MANAGER
 
 provider_list = [provider.value for provider in CredentialsProvider]
 
@@ -31,10 +26,6 @@ def provider_option(f):
 def secret_name_option(f):
     return click.option('--secret_key', '-k', 
                         required=True, help='The name of the secret to store or retrieve.')(f)
-
-def secret_value_option(f):
-    return click.option('--secret_value', '-v', 
-                        required=True, help='The value of the secret to store.')(f)
 
 def namespace_option(f):
     return click.option('--namespace', '-n', 
@@ -129,32 +120,6 @@ def aws_options(func):
         return func(*args, **kwargs)
     return wrapper
 
-
-@secrets.command()
-@provider_option
-@secret_name_option
-@secret_value_option
-@namespace_option
-@aws_options
-@conjur_options
-@gcp_options
-def set(provider, secret_key, secret_value, namespace):
-    """
-    Set a secret in a provider using Agent Guard.
-
-    This command allows you to to set a secret in the specified secret provider.
-    If no provider is specified, it will prompt you to select one from the available options.
-    """
-    extra: dict[str, Any] = {}
-    if namespace:
-        extra['namespace'] = namespace
-
-    provider: BaseSecretsProvider = secrets_provider_fm.get(provider)(**extra)
-    if not provider.connect():
-        raise click.ClickException(f"Failed to connect to provider: {provider}")
-    
-    provider.store(key=secret_key, secret=secret_value)
-    
 @secrets.command()
 @provider_option
 @secret_name_option

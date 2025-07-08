@@ -80,26 +80,6 @@ class FileSecretsProvider(BaseSecretsProvider):
             logger.error(message)
             raise SecretProviderException(message)
 
-    def _store(self, key: str, secret: str) -> None:
-        """
-        Store a secret in the file.
-
-        :param key: The key for the secret.
-        :param secret: The secret to store.
-        :raises SecretProviderException: If there is an error writing the secret to the file.
-        """
-        try:
-            current_values = self._parse_collection() or {}
-            current_values[key] = secret
-
-            with open(self._namespace, "w") as file:
-                for k, v in json.loads(secret).items():
-                    file.write(f"{k}={v}\n")
-        except Exception as ex:
-            message = f"Failed to store secret {key}: {ex}"
-            logger.error(message)
-            raise SecretProviderException(message)
-
     def _get(self, key: Optional[str] = None) -> Union[Optional[str], Dict[str, str]]:
         """
         Retrieve the entire collection of secrets from the file.
@@ -117,32 +97,4 @@ class FileSecretsProvider(BaseSecretsProvider):
             message = f"Error retrieving secrets from file {self._namespace}: {str(e)}"
             logger.error(message)
             raise SecretProviderException(message)
-
-    def delete(self, key: str) -> None:
-        """
-        Delete a secret from the file.
-
-        :param key: The key for the secret.
-        :raises SecretProviderException: If key is missing or if there is an error deleting the secret.
-        """
-        if not key:
-            message = "delete: key is missing"
-            logger.warning(message)
-            raise SecretProviderException(message)
-
-        try:
-            collection = self._parse_collection()
-            
-            # Check if key exists in the collection
-            if key in collection:
-                del collection[key]
-                
-                # Write the updated collection back to the file
-                with open(self._namespace, "w") as file:
-                    for k, v in collection.items():
-                        file.write(f"{k}={v}\n")
-        except Exception as e:
-            message = f"Error deleting secret: {str(e)}"
-            logger.error(message)
-            raise SecretProviderException(message)
-
+        
