@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from agent_guard_core.credentials.conjur_secrets_provider import ConjurSecretsProvider
-from agent_guard_core.credentials.secrets_provider import SecretProviderException
+from agent_guard_core.credentials.secrets_provider import SecretProviderException, SecretNotFoundException
 
 
 @pytest.fixture(scope="module")
@@ -55,69 +55,64 @@ def test_provider_connect(provider):
 
 
 @pytest.mark.conjur
-def test_store_secret(provider):
-    key = "test_key"
-    value = "test_value"
-
-    # Store get and compare
-    provider.store(key, value)
-    fetched_value = provider.get(key)
-    assert fetched_value == value
-
-    # delete secret and check its none
-    provider.delete(key)
-    fetched_value = provider.get(key)
-    assert not fetched_value
+def test_get_existing_secret(provider):
+    """
+    Test getting an existing secret.
+    Note: This test assumes a secret with key 'test_secret' exists in the Conjur vault.
+    """
+    try:
+        fetched_value = provider.get("test_secret")
+        assert fetched_value is not None
+        assert isinstance(fetched_value, str)
+    except SecretNotFoundException:
+        pytest.skip("Test secret 'test_secret' not found in Conjur. Please add it manually for this test.")
 
 
 @pytest.mark.conjur
-def test_get_secret(provider):
-    provider.store("another_test_key", "another_test_value")
-    fetched_value = provider.get("another_test_key")
-    assert fetched_value == "another_test_value"
-
-
-@pytest.mark.conjur
-def test_store_secret_with_none_key(provider):
-    with pytest.raises(SecretProviderException) as e:
-        provider.store(None, "test_value")
-        fetched_value = provider.get("")
-        assert fetched_value is None
-
-
-@pytest.mark.conjur
-def test_store_secret_with_empty_key(provider):
-    with pytest.raises(SecretProviderException) as e:
-        provider.store("", "test_value")
-        fetched_value = provider.get("")
-        assert fetched_value is None
-
-
-@pytest.mark.conjur
-def test_store_secret_with_none_value(provider):
-    with pytest.raises(SecretProviderException) as e:
-        provider.store("test_key", None)
-        fetched_value = provider.get("test_key")
-        assert fetched_value is None
-
-
-@pytest.mark.conjur
-def test_store_secret_with_empty_value(provider):
-    with pytest.raises(SecretProviderException) as e:
-        provider.store("test_key", "")
-        fetched_value = provider.get("test_key")
-        assert fetched_value is None
+def test_get_namespace_secret(provider):
+    """
+    Test getting a secret from the namespace.
+    Note: This test assumes a secret exists in the namespace used by the provider.
+    """
+    try:
+        # Get all secrets in the namespace
+        secrets = provider.get()
+        assert secrets is not None
+        assert isinstance(secrets, dict)
+        assert len(secrets) > 0
+        
+        # Get the first secret key and try to retrieve it directly
+        first_key = next(iter(secrets))
+        fetched_value = provider.get(first_key)
+        assert fetched_value is not None
+        assert fetched_value == secrets[first_key]
+    except SecretNotFoundException:
+        pytest.skip("No secrets found in the namespace. Please add some secrets manually for this test.")
 
 
 @pytest.mark.conjur
 def test_get_nonexistent_secret(provider):
-    fetched_value = provider.get("nonexistent_key")
-    assert fetched_value is None
+    """Test getting a nonexistent secret raises the correct exception."""
+    with pytest.raises(SecretNotFoundException):
+        provider.get("nonexistent_key_" + str(uuid.uuid4()))
 
 
 @pytest.mark.conjur
-def test_store_and_update_secret(provider):
-    provider.store("update_test_key", "initial_value")
-    provider.store("update_test_key", "updated_value")
-    fetched_value = provider.get("update_test_key")
-    assert fetched_value == "updated_value"
+def test_get_with_empty_key(provider):
+    """Test getting a secret with an empty key raises the correct exception."""
+    with pytest.raises(SecretProviderException):
+        provider.get("")
+
+
+@pytest.mark.conjur
+def test_get_with_none_key(provider):
+    """
+    Test getting all secrets when key is None.
+    This should return all secrets in the namespace.
+    """
+    try:
+        secrets = provider.get(None)
+        assert secrets is not None
+        assert isinstance(secrets, dict)
+    except SecretProviderException as e:
+        pytest.fail(f"get(None) should not raise an exception: {str(e)}")

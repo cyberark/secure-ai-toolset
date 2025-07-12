@@ -1,6 +1,6 @@
 # Agent Guard CLI
 
-The Agent Guard CLI provides commands to configure and manage secret providers and MCP proxy capabilities.
+The Agent Guard CLI provides commands to manage secret providers and MCP proxy capabilities.
 
 ## Usage
 
@@ -115,32 +115,6 @@ Group of commands to manage Agent Guard MCP proxy.
 
 Group of commands to manage secrets.
 
-- #### **set**
-
-  Store a secret in the configured secret provider.
-
-  **Options:**
-  - `--provider, -p [PROVIDER]`  
-    The secret provider to store the secret.
-  - `--secret_key, -k [KEY]`  
-    The name of the secret to store.
-  - `--secret_value, -v [VALUE]`  
-    The value of the secret to store.
-  - `--namespace, -n [NAMESPACE]`  
-    (Optional) The namespace to organize secrets. Default: `default`.
-  - Various provider-specific options for AWS, GCP, and Conjur.
-
-  **Example:**
-  ```sh
-  # Store a secret in the default namespace
-  agc secrets set -p AWS_SECRETS_MANAGER_PROVIDER -k my-secret -v "my-secret-value"
-  
-  # Store a secret in a custom namespace
-  agc secrets set -p AWS_SECRETS_MANAGER_PROVIDER -k my-secret -v "my-secret-value" -n production
-  ```
-
-  **Note:** Secrets are organized within namespaces. In AWS Secrets Manager, for example, secrets are stored as key-value pairs within a single JSON object located at `{namespace}/agentic_env_vars` (e.g., `default/agentic_env_vars` or `production/agentic_env_vars`).
-
 - #### **get**
 
   Retrieve a secret from the configured secret provider.
@@ -166,85 +140,6 @@ Group of commands to manage secrets.
 
   **Note:** When retrieving secrets, you must specify the same namespace used when storing the secret.
 
-### **configure**
-
-Group of commands to manage Agent Guard configuration.
-
-**Note:** The configure commands are not relevant for containerized environments, as configuration in containers is typically managed through environment variables or mounted config files.
-
-- #### **set**
-
-  Set the secret provider and related configuration options.
-
-  **Options:**
-  - `--provider [PROVIDER]`  
-    The secret provider to store and retrieve secrets.  
-    Choices: `AWS_SECRETS_MANAGER_PROVIDER`, `FILE_SECRET_PROVIDER`, `CONJUR_SECRET_PROVIDER`, `GCP_SECRETS_MANAGER_PROVIDER`  
-    Default: `FILE_SECRET_PROVIDER`
-
-  - `--conjur-authn-login [LOGIN]`  
-    (Optional) Conjur authentication login (workload ID).
-
-  - `--conjur-appliance-url [URL]`  
-    (Optional) Endpoint URL of Conjur Cloud.
-
-  - `--conjur-authenticator-id [ID]`  
-    (Optional) Conjur authenticator ID.
-
-  - `--conjur-account [ACCOUNT]`  
-    (Optional) Conjur account ID.
-
-  - `--conjur-api-key [KEY]`  
-    (Optional) Conjur API key.
-
-  - `--aws-region [REGION]`  
-    (Optional) AWS region.
-
-  - `--aws-access-key-id [KEY]`  
-    (Optional) AWS access key ID.
-
-  - `--aws-secret-access-key [KEY]`  
-    (Optional) AWS secret access key.
-
-  - `--gcp-project-id [ID]`  
-    (Optional) GCP project ID.
-
-  - `--gcp-secret-id [ID]`  
-    (Optional) GCP secret ID.
-
-  - `--gcp-region [REGION]`  
-    (Optional) GCP region.
-
-  - `--gcp-replication-type [TYPE]`  
-    (Optional) GCP replication type: automatic or user-managed.
-
-  **Example:**
-  ```sh
-  agc config set --provider CONJUR_SECRET_PROVIDER --conjur-authn-login my-app --conjur-api-key my-key --conjur-appliance-url https://conjur.example.com
-  ```
-
-- #### **list**
-
-  List all configuration parameters and their values.
-
-  **Example:**
-  ```sh
-  agc config list
-  ```
-
-- #### **get**
-
-  Get the value of a specific configuration parameter.
-
-  **Options:**
-  - `--key [KEY]`  
-    Configuration key to retrieve.
-
-  **Example:**
-  ```sh
-  agc config get --key SECRET_PROVIDER
-  ```
-
 ## Help
 
 For help on any command, use the `--help` flag:
@@ -253,7 +148,3 @@ For help on any command, use the `--help` flag:
 agc mcp-proxy start --help
 ```
 
----
-
-**Note:**  
-The CLI stores configuration in a file under your home directory: `~/.agent_guard/config.env`

@@ -64,7 +64,7 @@ class EnvironmentVariablesManager:
         :return: A dictionary of environment variables.
         """
         try:
-            secret_dictionary = self.secret_provider.get_secret_dictionary()
+            secret_dictionary = self.secret_provider.get()
         except Exception as e:
             self._logger.warning("Failed to list environment variables: %s",
                                  e.args[0])
@@ -105,9 +105,9 @@ class EnvironmentVariablesManager:
         """
         try:
             secret_dictionary: Dict[
-                str, str] = self.secret_provider.get_secret_dictionary()
+                str, str] = self.secret_provider.get()
             secret_dictionary[key.strip()] = value.strip()
-            self.secret_provider.store_secret_dictionary(
+            self.secret_provider.store(
                 secret_dictionary=secret_dictionary)
         except Exception as e:
             self._logger.error("Failed to set environment variable '%s': %s",
@@ -125,10 +125,10 @@ class EnvironmentVariablesManager:
         """
         try:
             secret_dictionary: Dict[
-                str, str] = self.secret_provider.get_secret_dictionary()
+                str, str] = self.secret_provider.get()
             if key in secret_dictionary:
                 del secret_dictionary[key]
-                self.secret_provider.store_secret_dictionary(
+                self.secret_provider.store(
                     secret_dictionary=secret_dictionary)
         except Exception as e:
             self._logger.error(
