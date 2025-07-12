@@ -4,8 +4,8 @@ from typing import Optional
 
 import click
 
-from agent_guard_core.cli.mcp_proxy import mcp_proxy
-from agent_guard_core.cli.secrets import secrets
+from agent_guard_core.cli.mcp_proxy_cli import mcp_proxy
+from agent_guard_core.cli.secrets_cli import secrets
 from agent_guard_core.credentials.enum import CredentialsProvider
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')

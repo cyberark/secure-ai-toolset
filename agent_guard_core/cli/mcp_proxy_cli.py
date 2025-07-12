@@ -12,8 +12,9 @@ from typing import Any, Optional
 import click
 from mcp import ClientSession, StdioServerParameters, stdio_client, stdio_server
 
+from agent_guard_core.cli.consts import ALL_ENV_URIS
 from agent_guard_core.credentials.secrets_provider import BaseSecretsProvider, secrets_provider_fm
-from agent_guard_core.model.secret_uri import SecretUri
+from agent_guard_core.model.secret_uri import SecretUri, SecretUriList
 from agent_guard_core.proxy.audited_proxy import create_agent_guard_proxy_server
 from agent_guard_core.proxy.proxy_utils import get_audit_logger
 from agent_guard_core.utils.mcp_config_wizard import transform_mcp_servers
@@ -148,11 +149,19 @@ def proxy_apply_config(mcp_config_file: Optional[str] = None, cap: Optional[tupl
 def apply_secrets(secret_uris: list[str]) -> None:
     provider_map: dict[str, BaseSecretsProvider] = {}
 
+    if ALL_ENV_URIS in secret_uris:
+        logger.debug("Applying all environment variables from ALL_ENV_URIS")
+        parsed_secret_uris= SecretUriList.from_env_vars(list(os.environ.items()))
+        secret_uris = [uri for uri in parsed_secret_uris.root]
+    
     for uri in secret_uris:
         secret_uri: Optional[SecretUri] = None
 
         try:
-            secret_uri = SecretUri.from_uri(uri)
+            if isinstance(uri, str):
+                secret_uri = SecretUri.from_uri(uri)
+            elif isinstance(uri, SecretUri):
+                secret_uri = uri
         except Exception as e:
             logger.warning(f"Failed to parse secret URI '{uri}': {e}")
             continue
