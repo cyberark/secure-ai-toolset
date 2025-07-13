@@ -11,7 +11,7 @@ CyberArk's Agent Guard MCP Proxy is an AI agent security tool built for develope
 
 The tool uses the [Agent Guard CLI](../agent_guard_core/cli.md).
 
-The Docker image, `<name>`, is available from the [AWS Marketplace](https://link.to.aws.marketplace.com).  **!!!NEED TO UPDATE IMAGE NAME ADD LINK TO AWS MARKETPLACE!!!!.**
+The Docker image, `cyberark/cyberark.agent-guard:1.0.1`, is available from the [AWS Marketplace](https://link.to.aws.marketplace.com).  **!!!NEED TO UPDATE IMAGE NAME ADD LINK TO AWS MARKETPLACE!!!!.**
 
 
 ## Before you begin
@@ -35,17 +35,61 @@ Make sure that:
 ## 1. Set up the dockerized Agent Guard
 
 1. Pull the Agent Guard MCP Proxy image (**agc**) from AWS ECR.
-2. Tag the image locally: `docker build -t agc`.
+```
+docker pull 709825985650.dkr.ecr.us-east-1.amazonaws.com/cyberark/cyberark.agent-guard:1.0.1
+```
+2. Tag the image locally: 
+```
+docker tag 709825985650.dkr.ecr.us-east-1.amazonaws.com/cyberark/cyberark.agent-guard:1.0.1 agc
+```
+## 2. Enable Agent Guard MCP Proxy in your existing configurations
 
-## 2. Generate configuration snippets for audit logging
+Agent Guard offers an 'apply-config' command which automatically enables the Agent Guard MCP Proxy in your existing configuration.
+You can also elect to make the changes manually, by prepending 'docker run agc' to your MCP server configuration block:
+An example config of an MCP client which looks like this:
+```
+{
+  "mcpServers": {
+    "fetch": {
+      "command": "uvx",
+      "args": [
+        "mcp-server-fetch"
+      ],
+      "transportType": "stdio"
+    }
+  }
+}
+```
 
-Set up a local sample config file (e.g., /tmp/config/config-sample.json).
-
-Mount the config file's directory to the container's /config path and run apply-config -c audit to apply the audit capabilities to this sample config file:
+turns into:
+```
+{
+  "mcpServers": {
+    "fetch": {
+      "command": "docker",
+      "args": [
+        "run",
+        "agc",
+        "mcp-proxy",
+        "start",
+        "-c",
+        "audit",
+        "uvx",
+        "mcp-server-fetch
+      ],
+      "transportType": "stdio"
+    }
+  }
+}
+```
+If you want to use the 'apply-config' command, locate the path of your MCP server configuration file (let's call it /home/user/mcpservers.json for the same of the example), and run the following command:
 
 ````
-docker run -v /tmp/config:/config agc mcp-proxy apply-config -c audit
+docker run -v /home/user/:/config agc mcp-proxy apply-config -c audit
 ````
+
+Agent Guard will automatically scan the folder for any relevant JSON files and modify it to the Agent Guard MCP Proxy, and output the
+modified configuration file.
 
 ## 3. Update the AI agent's MCP configuration
 
@@ -53,9 +97,10 @@ From the output, copy the audit capabilities that interest you into your AI agen
 
 ## 4. Set up the log file
 
-Logs are written to **agent_guard_core_proxy.log**. To see the logs locally, mount a local path to the Docker container's /logs path.
+Logs are written to **agent_guard_core_proxy.log**, and is written under /logs insides the container. For you to see it,
+make sure you mount the /logs directory. 
 
-For example: 
+For example, this will cause the looks to be written to /tmp/agent_guard_core_proxy.log on the host:
 ````
 docker run -v /tmp:/logs
 ````
