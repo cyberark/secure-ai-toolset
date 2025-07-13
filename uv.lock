@@ -16,8 +16,10 @@ dependencies = [
     { name = "boto3" },
     { name = "click" },
     { name = "google-cloud-secret-manager" },
+    { name = "keyring" },
     { name = "mcp" },
     { name = "mcp-proxy" },
+    { name = "pkce" },
     { name = "python-dotenv" },
     { name = "requests" },
 ]
@@ -63,10 +65,12 @@ requires-dist = [
     { name = "h2", marker = "extra == 'examples'", specifier = ">=4.2.0" },
     { name = "httpx", marker = "extra == 'examples'", specifier = ">=0.28.1" },
     { name = "isort", marker = "extra == 'dev'" },
+    { name = "keyring", specifier = ">=25.6.0" },
     { name = "mcp", specifier = ">=1.9.1" },
     { name = "mcp-proxy", specifier = ">=0.8.0" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.16.1" },
     { name = "pandas", marker = "extra == 'servers'" },
+    { name = "pkce", specifier = ">=1.0.3" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3.5" },
     { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=1.0.0" },
     { name = "python-dotenv" },
@@ -1330,6 +1334,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/cd/00/20f40a935514037b7d3f87adfc87d2c538430ea625b63b3af8c3f5578e72/pillow-11.1.0-pp310-pypy310_pp73-manylinux_2_28_aarch64.whl", hash = "sha256:d44ff19eea13ae4acdaaab0179fa68c0c6f2f45d66a4d8ec1eda7d6cecbcc15f", size = 3446208, upload-time = "2025-01-02T08:13:46.817Z" },
     { url = "https://files.pythonhosted.org/packages/28/3c/7de681727963043e093c72e6c3348411b0185eab3263100d4490234ba2f6/pillow-11.1.0-pp310-pypy310_pp73-manylinux_2_28_x86_64.whl", hash = "sha256:d3d8da4a631471dfaf94c10c85f5277b1f8e42ac42bade1ac67da4b4a7359b73", size = 3509746, upload-time = "2025-01-02T08:13:50.6Z" },
     { url = "https://files.pythonhosted.org/packages/41/67/936f9814bdd74b2dfd4822f1f7725ab5d8ff4103919a1664eb4874c58b2f/pillow-11.1.0-pp310-pypy310_pp73-win_amd64.whl", hash = "sha256:4637b88343166249fe8aa94e7c4a62a180c4b3898283bb5d3d2fd5fe10d8e4e0", size = 2626353, upload-time = "2025-01-02T08:13:52.725Z" },
+]
+
+[[package]]
+name = "pkce"
+version = "1.0.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/29/ea/ddd845c2ec21bf1e8555c782b32dc39b82f0b12764feb9f73ccbb2470f13/pkce-1.0.3.tar.gz", hash = "sha256:9775fd76d8a743d39b87df38af1cd04a58c9b5a5242d5a6350ef343d06814ab6", size = 2757, upload-time = "2021-02-08T18:29:07.07Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/15/51/52c22ec0812d25f5bf297a01153604bfa7bfa59ed66f6cd8345beb3c2b2a/pkce-1.0.3-py3-none-any.whl", hash = "sha256:55927e24c7d403b2491ebe182b95d9dcb1807643243d47e3879fbda5aad4471d", size = 3200, upload-time = "2021-02-08T18:29:05.678Z" },
 ]
 
 [[package]]
