@@ -152,13 +152,15 @@ Example using a `with` statement:
     my agentic code
     ...
 ```
+
 ## Stdio Proxy
 Start the proxy server to listen for incoming requests
 ```bash
 agc run stdio-proxy --mcp-config-file <FILE_PATH>
 
 ```
-use the `--mcp-config-file` option to specify the path to the MCP configuration file.
+
+Use the `--mcp-config-file` option to specify the path to the MCP configuration file.
 
 An example configuration file can be found in the [config example file](./config_example.json).
 

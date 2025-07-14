@@ -7,7 +7,6 @@
 - [Retrieve a secret](#retrieve-a-secret)
 
 
-
 ## Overview
 
 CyberArk's Agent Guard is an AI agent security tool supporting secure secret retrieval for agents managed via external secret providers such as AWS Secrets Manager and CyberArk Secrets Manager (prevfiously CyberArk Conjur).Conjur Open Source, and traceability of AI agent MCP communications via the Agent Guard’s MCP Proxy.
@@ -15,7 +14,6 @@ CyberArk's Agent Guard is an AI agent security tool supporting secure secret ret
 The tool uses the [Agent Guard CLI](../agent_guard_core/cli.md).
 
 The Docker image, `cyberark/cyberark.agent-guard:1.0.1`, is available from the [AWS Marketplace](https://link.to.aws.marketplace.com).  **!!!NEED TO UPDATE IMAGE NAME ADD LINK TO AWS MARKETPLACE!!!!.**
-
 
 ## Before you begin
 
@@ -33,7 +31,6 @@ The Docker image, `cyberark/cyberark.agent-guard:1.0.1`, is available from the [
    ```
 - You have a working Docker setup
 - You've downloaded the Agent Guard Docker image, `<name of image>`, from the AWS Marketplace
-
 
 ### 2. Set up the Agent Guard container
 
@@ -69,6 +66,7 @@ An example config of an MCP client which looks like this:
 ```
 
 turns into:
+
 ```
 {
   "mcpServers": {
@@ -89,6 +87,7 @@ turns into:
   }
 }
 ```
+
 If you want to use the 'apply-config' command, locate the path of your MCP server configuration file (let's call it /home/user/mcpservers.json for the same of the example), and run the following command:
 
 ```
@@ -112,7 +111,6 @@ For example, this will cause the looks to be written to /tmp/agent_guard_core_pr
 docker run -v /tmp:/logs
 ```
 
-
 ### Example
 
 Set up a configuration file, **config-sample.json**, locally in **/tmp/config**.
@@ -131,7 +129,6 @@ Copy over to your AI agent's MCP config file the activity you want to log. For e
 
 ![ai-agent-config](/docs/images/mcp-proxy-ai-agent-config.png)
 
-
 ### Log output
 When you run your MCP host, you should start seeing the host interacting with the proxied MCP server querying it for the List operations like this:
 
@@ -142,6 +139,7 @@ As you interact with the server, you should see more logs:
 ![server-interaction-logs](/docs/images/output-server-interaction.png)
 
 ## Retrieve a secret
+
 CyberArk's Agent Guard for Secret Retrieval (dockerized) is built for AI agent developers, and can be used to  streamline secret retrieval and reduce boilerplate. 
 
 Make sure you have at least one secret stored in your Secrets Manager; for example: a secret named **secret1** with value **1234567890**.
