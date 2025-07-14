@@ -13,7 +13,7 @@ CyberArk's Agent Guard is an AI agent security tool supporting secure secret ret
 
 The tool uses the [Agent Guard CLI](../agent_guard_core/cli.md).
 
-The Docker image, `cyberark/cyberark.agent-guard:1.0.1`, is available from the [AWS Marketplace](https://link.to.aws.marketplace.com).  **!!!NEED TO UPDATE IMAGE NAME ADD LINK TO AWS MARKETPLACE!!!!.**
+The Agent Guard Docker image is available from the Amazon ECR which is accessible through the AWS Marketplace.
 
 ## Before you begin
 
@@ -34,7 +34,7 @@ The Docker image, `cyberark/cyberark.agent-guard:1.0.1`, is available from the [
 
 ### 2. Set up the Agent Guard container
 
-1. Pull the Agent Guard MCP Proxy image (**agc**) from AWS ECR.
+1. Pull the Agent Guard Docker image (**agc**) from the Amazon ECR.
 ```
 docker pull 709825985650.dkr.ecr.us-east-1.amazonaws.com/cyberark/cyberark.agent-guard:1.0.1
 ```
