@@ -24,12 +24,8 @@
 
 CyberArk's Agent Guard is an AI agent security tool supporting secure secrets retrieval for agents managed via external secret providers such as AWS Secrets Manager and CyberArk Secrets Manager, and traceability of AI agent MCP communications via the Agent Guard’s MCP Proxy.
 
-- [Agent Guard for secure secret retrieval](/docs/agent-guard-secrets-retrieval-lp.md)
-- [Agent Guard MCP proxy](/docs/agent-guard-mcp-proxy.md)
-
-
-
-
+- [Agent Guard - Python libraries](docs/agent-guard-pipy.md)
+- [Agent Guard - containerized](/docs/agent-guard-containerized.md)
 
 ## 🤝 Contribution
 
