@@ -22,68 +22,15 @@
 
 ## 🌟 Overview
 
-This toolset is intended for AI agent builders to simplify your work and reduce the level of boilerplate code you need to write.
-The toolset includes a [Python library](https://pypi.org/project/agent-guard-core/).
+CyberArk's Agent Guard is an AI agent security tool supporting secure secrets retrieval for agents managed via external secret providers such as AWS Secrets Manager and CyberArk Secrets Manager, and traceability of AI agent MCP communications via the Agent Guard’s MCP Proxy.
 
-
-## Key Features
-
-### ✨ Secured environment variables provisioning
-
-This toolset can populate API keys and secrets as environment variables. The secrets are stored in your secret management of choice and are provisioned at runtime into your process memory.
-The secrets can be populated and depopulated, for a specific context: Agent, Tool, HTTP call.
-Currently [supported](https://github.com/cyberark/agent-guard/tree/main/agent_guard_core/credentials) secret providers:
-- CyberArk Conjur
-- AWS Secrets Manager
-- Local `.env` file (for development purposes)
-
-However, this functionality is extensible by implementing a [SecretsProvider](https://github.com/cyberark/agent-guard/tree/main/agent_guard_core/credentials) interface.
-
-#### Example
-
-For full, runnable examples, please see the [examples](https://github.com/cyberark/agent-guard/tree/main/examples) directory.
-
-```python
-...
-
-from agent_guard_core.credentials.aws_secrets_manager_provider import AWSSecretsProvider
-from agent_guard_core.credentials.environment_manager import EnvironmentVariablesManager
-
-
-# Populate the environment variables from AWS Secrets Manager
-@EnvironmentVariablesManager.set_env_vars(AWSSecretsProvider())
-async def main() -> None:
-    runtime = SingleThreadedAgentRuntime()
-    tools: List[Tool] = [
-        FunctionTool(get_stock_price, description='Get the stock price.')
-    ]
-    
-    await ToolAgent.register(runtime, 'tool_executor_agent',
-                             lambda: ToolAgent('tool executor agent', tools))
-
-    await ToolUseAgent.register(
-        runtime,
-        'tool_use_agent',
-        lambda: ToolUseAgent(
-            AzureOpenAIChatCompletionClient(
-                model='gpt-4o',
-                azure_endpoint=os.getenv('AZURE_OPENAI_ENDPOINT'),
-                azure_deployment='gpt-4o',
-                api_version='2024-02-01'),
-            [tool.schema for tool in tools], 'tool_executor_agent'),
-    )
-
-    ...
-```
-
-## ⚡ Getting Started
-
-Please take a look at our [getting started](https://github.com/cyberark/agent-guard/blob/main/GETTING_STARTED.md) page and try it out!
+- [Agent Guard - Python libraries](docs/agent-guard-pypi.md)
+- [Agent Guard - containerized](/docs/agent-guard-containerized.md)
 
 ## 🤝 Contribution
 
-Please make sure to read the [CONTRIBUTING.md](https://github.com/cyberark/agent-guard/blob/main/CONTRIBUTING.md) file if you want to contribute to this project.
+Make sure to read the [CONTRIBUTING.md](https://github.com/cyberark/agent-guard/blob/main/CONTRIBUTING.md) file if you want to contribute to this project.
 
 ## 💁  Contact
 
-Feel free to contact us via GitHub issues or through LinkedIn: [Gil Adda](https://www.linkedin.com/in/gil-adda-6117b9/), [Rafi Schwarz](https://www.linkedin.com/in/rafi-schwarz/). 
+Feel free to contact us via GitHub issues.
