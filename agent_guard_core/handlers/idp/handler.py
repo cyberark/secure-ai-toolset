@@ -216,7 +216,7 @@ if __name__ == "__main__":
         client_id="__idaptive_cybr_user_oidc",
         authorize_endpoint="oauth2/authorize/__agcserver",
         token_endpoint="oauth2/token/__agcserver",
-        scope="openid"#"full"#"full"
+        scope="api profile"#"full"#"full"
     )
 
     oidc = OIDCLogin(config)
