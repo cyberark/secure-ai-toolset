@@ -19,7 +19,7 @@ def save_edits(edited_secrets: pd.DataFrame):
 
         # Save the updated secrets back to the secret provider
         if len(updated_secrets) > 0:
-            secret_provider.store_secret_dictionary(updated_secrets)
+            secret_provider.store(updated_secrets)
             st.success("Secrets updated successfully!")
         else:
             st.warning("Trying to save an empty list")
@@ -42,7 +42,7 @@ try:
         f"Secret Provider: {secret_provider_name} (Namespace: {secret_provider_namespace})"
     )
 
-    secrets_dictionary = secret_provider.get_secret_dictionary()
+    secrets_dictionary = secret_provider.get()
 
 except SecretProviderException as e:
     if "ExpiredTokenException" in e.args[0] and isinstance(
