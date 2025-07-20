@@ -10,10 +10,10 @@ class EnhancedStrEnum(str, Enum):
         return self.value
 
 class CredentialsProvider(EnhancedStrEnum):
-    AWS_SECRETS_MANAGER = "aws-secretsmanager"
+    AWS_SECRETS_MANAGER = "aws"
     CONJUR = "conjur"
     FILE_DOTENV = "file-dotenv"
-    GCP_SECRETS_MANAGER = "gcp-secretsmanager"
+    GCP_SECRETS_MANAGER = "gcp"
     
 class ConjurEnvVars(EnhancedStrEnum):
     CONJUR_AUTHN_LOGIN = "CONJUR_AUTHN_LOGIN" 
