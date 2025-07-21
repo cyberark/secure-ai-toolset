@@ -44,16 +44,16 @@ Group of commands to manage Agent Guard MCP proxy.
   agc mcp-proxy start -d --cap audit uvx mcp-server-fetch
   
   # Start with secret URI injection
-  agc mcp-proxy start --cap audit --secret-uri conjur://openai-api-key/OPENAI_API_KEY uvx mcp-server-fetch
+  agc mcp-proxy start --cap audit --secret-uri conjur://my-api-key/MY_API_KEY uvx mcp-server-fetch
   
   # Start with multiple secret URIs
-  agc mcp-proxy start --cap audit -s conjur://api-key/OPENAI_API_KEY -s aws://db-password/DB_PASSWORD uvx mcp-server-fetch
+  agc mcp-proxy start --cap audit -s conjur://my-api-key/MY_API_KEY -s aws://db-password/DB_PASSWORD uvx mcp-server-fetch
   
   # Start with secrets from environment variables
   agc mcp-proxy start --cap audit --get-secrets-from-env uvx mcp-server-fetch
   
   # Combine secret injection with other options
-  agc mcp-proxy start -d --cap audit --secret-uri conjur://api-key/OPENAI_API_KEY --get-secrets-from-env uvx mcp-server-fetch
+  agc mcp-proxy start -d --cap audit --secret-uri conjur://my-api-key/MY_API_KEY --get-secrets-from-env uvx mcp-server-fetch
   
   # For containerized environments with persistent logs
   docker run -v /path/to/local/logs:/logs agc mcp-proxy start --cap audit uvx mcp-server-fetch
@@ -122,7 +122,7 @@ Group of commands to manage Agent Guard MCP proxy.
 
   **Examples:**
   ```
-  conjur://openai-api-key/OPENAI_API_KEY
+  conjur://my-api-key/MY_API_KEY
   aws://database-password/DB_PASSWORD
   gcp://service-account-key
   ```
@@ -133,10 +133,10 @@ Group of commands to manage Agent Guard MCP proxy.
 
   ```
   # Single secret URI
-  agc mcp-proxy start --secret-uri conjur://openai-api-key/OPENAI_API_KEY uvx mcp-server-fetch
+  agc mcp-proxy start --secret-uri conjur://my-api-key/MY_API_KEY uvx mcp-server-fetch
 
   # Multiple secret URIs
-  agc mcp-proxy start -s conjur://api-key/OPENAI_API_KEY -s aws://db-password/DB_PASSWORD uvx mcp-server-fetch
+  agc mcp-proxy start -s conjur://my-api-key/MY_API_KEY -s aws://db-password/DB_PASSWORD uvx mcp-server-fetch
   ```
 
   ##### Using Environment Variables
@@ -145,7 +145,7 @@ Group of commands to manage Agent Guard MCP proxy.
 
   ```
   # Set environment variables in the format: ENV_VAR=provider://key
-  export OPENAI_API_KEY=conjur://api-key
+  export MY_API_KEY=conjur://my-api-key
   export DB_PASSWORD=aws://database-password
 
   # Use the flag to fetch all matching environment variables
@@ -157,7 +157,7 @@ Group of commands to manage Agent Guard MCP proxy.
   You can combine both methods to provide maximum flexibility:
 
   ```
-  agc mcp-proxy start --secret-uri conjur://api-key/OPENAI_API_KEY --get-secrets-from-env uvx mcp-server-fetch
+  agc mcp-proxy start --secret-uri conjur://my-api-key/MY_API_KEY --get-secrets-from-env uvx mcp-server-fetch
   ```
 
   **Security Note:** Secrets are fetched at startup and injected as environment variables for the MCP server process. Ensure your secret providers are properly configured and accessible.
@@ -197,7 +197,7 @@ Group of commands to manage Agent Guard MCP proxy.
           "--cap",
           "audit",
           "--secret-uri",
-          "conjur://openai-api-key/OPENAI_API_KEY",
+          "conjur://my-api-key/MY_API_KEY",
           "--get-secrets-from-env",
           "uvx",
           "mcp-server-fetch"
