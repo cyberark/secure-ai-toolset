@@ -3,9 +3,10 @@ import sys
 
 import click
 
-from agent_guard_core.cli.login_idp import idp_login
+from agent_guard_core.cli.idp_cli import idp_login
 from agent_guard_core.cli.mcp_proxy_cli import mcp_proxy
 from agent_guard_core.cli.secrets_cli import secrets
+from agent_guard_core.cli.sia_postgresdb_cli import sia_postgresdb
 from agent_guard_core.credentials.enum import CredentialsProvider
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -23,6 +24,7 @@ def cli():
 cli.add_command(secrets)
 cli.add_command(mcp_proxy)
 cli.add_command(idp_login)
+cli.add_command(sia_postgresdb)
 
 if __name__ == '__main__':
     try:

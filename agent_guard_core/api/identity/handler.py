@@ -14,7 +14,7 @@ import keyring
 import pkce
 import requests
 
-from agent_guard_core.api.identity.consts import ACCESS_TOKEN, ID_TOKEN, REFRESH_TOKEN
+from agent_guard_core.api.identity.consts import ACCESS_TOKEN, ID_TOKEN, KEYRING_ACCESS_TOKEN, REFRESH_TOKEN
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +50,7 @@ class IdentityHandler:
         self._load_tokens_from_keyring()
 
     def _load_tokens_from_keyring(self):
-        raw = keyring.get_password(self._config.service_name, self._config.client_id)
+        raw = keyring.get_password(self._config.service_name, KEYRING_ACCESS_TOKEN)
         if raw:
             try:
                 self._tokens = json.loads(raw)
@@ -62,7 +62,7 @@ class IdentityHandler:
         if self._tokens:
             keyring.set_password(
                 self._config.service_name,
-                self._config.client_id,
+                KEYRING_ACCESS_TOKEN,
                 json.dumps(self._tokens)
             )
             logger.debug("Tokens securely stored in keyring.")

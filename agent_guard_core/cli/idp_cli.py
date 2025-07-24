@@ -7,9 +7,9 @@ from agent_guard_core.api.identity.handler import IdentityConfig, IdentityHandle
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-@click.group(name="idp-login")
+@click.group(name="idp")
 def idp_login():
-    """Commands to manage IDP login in Agent Guard."""
+    """Commands to manage Identity Provider (IDP) operations in Agent Guard."""
 
 @idp_login.command(name="login", help="Login to the Identity Provider (IDP) and obtain tokens.")
 @click.option(

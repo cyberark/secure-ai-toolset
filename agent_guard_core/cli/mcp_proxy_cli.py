@@ -8,6 +8,7 @@ import uuid
 from enum import Enum
 from pathlib import Path
 from typing import Any, Optional
+from urllib.parse import quote_plus
 
 import click
 from mcp import ClientSession, StdioServerParameters, stdio_client, stdio_server
