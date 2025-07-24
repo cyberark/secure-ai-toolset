@@ -23,7 +23,9 @@ dependencies = [
     "boto3",
     "google-cloud-secret-manager",
     "mcp>=1.9.1",
-    "mcp-proxy>=0.8.0"
+    "mcp-proxy>=0.8.0",
+    "keyring>=25.6.0",
+    "pkce>=1.0.3",
 ]
 
 [build-system]
@@ -31,7 +33,7 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [project.scripts]
-agc = "agent_guard_core.cli:cli"
+agc = "agent_guard_core.cli.cli:cli"
 
 [project.optional-dependencies]
 dev = [
@@ -46,6 +48,7 @@ dev = [
     "python-semantic-release",
     "bandit",
     "vulture",
+    "mypy>=1.16.1",
 ]
 servers = [
     "uvicorn", "streamlit", "fastapi", "pandas"
