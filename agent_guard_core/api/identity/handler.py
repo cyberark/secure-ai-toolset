@@ -1,6 +1,8 @@
 import http.server
 import json
 import logging
+import os
+import pathlib
 import socketserver
 import threading
 import urllib.parse
@@ -12,28 +14,33 @@ import keyring
 import pkce
 import requests
 
-from agent_guard_core.handlers.idp.consts import ACCESS_TOKEN, ID_TOKEN, REFRESH_TOKEN
+from agent_guard_core.api.identity.consts import ACCESS_TOKEN, ID_TOKEN, REFRESH_TOKEN
 
 logger = logging.getLogger(__name__)
 
 @dataclass
-class IDPConfig:
+class IdentityConfig:
     """
     Generic Identity Provider configuration.
     """
-    domain: str                     # e.g. dev-abc123.us.auth0.com
-    client_id: str
+    domain: str = ""
+    app_id: str = ""
+    client_id: str = ""
     client_secret: Optional[str] = None  
     redirect_uri: str = "http://localhost:5005/callback"
     audience: str = ""
     resource: str = ""
-    scope: str = ""
-    service_name: str = "oidc-login"  # keyring service name
-    authorize_endpoint: str = "authorize"
-    token_endpoint: str = "token"
+    scope: str = "full"  # Default scope, can be overridden
+    service_name: str = "agc-oidc-login"  # keyring service name
+    authorize_endpoint: str = "oauth2/authorize"
+    token_endpoint: str = "oauth2/token"
 
-class OIDCLogin:
-    def __init__(self, config: IDPConfig):
+class IdentityHandler:
+    def __init__(self, config: Optional[IdentityConfig] = None):
+        if config is None:
+            logger.debug("No IdentityConfig provided, using default configuration.")
+            config = IdentityConfig()
+
         self._config = config
         self._code_verifier, self._code_challenge = pkce.generate_pkce_pair()
         self._auth_code = None
@@ -63,17 +70,27 @@ class OIDCLogin:
     def _start_local_server(self):
         class AuthHandler(http.server.SimpleHTTPRequestHandler):
             def do_GET(inner_self):
+                # Get the directory containing the HTML templates
+                current_dir = pathlib.Path(__file__).parent
+                resources_dir = current_dir / 'resources'
+
                 query = urllib.parse.urlparse(inner_self.path).query
                 params = urllib.parse.parse_qs(query)
                 if "code" in params:
                     self._auth_code = params["code"][0]
                     inner_self.send_response(200)
+                    inner_self.send_header('Content-type', 'text/html')
                     inner_self.end_headers()
-                    inner_self.wfile.write(b"<h1>Login complete. You may close this window.</h1>")
+                    with open(resources_dir / 'login_success.html', 'r') as f:
+                        html = f.read()
+                    inner_self.wfile.write(html.encode())
                 else:
                     inner_self.send_response(400)
+                    inner_self.send_header('Content-type', 'text/html')
                     inner_self.end_headers()
-                    inner_self.wfile.write(b"Missing code parameter.")
+                    with open(resources_dir / 'login_error.html', 'r') as f:
+                        html = f.read()
+                    inner_self.wfile.write(html.encode())
 
         httpd = socketserver.TCPServer(("", 5005), AuthHandler)
         thread = threading.Thread(target=httpd.handle_request)
@@ -89,6 +106,10 @@ class OIDCLogin:
         if self._tokens and not force:
             logger.info("Using existing tokens from keyring. Use force=True to re-login.")
             return self._tokens
+
+        # Check if running inside a Docker container
+        if os.path.exists('/.dockerenv'):
+            raise RuntimeError("Cannot open browser in a Docker container. This operation requires a GUI environment.")
 
         # Build authorization URL
         params = {
@@ -109,11 +130,13 @@ class OIDCLogin:
         if self._config.client_id:
             params["client_id"] = self._config.client_id
 
-        url = f"https://{self._config.domain}/{self._config.authorize_endpoint}?" + urllib.parse.urlencode(params)
-        logger.info(f"Opening browser to: {url}")
+        base_url = f"https://{self._config.domain}/{self._config.authorize_endpoint}"
+        if self._config.app_id:
+            base_url += f"/{self._config.app_id}"
 
+        url = base_url + "?" + urllib.parse.urlencode(params)
         server_thread = self._start_local_server()
-        logger.info("Opening browser with URL\n%s", url)
+        logger.debug("Opening browser with URL\n%s", url)
         webbrowser.open(url)
 
         server_thread.join()
@@ -122,6 +145,9 @@ class OIDCLogin:
 
         # Exchange code for tokens
         token_url = f"https://{self._config.domain}/{self._config.token_endpoint}"
+        if self._config.app_id:
+            token_url += f"/{self._config.app_id}"
+            
         token_data = {
             "grant_type": "authorization_code",
             "client_id": self._config.client_id,
@@ -134,8 +160,6 @@ class OIDCLogin:
         response.raise_for_status()
         self._tokens = response.json()
         self._save_tokens_to_keyring()
-
-        logger.info("Login successful")
 
     def refresh_token(self):
         if not self._tokens or "refresh_token" not in self._tokens:
@@ -167,59 +191,35 @@ class OIDCLogin:
     def refresh_token_value(self):
         return self._tokens.get(REFRESH_TOKEN) if self._tokens else None
 
+    def logout(self):
+        """
+        Clear all stored tokens from memory and keyring.
+        """
+        # Clear tokens from memory
+        self._tokens = {}
+        self._auth_code = None
+        
+        # Remove tokens from keyring
+        try:
+            keyring.delete_password(self._config.service_name, self._config.client_id)
+            logger.debug("Tokens removed from keyring.")
+        except keyring.errors.PasswordDeleteError:
+            # Password might not exist, which is fine during logout
+            pass
+
 
 # =====================================================
 # Example usage
 # =====================================================
 if __name__ == "__main__":
-    config = IDPConfig(
-        domain="dev-4jacj8b580bps666.us.auth0.com",
-        client_id="k7RrMA7YbQGaTe5uJsw8d7fZiHz6nU0w",
-        audience=""  # or set resource for Azure
-    )
-
-    config = IDPConfig( # Creates an access token, but can't post to SIA SSO (unauthorized)
-        domain="alr5172.id.integration-cyberark.cloud",
-        client_id="agc",
-        authorize_endpoint="oauth2/authorize/__agcapp",
-        token_endpoint="oauth2/token/__agcapp",
-        scope="api profile"#scope="dpa DPA adb"
-    )
-
-    config = IDPConfig(
-        domain="alr5172.id.integration-cyberark.cloud",
-        client_id="__idaptive_cybr_user_oidc",
-        authorize_endpoint="oauth2/authorize/__idaptive_cybr_user_oidc",
-        token_endpoint="oauth2/token/__idaptive_cybr_user_oidc",
-        scope="openid api profile",
-        redirect_uri="https://chat-sia.integration-cyberark.cloud/",
-    )
-
-    config = IDPConfig(
+    config = IdentityConfig( 
         domain="alr5172.id.integration-cyberark.cloud",
         client_id="0ded131f-a0ba-42c6-8c29-d1fee00cab91",
-        authorize_endpoint="oauth2/authorize/__agcoid",
-        token_endpoint="oauth2/token/__agcoid",
-        scope="api profile"
+        app_id="__agcoid",
+        scope="full"
     )
 
-    config = IDPConfig( # WORKING AND I GET AUTHENTICATE
-        domain="alr5172.id.integration-cyberark.cloud",
-        client_id="agc",
-        authorize_endpoint="oauth2/authorize/__agcserver",
-        token_endpoint="oauth2/token/__agcserver",
-        scope="full"#"full"#"full"
-    )
-
-    config = IDPConfig( 
-        domain="alr5172.id.integration-cyberark.cloud",
-        client_id="__idaptive_cybr_user_oidc",
-        authorize_endpoint="oauth2/authorize/__agcserver",
-        token_endpoint="oauth2/token/__agcserver",
-        scope="api profile"#"full"#"full"
-    )
-
-    oidc = OIDCLogin(config)
+    oidc = IdentityHandler(config)
     tokens = oidc.login()  # will reuse from keyring if present
 
     print("Access Token:", oidc.access_token)
